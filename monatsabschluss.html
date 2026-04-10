@@ -165,24 +165,25 @@
             .tabs::-webkit-scrollbar { display: none; }
             .tab { padding: 10px 10px; font-size: 12px; flex-shrink: 0; }
             .content { padding: 0 8px; margin: 12px auto; }
-            .card { padding: 14px; margin-bottom: 14px; }
+            .card { padding: 14px; margin-bottom: 14px; overflow-x: hidden; }
             .card h2 { font-size: 15px; margin-bottom: 12px; }
             .form-row { flex-direction: column; gap: 10px; }
             .form-group { width: 100%; }
             .form-group input, .form-group select { width: 100% !important; }
             .form-group label { font-size: 11px; }
             .info-bar { padding: 10px 12px; flex-direction: column; gap: 4px; font-size: 12px; }
-            .calendar-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
-            .cal-day { padding: 6px 4px; font-size: 11px; }
-            .cal-day .day-num { font-size: 12px; }
-            .cal-day .day-info { font-size: 9px; }
-            .cal-header { font-size: 10px; padding: 4px; }
-            .legend { gap: 8px; font-size: 11px; }
+            /* Kalender MUSS immer 5 Spalten behalten (Mo-Fr) */
+            .calendar-grid { grid-template-columns: repeat(5, 1fr) !important; gap: 3px; }
+            .cal-day { padding: 4px 2px; font-size: 10px; border-radius: 6px; word-break: break-word; }
+            .cal-day .day-num { font-size: 11px; }
+            .cal-day .day-info { font-size: 8px; }
+            .cal-header { font-size: 9px; padding: 4px 2px; }
+            .legend { gap: 6px; font-size: 10px; flex-wrap: wrap; }
+            .legend-dot { width: 10px; height: 10px; }
             .summary-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
             .summary-card { padding: 14px 10px; }
             .summary-card .value { font-size: 22px; }
             .summary-card .label { font-size: 10px; }
-            /* Tabellen mobile: Karten-Layout */
             .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             table { font-size: 12px; min-width: 420px; }
             th { padding: 8px 6px; font-size: 10px; }
@@ -195,9 +196,11 @@
             .empty-state { padding: 24px 12px; font-size: 13px; }
         }
         @media (max-width: 380px) {
-            .calendar-grid { grid-template-columns: repeat(3, 1fr); }
             .summary-grid { grid-template-columns: 1fr; }
             .header h1 { font-size: 14px; }
+            .cal-day { padding: 3px 1px; font-size: 9px; }
+            .cal-day .day-num { font-size: 10px; }
+            .cal-day .day-info { display: none; }
         }
         /* PIN OVERLAY */
         .pin-overlay {
@@ -349,12 +352,42 @@
     <div class="section" id="section-sales">
         <div class="card">
             <h2>Produktverkauf erfassen</h2>
-            <div class="form-row">
-                <div class="form-group"><label>Datum</label><input type="date" id="s-date"></div>
-                <div class="form-group"><label>Produkt</label><input type="text" id="s-product" placeholder="Produktname" style="width:200px"></div>
-                <div class="form-group"><label>Menge</label><input type="number" id="s-qty" value="1" min="1" style="width:70px"></div>
-                <div class="form-group"><label>Verkaufspreis (&euro;)</label><input type="number" id="s-price" step="0.01" placeholder="0.00" style="width:110px"></div>
-                <button class="btn btn-primary" onclick="addSale()">Eintragen</button>
+            <!-- Scan / Manuell Toggle -->
+            <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <button class="scan-mode-btn active" id="modeManual" onclick="switchSaleMode('manual')" style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .2s;">&#9998; Manuell</button>
+                <button class="scan-mode-btn" id="modeScan" onclick="switchSaleMode('scan')" style="flex:1;padding:10px;text-align:center;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .2s;">&#128247; Barcode scannen</button>
+            </div>
+            <!-- Manuell -->
+            <div id="saleManual">
+                <div class="form-row">
+                    <div class="form-group"><label>Datum</label><input type="date" id="s-date"></div>
+                    <div class="form-group"><label>Produkt</label><input type="text" id="s-product" placeholder="Produktname"></div>
+                    <div class="form-group"><label>Menge</label><input type="number" id="s-qty" value="1" min="1"></div>
+                    <div class="form-group"><label>Verkaufspreis (&euro;)</label><input type="number" id="s-price" step="0.01" placeholder="0.00"></div>
+                    <button class="btn btn-primary" onclick="addSale()">Eintragen</button>
+                </div>
+            </div>
+            <!-- Scanner -->
+            <div id="saleScan" style="display:none;">
+                <div style="background:#f5f3ef;border:2px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;">
+                    <video id="scanVideo" style="width:100%;display:block;border-radius:10px;" playsinline></video>
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                        <div style="width:70%;height:2px;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:scanPulse 2s ease-in-out infinite;"></div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                    <input type="text" id="scanEanInput" placeholder="EAN-Code eingeben oder scannen..." style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
+                    <button class="btn btn-primary" onclick="lookupEan()">Suchen</button>
+                </div>
+                <div id="scanResult" style="display:none;padding:14px;border:1px solid var(--accent);border-radius:10px;background:rgba(200,168,124,.06);margin-bottom:12px;">
+                    <div style="font-weight:600;font-size:15px;" id="scanProductName"></div>
+                    <div style="font-size:13px;color:var(--text-light);margin-top:4px;" id="scanProductInfo"></div>
+                    <div class="form-row" style="margin-top:12px;">
+                        <div class="form-group"><label>Menge</label><input type="number" id="scan-qty" value="1" min="1"></div>
+                        <div class="form-group"><label>Preis (&euro;)</label><input type="number" id="scan-price" step="0.01"></div>
+                        <button class="btn btn-primary" onclick="addScannedSale()">Eintragen</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card">
@@ -793,6 +826,180 @@ function startApp() {
     loadDeviations();
     loadSales();
 }
+
+// ============ BARCODE SCANNER FÜR PRODUKTVERKAUF ============
+let scanStream = null;
+let scanProductDb = {}; // local product cache
+
+// Load product DB from localStorage
+try { scanProductDb = JSON.parse(localStorage.getItem('sc_products_db') || '{}'); } catch(e) {}
+
+function switchSaleMode(mode) {
+    document.getElementById('saleManual').style.display = mode === 'manual' ? 'block' : 'none';
+    document.getElementById('saleScan').style.display = mode === 'scan' ? 'block' : 'none';
+    document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
+    document.getElementById('modeScan').classList.toggle('active', mode === 'scan');
+    document.getElementById('modeManual').style.background = mode === 'manual' ? 'rgba(200,168,124,.15)' : '#f5f3ef';
+    document.getElementById('modeManual').style.color = mode === 'manual' ? 'var(--primary-dark)' : 'var(--text-light)';
+    document.getElementById('modeScan').style.background = mode === 'scan' ? 'rgba(200,168,124,.15)' : '#f5f3ef';
+    document.getElementById('modeScan').style.color = mode === 'scan' ? 'var(--primary-dark)' : 'var(--text-light)';
+
+    if (mode === 'scan') {
+        startCamera();
+    } else {
+        stopCamera();
+    }
+}
+
+async function startCamera() {
+    const video = document.getElementById('scanVideo');
+    try {
+        scanStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = scanStream;
+        video.play();
+        // Start barcode detection
+        detectBarcode(video);
+    } catch(e) {
+        console.log('Camera error:', e);
+        alert('Kamera konnte nicht geöffnet werden. Bitte EAN-Code manuell eingeben.');
+    }
+}
+
+function stopCamera() {
+    if (scanStream) {
+        scanStream.getTracks().forEach(t => t.stop());
+        scanStream = null;
+    }
+}
+
+async function detectBarcode(video) {
+    if (!scanStream) return;
+
+    // Use BarcodeDetector API if available (Chrome, Edge)
+    if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+        const scan = async () => {
+            if (!scanStream) return;
+            try {
+                const barcodes = await detector.detect(video);
+                if (barcodes.length > 0) {
+                    const code = barcodes[0].rawValue;
+                    document.getElementById('scanEanInput').value = code;
+                    lookupEan();
+                    // Vibrate feedback
+                    if (navigator.vibrate) navigator.vibrate(100);
+                    return; // stop scanning after finding one
+                }
+            } catch(e) {}
+            if (scanStream) requestAnimationFrame(scan);
+        };
+        // Wait for video to be ready
+        video.addEventListener('loadeddata', () => { if (scanStream) requestAnimationFrame(scan); }, { once: true });
+        if (video.readyState >= 2 && scanStream) requestAnimationFrame(scan);
+    } else {
+        // Fallback: manual EAN input only
+        console.log('BarcodeDetector not available - use manual EAN input');
+    }
+}
+
+async function lookupEan() {
+    const ean = document.getElementById('scanEanInput').value.trim();
+    if (!ean) return;
+
+    const resultDiv = document.getElementById('scanResult');
+    const nameDiv = document.getElementById('scanProductName');
+    const infoDiv = document.getElementById('scanProductInfo');
+
+    // Check local cache first
+    if (scanProductDb[ean]) {
+        const p = scanProductDb[ean];
+        nameDiv.textContent = p.name;
+        infoDiv.textContent = (p.brand || '') + (p.size ? ' · ' + p.size : '');
+        document.getElementById('scan-price').value = p.price || '';
+        resultDiv.style.display = 'block';
+        return;
+    }
+
+    // Try Open Food Facts / Open Beauty Facts API
+    nameDiv.textContent = 'Suche...';
+    infoDiv.textContent = '';
+    resultDiv.style.display = 'block';
+
+    try {
+        const res = await fetch('https://world.openbeautyfacts.org/api/v0/product/' + ean + '.json');
+        const data = await res.json();
+        if (data.status === 1 && data.product) {
+            const p = data.product;
+            const name = p.product_name || p.product_name_de || 'Unbekanntes Produkt';
+            const brand = p.brands || '';
+            nameDiv.textContent = name;
+            infoDiv.textContent = brand + (p.quantity ? ' · ' + p.quantity : '');
+            // Cache it
+            scanProductDb[ean] = { name, brand, size: p.quantity || '', price: '' };
+            localStorage.setItem('sc_products_db', JSON.stringify(scanProductDb));
+        } else {
+            // Try OpenFoodFacts as fallback
+            const res2 = await fetch('https://world.openfoodfacts.org/api/v0/product/' + ean + '.json');
+            const data2 = await res2.json();
+            if (data2.status === 1 && data2.product) {
+                const p = data2.product;
+                const name = p.product_name || p.product_name_de || 'Unbekanntes Produkt';
+                const brand = p.brands || '';
+                nameDiv.textContent = name;
+                infoDiv.textContent = brand + (p.quantity ? ' · ' + p.quantity : '');
+                scanProductDb[ean] = { name, brand, size: p.quantity || '', price: '' };
+                localStorage.setItem('sc_products_db', JSON.stringify(scanProductDb));
+            } else {
+                nameDiv.textContent = 'Produkt nicht gefunden (EAN: ' + ean + ')';
+                infoDiv.textContent = 'Bitte Produktname und Preis manuell eingeben.';
+                nameDiv.contentEditable = true;
+                nameDiv.style.borderBottom = '1px dashed var(--accent)';
+                nameDiv.focus();
+            }
+        }
+    } catch(e) {
+        nameDiv.textContent = 'Offline - bitte Produktname eingeben';
+        nameDiv.contentEditable = true;
+        nameDiv.style.borderBottom = '1px dashed var(--accent)';
+        infoDiv.textContent = 'EAN: ' + ean;
+    }
+}
+
+function addScannedSale() {
+    const product = document.getElementById('scanProductName').textContent;
+    const qty = parseInt(document.getElementById('scan-qty').value) || 1;
+    const price = parseFloat(document.getElementById('scan-price').value) || 0;
+    if (!product || product.includes('Suche...') || price <= 0) {
+        alert('Bitte Produktname und Preis eingeben.');
+        return;
+    }
+    // Set values in the manual form and use existing addSale()
+    document.getElementById('s-product').value = product;
+    document.getElementById('s-qty').value = qty;
+    document.getElementById('s-price').value = price;
+    const today = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('s-date').value) document.getElementById('s-date').value = today;
+    addSale();
+    // Reset scanner
+    document.getElementById('scanResult').style.display = 'none';
+    document.getElementById('scanEanInput').value = '';
+    document.getElementById('scan-qty').value = 1;
+    document.getElementById('scan-price').value = '';
+    // Save price in cache for next time
+    const ean = document.getElementById('scanEanInput').value;
+    if (ean && scanProductDb[ean]) {
+        scanProductDb[ean].price = price;
+        localStorage.setItem('sc_products_db', JSON.stringify(scanProductDb));
+    }
+}
+
+// Initialize mode buttons style
+document.getElementById('modeManual').style.background = 'rgba(200,168,124,.15)';
+document.getElementById('modeManual').style.color = 'var(--primary-dark)';
+document.getElementById('modeScan').style.background = '#f5f3ef';
+document.getElementById('modeScan').style.color = 'var(--text-light)';
 
 // ============ START ============
 initSidebar();
