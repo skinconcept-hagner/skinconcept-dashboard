@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b08d57">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Skinconcept">
+    <link rel="apple-touch-icon" href="icon.svg">
 <title>SKINCONCEPT Kundenkartei</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
@@ -218,29 +224,44 @@ body.client-open .back-btn{display:inline-flex}
 /* RESPONSIVE — iPad & Tablet */
 @media(max-width:1100px){
   .sidebar{width:320px}
-  .ktabs{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
-  .ktab{padding:12px 14px;font-size:11px}
+  .ktabs{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 16px;scrollbar-width:none}
+  .ktabs::-webkit-scrollbar{display:none}
+  .ktab{padding:12px 14px;font-size:11px;flex-shrink:0}
   .kbody{padding:16px 20px 40px}
   .kartei-header{padding:20px 20px 0}
   .kh-metrics{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:900px){
   .sidebar{width:100%}
-  .app{flex-direction:column}
+  .app{flex-direction:column;height:auto;min-height:calc(100vh - 57px - 40px)}
   body:not(.client-open) .main-content{display:none}
   body.client-open .sidebar{display:none}
-  body.client-open .main-content{display:block;height:calc(100vh - 57px)}
+  body.client-open .main-content{display:block;min-height:calc(100vh - 57px)}
   body.client-open .back-btn{display:inline-flex}
   .kh-metrics{grid-template-columns:repeat(2,1fr)}
   .form-grid{grid-template-columns:1fr}
   .hdr{padding:12px 16px}
   .brand h1{font-size:18px}
+  .kartei{height:auto;min-height:100%}
+  .kh-top{flex-direction:column;gap:10px}
+  .kh-actions{width:100%;justify-content:flex-start}
+  .kh-contact{flex-direction:column;gap:6px}
 }
 @media(max-width:600px){
-  .kh-name{font-size:24px}
+  .kh-name{font-size:22px}
   .kh-metrics{grid-template-columns:1fr 1fr}
-  .ktab{padding:10px 10px;font-size:10px}
+  .ktabs{padding:0 10px;gap:0}
+  .ktab{padding:10px 10px;font-size:10px;flex-shrink:0}
+  .kbody{padding:12px 14px 40px}
+  .kartei-header{padding:14px 14px 0}
   .photo-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .anam-field{flex-direction:column;gap:2px}
+  .anam-value{text-align:left;max-width:100%}
+  .sec-card{padding:14px}
+  .sec-card h3{font-size:14px}
+  .modal-content{width:95vw;max-width:95vw;padding:16px;max-height:90vh}
+  .nc-card{padding:20px;width:95vw}
+  .sb-item{padding:10px 12px}
 }
 
 /* NEW CLIENT NOTIFICATION */
@@ -2245,5 +2266,7 @@ loadAnamnese();
 
 console.log('Kundenkartei geladen:',clients.length,'Kunden');
 </script>
+
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}</script>
 </body>
 </html>
