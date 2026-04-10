@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skinconcept Hagner - Kunden & Kommunikation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        /* ===== DARK PREMIUM THEME OVERRIDE ===== */
+        :root {
+            --bg: #131316 !important;
+            --bg2: #1b1b20;
+            --bg3: #242429;
+            --bg4: #2e2e35;
+            --bg-card: #1b1b20 !important;
+            --hover: #35353d;
+            --text: #f0ece6 !important;
+            --text-light: #a8a4a0 !important;
+            --muted: #5a5753;
+            --primary: #c9a96e !important;
+            --primary-light: #d4b478 !important;
+            --primary-dark: #b8953f !important;
+            --accent: #c9a96e !important;
+            --accent-light: rgba(201,169,110,.18) !important;
+            --border: rgba(255,255,255,.06) !important;
+            --success: #4ade80 !important;
+            --success-light: rgba(74,222,128,.1) !important;
+            --warning: #facc15 !important;
+            --warning-light: rgba(250,204,21,.1) !important;
+            --danger: #f87171 !important;
+            --danger-light: rgba(248,113,113,.1) !important;
+            --info: #60a5fa !important;
+            --info-light: rgba(96,165,250,.1) !important;
+            --shadow: 0 2px 12px rgba(0,0,0,.3) !important;
+            --shadow-hover: 0 8px 30px rgba(0,0,0,.4) !important;
+            --radius: 10px !important;
+            --radius-sm: 8px !important;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif !important;
+            background: var(--bg) !important;
+            color: var(--text) !important;
+            font-weight: 300;
+        }
+
+        /* Sidebar dark override */
+        .sidebar {
+            background: linear-gradient(180deg, #0d0d10, #18181d) !important;
+            border-right: 1px solid var(--border);
+        }
+        .sidebar-brand { border-bottom-color: var(--border) !important; }
+        .sidebar-brand h1 { font-family: 'Cormorant Garamond', serif !important; letter-spacing: 3px; }
+        .sidebar a, .sidebar .nav-item {
+            color: var(--text-light) !important;
+            transition: all .2s;
+        }
+        .sidebar a:hover, .sidebar .nav-item:hover,
+        .sidebar a.active, .sidebar .nav-item.active {
+            color: #c9a96e !important;
+            background: rgba(201,169,110,.08) !important;
+        }
+
+        /* Main area */
+        .main { background: var(--bg) !important; }
+
+        /* Page header */
+        .page-header {
+            border-bottom: 1px solid var(--border) !important;
+            padding-bottom: 20px !important;
+            margin-bottom: 24px !important;
+        }
+        .page-header h2 {
+            font-family: 'Cormorant Garamond', serif !important;
+            font-weight: 400 !important;
+            letter-spacing: 3px !important;
+            text-transform: uppercase !important;
+            font-size: 24px !important;
+        }
+        .page-header p { color: var(--muted) !important; font-size: 12px !important; letter-spacing: 1px !important; }
+
+        /* Tabs */
+        .tabs {
+            background: var(--bg2) !important;
+            border-bottom: 1px solid var(--border) !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            gap: 0 !important;
+            margin-bottom: 24px !important;
+            display: flex !important;
+            overflow-x: auto;
+        }
+        .tabs .tab {
+            padding: 14px 22px !important;
+            font-size: 13px !important;
+            font-weight: 400 !important;
+            color: var(--muted) !important;
+            background: none !important;
+            border: none !important;
+            border-bottom: 2px solid transparent !important;
+            border-radius: 0 !important;
+            cursor: pointer;
+            transition: all .2s;
+            letter-spacing: .5px;
+            white-space: nowrap;
+        }
+        .tabs .tab:hover { color: var(--text-light) !important; }
+        .tabs .tab.active {
+            color: #c9a96e !important;
+            border-bottom-color: #c9a96e !important;
+            background: none !important;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg2) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius) !important;
+            box-shadow: none !important;
+            padding: 22px !important;
+        }
+        .card-header {
+            border-bottom: 1px solid var(--border) !important;
+            padding-bottom: 14px !important;
+            margin-bottom: 16px !important;
+        }
+        .card-header h3 {
+            font-family: 'Outfit', sans-serif !important;
+            font-weight: 500 !important;
+            font-size: 16px !important;
+            letter-spacing: .5px;
+        }
+
+        /* Buttons */
+        .btn {
+            font-family: 'Outfit', sans-serif !important;
+            font-weight: 500 !important;
+            letter-spacing: .3px;
+            border-radius: 8px !important;
+            transition: all .2s !important;
+        }
+        .btn-primary {
+            background: #c9a96e !important;
+            color: #131316 !important;
+            border: none !important;
+        }
+        .btn-primary:hover {
+            background: #d4b478 !important;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: var(--bg3) !important;
+            color: var(--text-light) !important;
+            border: 1px solid var(--border) !important;
+        }
+        .btn-secondary:hover {
+            background: var(--bg4) !important;
+            color: var(--text) !important;
+            border-color: rgba(255,255,255,.1) !important;
+        }
+        .btn-secondary.active-filter, .fu-filter-btn.active-filter {
+            background: rgba(201,169,110,.12) !important;
+            color: #c9a96e !important;
+            border-color: rgba(201,169,110,.3) !important;
+        }
+
+        /* Inputs & Selects */
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"],
+        input[type="search"], select, textarea {
+            background: var(--bg3) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text) !important;
+            border-radius: 8px !important;
+            font-family: 'Outfit', sans-serif !important;
+        }
+        input::placeholder, textarea::placeholder { color: var(--muted) !important; }
+        input:focus, select:focus, textarea:focus {
+            border-color: rgba(201,169,110,.4) !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(201,169,110,.1) !important;
+        }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        table thead th {
+            background: var(--bg3) !important;
+            color: var(--muted) !important;
+            font-size: 11px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1.5px !important;
+            font-weight: 500 !important;
+            padding: 12px 14px !important;
+            border-bottom: 1px solid var(--border) !important;
+        }
+        table tbody td {
+            padding: 12px 14px !important;
+            border-bottom: 1px solid var(--border) !important;
+            font-size: 13px !important;
+            color: var(--text) !important;
+        }
+        table tbody tr:hover { background: rgba(255,255,255,.02) !important; }
+
+        /* Badges */
+        .badge { border-radius: 20px !important; font-size: 11px !important; font-weight: 500 !important; padding: 3px 10px !important; }
+        .badge-geplant { background: rgba(201,169,110,.12) !important; color: #c9a96e !important; }
+        .badge-gepostet { background: rgba(74,222,128,.1) !important; color: #4ade80 !important; }
+        .badge-entwurf { background: rgba(248,113,113,.1) !important; color: #f87171 !important; }
+
+        /* Modals */
+        .modal-overlay {
+            background: rgba(0,0,0,.7) !important;
+            backdrop-filter: blur(8px);
+        }
+        .modal {
+            background: var(--bg2) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 14px !important;
+            color: var(--text) !important;
+        }
+        .modal h3 { font-family: 'Outfit', sans-serif !important; font-weight: 500 !important; }
+        .form-group label {
+            color: var(--text-light) !important;
+            font-size: 12px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            font-weight: 500 !important;
+        }
+
+        /* Toast override */
+        .toast {
+            background: var(--bg3) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text) !important;
+        }
+
+        /* Loading spinner */
+        .loading { color: var(--muted) !important; }
+        .spinner { border-color: var(--border) !important; border-top-color: #c9a96e !important; }
+
+        /* Empty state */
+        .empty-state { color: var(--muted) !important; }
+        .empty-state h3 { color: var(--text-light) !important; }
+
+        /* Screenshot Upload Area */
+        .upload-zone {
+            border: 2px dashed rgba(255,255,255,.08);
+            border-radius: var(--radius);
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            position: relative;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #c9a96e;
+            background: rgba(201,169,110,.05);
+        }
+        .upload-zone .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+        .upload-zone p { color: var(--text-light); font-size: 14px; }
+        .upload-zone input[type="file"] {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+
+        /* OCR Progress */
+        .ocr-progress { margin: 20px 0; display: none; }
+        .ocr-progress.active { display: block; }
+        .progress-bar-wrap {
+            background: var(--bg4);
+            border-radius: 20px;
+            height: 6px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c9a96e, #d4b478);
+            border-radius: 20px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        .ocr-status { font-size: 13px; color: var(--text-light); }
+
+        /* Preview image */
+        .screenshot-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            margin: 16px 0;
+            display: none;
+        }
+
+        /* Extracted clients list */
+        .extracted-list { margin: 16px 0; }
+        .extracted-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            background: var(--bg3);
+        }
+        .extracted-item input[type="checkbox"] {
+            width: 18px; height: 18px; accent-color: #c9a96e;
+        }
+        .extracted-item input[type="text"] {
+            flex: 1; padding: 6px 10px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 14px; background: var(--bg) !important;
+            color: var(--text);
+        }
+        .extracted-item .remove-btn {
+            background: none; border: none; color: var(--danger);
+            cursor: pointer; font-size: 16px; padding: 4px;
+        }
+
+        /* Follow-up Alert Banner */
+        .fu-alert-banner {
+            background: linear-gradient(135deg, rgba(74,222,128,0.06), rgba(74,222,128,0.02));
+            border: 1px solid rgba(74,222,128,.2);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            animation: fuGlow 2s ease-in-out infinite;
+            display: none;
+        }
+        .fu-alert-banner:hover {
+            border-color: rgba(74,222,128,0.4);
+            transform: translateY(-1px);
+        }
+        @keyframes fuGlow {
+            0%,100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+            50% { box-shadow: 0 0 20px rgba(74,222,128,0.06); }
+        }
+        .fu-alert-banner .fu-inner { display: flex; align-items: center; gap: 14px; }
+        .fu-alert-banner .fu-icon { font-size: 28px; line-height: 1; }
+        .fu-alert-banner .fu-count { font-size: 28px; font-weight: 700; color: #4ade80; }
+        .fu-alert-banner .fu-label { font-size: 14px; font-weight: 600; }
+        .fu-alert-banner .fu-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        /* Nachsorge WhatsApp Cards */
+        .nachsorge-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .nachsorge-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: #25d366;
+        }
+        .nachsorge-card:hover { border-color: rgba(37,211,102,0.25); }
+        .nachsorge-card.done { opacity: 0.4; }
+        .nachsorge-card.done::before { background: var(--border); }
+        .nachsorge-card.done:hover { opacity: 0.55; }
+        .nachsorge-card .nc-head {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+        }
+        .nachsorge-card .nc-day-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            background: rgba(37,211,102,0.1); color: #25d366;
+        }
+        .nachsorge-card .nc-msg {
+            font-size: 13px; color: var(--text-light); line-height: 1.6;
+            padding: 12px; background: var(--bg); border-radius: var(--radius-sm);
+            border-left: 3px solid #25d366; margin-bottom: 14px;
+        }
+        .nachsorge-card .nc-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+        .btn-whatsapp {
+            background: #25d366; color: #fff; border: none;
+            padding: 8px 16px; border-radius: var(--radius-sm);
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+        }
+        .btn-whatsapp:hover { background: #20bd5a; transform: translateY(-1px); }
+        .btn-whatsapp:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+        .btn-whatsapp svg { width: 16px; height: 16px; }
+        .phone-missing-hint { font-size: 11px; color: var(--warning); }
+        .phone-missing-hint a { color: #c9a96e; text-decoration: underline; cursor: pointer; }
+
+        /* Activity Overview Cards */
+        .activity-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px; margin-bottom: 20px;
+        }
+        .activity-stat {
+            background: var(--bg3); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .activity-stat:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.1); }
+        .activity-stat.active-filter {
+            border-color: rgba(201,169,110,.4);
+            box-shadow: 0 0 0 2px rgba(201,169,110,.1);
+        }
+        .activity-stat .count { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+        .activity-stat .label { font-size: 13px; color: var(--muted); font-weight: 400; }
+        .activity-stat.green .count { color: #4ade80; }
+        .activity-stat.orange .count { color: #fb923c; }
+        .activity-stat.red .count { color: #f87171; }
+        .activity-stat.blue .count { color: #60a5fa; }
+
+        /* Client activity card */
+        .client-activity-card {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px; padding: 14px 18px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            margin-bottom: 8px; background: var(--bg3); transition: all 0.2s;
+        }
+        .client-activity-card:hover { border-color: rgba(201,169,110,.2); }
+        .client-info .name { font-weight: 500; font-size: 15px; color: var(--text); }
+        .client-info .details { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        .contact-status { display: flex; align-items: center; gap: 8px; }
+        .contact-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+        }
+        .contact-badge.contacted { background: rgba(74,222,128,.1); color: #4ade80; }
+        .contact-badge.not-contacted { background: rgba(250,204,21,.1); color: #facc15; }
+        .contact-date { font-size: 11px; color: var(--muted); }
+
+        /* Menu toggle for mobile */
+        .menu-toggle { color: var(--text) !important; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+        <div class="page-header">
+            <h2>Kunden & Kommunikation</h2>
+            <p>Templates, Kundenliste, Aktivitaet & Screenshot-Import</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchKTab('overview')">Kunden-Uebersicht</button>
+            <button class="tab" onclick="switchKTab('nachsorge')">Follow-up <span id="nachsorgeCount" class="badge badge-entwurf" style="font-size:10px; padding:2px 6px; margin-left:4px; display:none;">0</span></button>
+            <button class="tab" onclick="switchKTab('clients')">Kundenliste</button>
+            <button class="tab" onclick="switchKTab('import')">Screenshot Import</button>
+            <button class="tab" onclick="switchKTab('birthdays')">Geburtstage <span id="birthdayCount" class="badge badge-gepostet" style="font-size:10px; padding:2px 6px; margin-left:4px; display:none;">0</span></button>
+            <button class="tab" onclick="switchKTab('templates')">Nachrichten-Templates</button>
+            <button class="tab" onclick="switchKTab('recall')">Recall-Tracker</button>
+        </div>
+
+        <!-- OVERVIEW TAB (NEW) -->
+        <div id="ktab-overview">
+            <!-- Follow-up Alert Banner -->
+            <div class="fu-alert-banner" id="fuAlertBanner" onclick="switchKTab('nachsorge'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab')[1].classList.add('active');">
+                <div class="fu-inner">
+                    <span class="fu-icon">&#128276;</span>
+                    <span class="fu-count" id="fuAlertCount">0</span>
+                    <div>
+                        <div class="fu-label" id="fuAlertLabel">Kunden warten auf Follow-up</div>
+                        <div class="fu-sub">Behandlung vor 5 Tagen — jetzt per WhatsApp nachfragen. Klicke hier.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="activity-grid">
+                <div class="activity-stat green active-filter" onclick="filterActivity('recent')">
+                    <div class="count" id="countRecent">0</div>
+                    <div class="label">Letzte 6 Wochen aktiv</div>
+                </div>
+                <div class="activity-stat orange" onclick="filterActivity('3months')">
+                    <div class="count" id="count3m">0</div>
+                    <div class="label">3+ Monate nicht da</div>
+                </div>
+                <div class="activity-stat red" onclick="filterActivity('6months')">
+                    <div class="count" id="count6m">0</div>
+                    <div class="label">6+ Monate nicht da</div>
+                </div>
+                <div class="activity-stat blue" onclick="filterActivity('all')">
+                    <div class="count" id="countAll">0</div>
+                    <div class="label">Alle Kunden</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 id="overviewTitle">Aktive Kunden (letzte 6 Wochen)</h3>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="overviewSearch" placeholder="Suchen..." oninput="renderOverview()" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; background:var(--bg); width:200px;">
+                    </div>
+                </div>
+                <div id="overviewList">
+                    <div class="loading"><div class="spinner"></div> Lade...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NACHSORGE / FOLLOW-UP TAB -->
+        <div id="ktab-nachsorge" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Follow-up nach Behandlung</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary btn-sm fu-filter-btn active-filter" data-fuf="pending" onclick="setFollowupFilter('pending', this)">Offen</button>
+                        <button class="btn btn-secondary btn-sm fu-filter-btn" data-fuf="all" onclick="setFollowupFilter('all', this)">Alle</button>
+                        <button class="btn btn-secondary btn-sm fu-filter-btn" data-fuf="done" onclick="setFollowupFilter('done', this)">Erledigt</button>
+                    </div>
+                </div>
+                <p style="color:var(--text-light); font-size:13px; margin-bottom:16px;">
+                    Kunden deren Behandlung <strong style="color:#25d366;">5–14 Tage</strong> her ist. Ein Klick auf <strong>WhatsApp senden</strong> — Nachricht ist vorgeschrieben, du drueckst nur noch Senden.
+                </p>
+                <div id="nachsorgeList">
+                    <div class="loading"><div class="spinner"></div> Lade...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLIENTS TAB -->
+        <div id="ktab-clients" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Kundenliste</h3>
+                    <button class="btn btn-primary btn-sm" onclick="openClientModal()">+ Neuer Kunde</button>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <input type="text" id="clientSearch" placeholder="Kunde suchen..." oninput="filterClients()" style="padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:14px; background:var(--bg); width:100%; max-width:400px;">
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>E-Mail</th>
+                                <th>Telefon</th>
+                                <th>Letzter Besuch</th>
+                                <th>Kontaktiert</th>
+                                <th>Naechster Recall</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientList">
+                            <tr><td colspan="7"><div class="loading"><div class="spinner"></div> Lade...</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREENSHOT IMPORT TAB (NEW) -->
+        <div id="ktab-import" style="display:none;">
+
+            <!-- CSV / Excel Import -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>CSV / Textdatei importieren (Treatwell-Export)</h3>
+                </div>
+                <p style="color:var(--text-light); font-size:13px; margin-bottom:16px;">
+                    Exportiere deine Kundenliste aus Treatwell als CSV oder Excel. Lege die Datei(en) in den Ordner
+                    <strong>Desktop &gt; Skinconcept-Dashboard &gt; Treatwell-Import</strong> und lade sie hier hoch.
+                </p>
+
+                <div class="upload-zone" id="csvUploadZone">
+                    <div class="icon">&#128196;</div>
+                    <p><strong>CSV / TXT / Excel-Datei hierher ziehen</strong><br>oder klicken zum Auswaehlen</p>
+                    <p style="font-size:12px; margin-top:8px;">CSV, TXT, XLS, XLSX — auch mehrere Dateien gleichzeitig</p>
+                    <input type="file" id="csvFileInput" accept=".csv,.txt,.xls,.xlsx" multiple>
+                </div>
+
+                <div id="csvPreview" style="display:none; margin-top:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3>Spalten-Zuordnung</h3>
+                        <span class="badge badge-geplant" id="csvRowCount">0 Zeilen erkannt</span>
+                    </div>
+                    <p style="color:var(--text-light); font-size:13px; margin-bottom:12px;">
+                        Ordne die Spalten aus deiner Datei den richtigen Feldern zu:
+                    </p>
+                    <div class="form-row" style="margin-bottom:12px;">
+                        <div class="form-group">
+                            <label>Name (Pflicht)</label>
+                            <select id="csvColName" style="padding:8px; border:1px solid var(--border); border-radius:6px; font-size:13px;"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>E-Mail</label>
+                            <select id="csvColEmail" style="padding:8px; border:1px solid var(--border); border-radius:6px; font-size:13px;"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefon</label>
+                            <select id="csvColPhone" style="padding:8px; border:1px solid var(--border); border-radius:6px; font-size:13px;"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Letzter Besuch</label>
+                            <select id="csvColVisit" style="padding:8px; border:1px solid var(--border); border-radius:6px; font-size:13px;"></select>
+                        </div>
+                    </div>
+                    <div class="table-wrap" style="max-height:300px; overflow-y:auto; margin-bottom:16px;">
+                        <table id="csvPreviewTable" style="font-size:13px;">
+                            <thead id="csvPreviewHead"></thead>
+                            <tbody id="csvPreviewBody"></tbody>
+                        </table>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-primary" onclick="importCSVClients()">Alle importieren</button>
+                        <button class="btn btn-secondary" onclick="resetCSVImport()">Zuruecksetzen</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screenshot Import -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Screenshots importieren (Tagesabschluss / Kundenliste)</h3>
+                </div>
+                <p style="color:var(--text-light); font-size:13px; margin-bottom:16px;">
+                    Lade einen oder mehrere Screenshots hoch — z.B. vom Treatwell-Tagesabschluss oder der Kundenliste. Die Namen werden per Texterkennung automatisch ausgelesen.
+                </p>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="icon">&#128247;</div>
+                    <p><strong>Screenshots hierher ziehen</strong><br>oder klicken zum Auswaehlen</p>
+                    <p style="font-size:12px; margin-top:8px;">JPG, PNG — auch mehrere Bilder gleichzeitig oder Strg+V</p>
+                    <input type="file" id="screenshotInput" accept="image/*" multiple>
+                </div>
+
+                <div id="screenshotPreviews" style="display:flex; flex-wrap:wrap; gap:12px; margin-top:16px;"></div>
+
+                <div class="ocr-progress" id="ocrProgress">
+                    <span class="ocr-status" id="ocrStatus">Bilder werden analysiert...</span>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" id="ocrProgressBar"></div>
+                    </div>
+                </div>
+
+                <div id="extractedResults" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 12px;">
+                        <h3>Erkannte Kunden</h3>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="selectAllExtracted()">Alle auswaehlen</button>
+                            <button class="btn btn-secondary btn-sm" onclick="addManualEntry()">+ Manuell hinzufuegen</button>
+                        </div>
+                    </div>
+                    <p style="color:var(--text-light); font-size:13px; margin-bottom:12px;">Hake die Kunden an, die importiert werden sollen. Du kannst Namen bearbeiten oder falsche Eintraege entfernen.</p>
+                    <div id="extractedList" class="extracted-list"></div>
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button class="btn btn-primary" onclick="importSelectedClients()">Ausgewaehlte importieren</button>
+                        <button class="btn btn-secondary" onclick="resetImport()">Zuruecksetzen</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>So geht's am schnellsten</h3>
+                <ul style="font-size:13px; color:var(--text-light); line-height:2; padding-left:20px;">
+                    <li><strong>Option 1 (empfohlen):</strong> In Treatwell unter Kunden &gt; Export/Herunterladen die Kundenliste als CSV exportieren und hier hochladen</li>
+                    <li><strong>Option 2:</strong> Screenshots von der Treatwell-Kundenliste machen (durchscrollen, jeweils Screenshot) und hier alle auf einmal hochladen</li>
+                    <li>Bereits vorhandene Kunden werden automatisch erkannt und aktualisiert (kein Duplikat)</li>
+                    <li>Nach dem Import kannst du E-Mail, Telefon und Notizen in der Kundenliste ergaenzen</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- BIRTHDAYS TAB (NEW) -->
+        <div id="ktab-birthdays" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Geburtstags-Kalender</h3>
+                </div>
+
+                <!-- Heute & bald -->
+                <div id="birthdayAlerts"></div>
+
+                <!-- Monatsübersicht -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 12px;">
+                    <h3 id="birthdayMonthTitle" style="font-size:15px;"></h3>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="changeBirthdayMonth(-1)">&larr;</button>
+                        <button class="btn btn-secondary btn-sm" onclick="changeBirthdayMonth(0)">Heute</button>
+                        <button class="btn btn-secondary btn-sm" onclick="changeBirthdayMonth(1)">&rarr;</button>
+                    </div>
+                </div>
+                <div id="birthdayMonthList"></div>
+            </div>
+        </div>
+
+        <!-- TEMPLATES TAB -->
+        <div id="ktab-templates" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Nachrichten-Vorlagen</h3>
+                    <button class="btn btn-primary btn-sm" onclick="openTemplateModal()">+ Neue Vorlage</button>
+                </div>
+                <p style="color:var(--text-light); font-size:13px; margin-bottom:16px;">Verwende Platzhalter: {kundenname}, {behandlung}, {datum}, {studio}</p>
+                <div id="templateList">
+                    <div class="loading"><div class="spinner"></div> Lade...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECALL TAB -->
+        <div id="ktab-recall" style="display:none;">
+            <div class="card">
+                <h3>Recall-Tracker</h3>
+                <p style="color:var(--text-light); font-size:13px; margin-bottom:16px;">Kunden, die fuer einen Recall faellig sind. Klicke auf "Nachricht", um eine Vorlage zu kopieren.</p>
+                <div id="recallList">
+                    <div class="loading"><div class="spinner"></div> Lade...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Template Modal -->
+<div class="modal-overlay" id="templateModal">
+    <div class="modal">
+        <h3 id="templateModalTitle">Neue Vorlage</h3>
+        <input type="hidden" id="templateId">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Typ</label>
+                <select id="tmplType">
+                    <option value="willkommen">Willkommen</option>
+                    <option value="recall_3m">Recall (3 Monate)</option>
+                    <option value="recall_6m">Recall (6 Monate)</option>
+                    <option value="nachsorge">Nachsorge</option>
+                    <option value="geburtstag">Geburtstag</option>
+                    <option value="danke">Dankeschoen</option>
+                    <option value="sonstiges">Sonstiges</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Treatment (optional)</label>
+                <input type="text" id="tmplTreatment" placeholder="z.B. Noon Facial">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Titel</label>
+            <input type="text" id="tmplTitle" placeholder="z.B. Willkommens-Nachricht">
+        </div>
+        <div class="form-group">
+            <label>Betreff (fuer E-Mail)</label>
+            <input type="text" id="tmplSubject" placeholder="z.B. Willkommen bei Skinconcept Hagner">
+        </div>
+        <div class="form-group">
+            <label>Nachricht</label>
+            <textarea id="tmplBody" rows="8" placeholder="Liebe {kundenname},&#10;&#10;vielen Dank fuer..."></textarea>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveTemplate()">Speichern</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('templateModal')">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Client Modal -->
+<div class="modal-overlay" id="clientModal">
+    <div class="modal">
+        <h3 id="clientModalTitle">Neuer Kunde</h3>
+        <input type="hidden" id="clientId">
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="clName" placeholder="Vor- und Nachname">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>E-Mail</label>
+                <input type="email" id="clEmail" placeholder="email@beispiel.de">
+            </div>
+            <div class="form-group">
+                <label>Telefon</label>
+                <input type="tel" id="clPhone" placeholder="0151...">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Letzter Besuch</label>
+                <input type="date" id="clLastVisit">
+            </div>
+            <div class="form-group">
+                <label>Recall-Intervall</label>
+                <select id="clRecallInterval">
+                    <option value="3">3 Monate</option>
+                    <option value="6">6 Monate</option>
+                    <option value="12">12 Monate</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Notizen</label>
+            <textarea id="clNotes" rows="3" placeholder="z.B. Empfindliche Haut, Allergien..."></textarea>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveClient()">Speichern</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('clientModal')">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+let allTemplates = [];
+let allClients = [];
+let currentFilter = 'recent';
+let extractedNames = [];
+let ocrDetectedDate = null;
+
+// ============ TABS ============
+function switchKTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    ['overview', 'nachsorge', 'clients', 'import', 'birthdays', 'templates', 'recall'].forEach(t => {
+        document.getElementById('ktab-' + t).style.display = t === tab ? 'block' : 'none';
+    });
+}
+
+// ============ ACTIVITY OVERVIEW ============
+function getActivityCategory(client) {
+    if (!client.lastVisit) return 'unknown';
+    const lastVisit = new Date(client.lastVisit + 'T00:00:00');
+    const now = new Date();
+    const diffDays = Math.floor((now - lastVisit) / 86400000);
+
+    if (diffDays <= 42) return 'recent';      // 6 Wochen
+    if (diffDays <= 90) return 'normal';       // bis 3 Monate
+    if (diffDays <= 180) return '3months';     // 3-6 Monate
+    return '6months';                           // 6+ Monate
+}
+
+function getContactStatus(client) {
+    if (!client.lastContacted) return { status: 'not-contacted', label: 'Nicht kontaktiert' };
+    const contacted = new Date(client.lastContacted + 'T00:00:00');
+    const now = new Date();
+    const diffDays = Math.floor((now - contacted) / 86400000);
+
+    // Nach 30 Tagen gilt Kontakt als "veraltet"
+    if (diffDays > 30) return { status: 'not-contacted', label: 'Zuletzt: ' + formatDate(client.lastContacted), expired: true };
+    return { status: 'contacted', label: 'Kontaktiert am ' + formatDate(client.lastContacted) };
+}
+
+function updateActivityCounts() {
+    let recent = 0, m3 = 0, m6 = 0;
+    allClients.forEach(c => {
+        const cat = getActivityCategory(c);
+        if (cat === 'recent') recent++;
+        else if (cat === '3months') m3++;
+        else if (cat === '6months') m6++;
+    });
+    document.getElementById('countRecent').textContent = recent;
+    document.getElementById('count3m').textContent = m3;
+    document.getElementById('count6m').textContent = m6;
+    document.getElementById('countAll').textContent = allClients.length;
+}
+
+function filterActivity(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.activity-stat').forEach(s => s.classList.remove('active-filter'));
+    const titles = {
+        recent: 'Aktive Kunden (letzte 6 Wochen)',
+        '3months': 'Kunden 3+ Monate nicht da',
+        '6months': 'Kunden 6+ Monate nicht da',
+        all: 'Alle Kunden'
+    };
+    document.getElementById('overviewTitle').textContent = titles[filter] || 'Alle Kunden';
+
+    // Highlight clicked card
+    const cards = document.querySelectorAll('.activity-stat');
+    const idx = { recent: 0, '3months': 1, '6months': 2, all: 3 };
+    if (idx[filter] !== undefined) cards[idx[filter]].classList.add('active-filter');
+
+    renderOverview();
+}
+
+function renderOverview() {
+    const container = document.getElementById('overviewList');
+    const search = (document.getElementById('overviewSearch').value || '').toLowerCase();
+
+    let filtered = allClients;
+
+    // Filter by activity
+    if (currentFilter === 'recent') {
+        filtered = filtered.filter(c => getActivityCategory(c) === 'recent');
+    } else if (currentFilter === '3months') {
+        filtered = filtered.filter(c => getActivityCategory(c) === '3months');
+    } else if (currentFilter === '6months') {
+        filtered = filtered.filter(c => getActivityCategory(c) === '6months');
+    }
+
+    // Search filter
+    if (search) {
+        filtered = filtered.filter(c => c.name.toLowerCase().includes(search));
+    }
+
+    // Sort: most recent visit first for "recent", oldest first for others
+    filtered.sort((a, b) => {
+        const dA = a.lastVisit || '0000-00-00';
+        const dB = b.lastVisit || '0000-00-00';
+        return currentFilter === 'recent' ? dB.localeCompare(dA) : dA.localeCompare(dB);
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">&#10003;</div><h3>Keine Kunden in dieser Kategorie</h3></div>';
+        return;
+    }
+
+    container.innerHTML = filtered.map(c => {
+        const cat = getActivityCategory(c);
+        const contact = getContactStatus(c);
+        const daysSince = c.lastVisit ? Math.floor((new Date() - new Date(c.lastVisit + 'T00:00:00')) / 86400000) : '?';
+        const weeksAgo = c.lastVisit ? Math.floor(daysSince / 7) : null;
+
+        let timeLabel = '';
+        if (weeksAgo !== null) {
+            if (weeksAgo < 1) timeLabel = 'Diese Woche';
+            else if (weeksAgo === 1) timeLabel = 'Vor 1 Woche';
+            else if (weeksAgo < 8) timeLabel = `Vor ${weeksAgo} Wochen`;
+            else {
+                const monthsAgo = Math.floor(daysSince / 30);
+                timeLabel = monthsAgo === 1 ? 'Vor 1 Monat' : `Vor ${monthsAgo} Monaten`;
+            }
+        } else {
+            timeLabel = 'Kein Besuch erfasst';
+        }
+
+        let statusColor = 'var(--success)';
+        if (cat === '3months') statusColor = 'var(--warning)';
+        if (cat === '6months') statusColor = 'var(--danger)';
+        if (cat === 'normal') statusColor = 'var(--info)';
+
+        return `
+            <div class="client-activity-card">
+                <div class="client-info" style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:10px; height:10px; border-radius:50%; background:${statusColor}; flex-shrink:0;"></div>
+                        <div>
+                            <div class="name">${c.name}</div>
+                            <div class="details">
+                                ${timeLabel} ${c.lastVisit ? ' &middot; Letzter Besuch: ' + formatDate(c.lastVisit) : ''}
+                                ${c.phone ? ' &middot; ' + c.phone : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-status">
+                    <span class="contact-badge ${contact.status}">
+                        ${contact.status === 'contacted' ? '&#10003;' : '&#9679;'} ${contact.label}
+                    </span>
+                    <button class="btn btn-secondary btn-sm" onclick="markContacted('${c.id}')" title="Als kontaktiert markieren">
+                        Kontaktiert
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="editClient('${c.id}')">
+                        Bearbeiten
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function markContacted(clientId) {
+    const today = todayStr();
+    try {
+        await db.collection('clients').doc(clientId).update({
+            lastContacted: today
+        });
+        const client = allClients.find(c => c.id === clientId);
+        if (client) client.lastContacted = today;
+        renderOverview();
+        renderClients();
+        showToast('Als kontaktiert markiert', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Fehler beim Aktualisieren', 'error');
+    }
+}
+
+// ============ GEBURTSTAGE ============
+let birthdayViewMonth = new Date().getMonth(); // 0-11
+let birthdayViewYear = new Date().getFullYear();
+
+function parseBirthday(client) {
+    // birthday field can be: "17-10-1990", "DD-MM-YYYY" format from Treatwell
+    // or Geburtsmonat/Geburstag fields
+    if (client.birthday && client.birthday.match(/\d{2}-\d{2}-\d{4}/)) {
+        const parts = client.birthday.split('-');
+        return { day: parseInt(parts[0]), month: parseInt(parts[1]), year: parseInt(parts[2]) };
+    }
+    // Check if we have month/day from Treatwell import (stored as geburtsmonat/geburstag)
+    if (client.birthdayMonth && client.birthdayDay) {
+        return { day: parseInt(client.birthdayDay), month: parseInt(client.birthdayMonth), year: null };
+    }
+    return null;
+}
+
+function getDaysUntilBirthday(bday) {
+    const today = new Date();
+    const thisYear = today.getFullYear();
+    let nextBirthday = new Date(thisYear, bday.month - 1, bday.day);
+    if (nextBirthday < today) {
+        nextBirthday = new Date(thisYear + 1, bday.month - 1, bday.day);
+    }
+    // Set both to midnight for clean comparison
+    today.setHours(0, 0, 0, 0);
+    nextBirthday.setHours(0, 0, 0, 0);
+    return Math.round((nextBirthday - today) / 86400000);
+}
+
+function renderBirthdays() {
+    const alerts = document.getElementById('birthdayAlerts');
+    const monthNames = ['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+    // Find clients with birthdays
+    const clientsWithBday = allClients
+        .map(c => ({ ...c, bday: parseBirthday(c) }))
+        .filter(c => c.bday);
+
+    // Today & upcoming (next 7 days)
+    const today = new Date();
+    const todayClients = [];
+    const upcomingClients = [];
+
+    clientsWithBday.forEach(c => {
+        const daysUntil = getDaysUntilBirthday(c.bday);
+        if (daysUntil === 0) todayClients.push(c);
+        else if (daysUntil > 0 && daysUntil <= 7) upcomingClients.push({ ...c, daysUntil });
+    });
+
+    // Update badge
+    const badge = document.getElementById('birthdayCount');
+    const alertCount = todayClients.length + upcomingClients.length;
+    if (alertCount > 0) {
+        badge.textContent = alertCount;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+
+    let html = '';
+
+    if (todayClients.length > 0) {
+        html += `<div style="background:var(--accent-light); border-radius:var(--radius-sm); padding:16px; margin-bottom:12px;">
+            <div style="font-weight:600; color:var(--primary-dark); margin-bottom:8px; font-size:15px;">&#127874; Heute Geburtstag!</div>`;
+        todayClients.forEach(c => {
+            const age = c.bday.year ? (today.getFullYear() - c.bday.year) : null;
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid rgba(201,168,124,0.3);">
+                    <div>
+                        <strong>${c.name}</strong>
+                        ${age ? `<span style="color:var(--text-light); font-size:13px;"> — wird ${age} Jahre</span>` : ''}
+                        ${c.phone ? `<div style="font-size:12px; color:var(--text-light);">${c.phone}</div>` : ''}
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="sendBirthdayMessage('${c.id}')">Glueckwuensche kopieren</button>
+                </div>`;
+        });
+        html += '</div>';
+    }
+
+    if (upcomingClients.length > 0) {
+        upcomingClients.sort((a, b) => a.daysUntil - b.daysUntil);
+        html += `<div style="background:var(--info-light); border-radius:var(--radius-sm); padding:16px; margin-bottom:12px;">
+            <div style="font-weight:600; color:var(--info); margin-bottom:8px; font-size:15px;">Naechste 7 Tage</div>`;
+        upcomingClients.forEach(c => {
+            const bdayDate = new Date(today);
+            bdayDate.setDate(bdayDate.getDate() + c.daysUntil);
+            const dayName = bdayDate.toLocaleDateString('de-DE', { weekday: 'long' });
+            const age = c.bday.year ? (bdayDate.getFullYear() - c.bday.year) : null;
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid rgba(91,123,168,0.2);">
+                    <div>
+                        <strong>${c.name}</strong>
+                        ${age ? `<span style="color:var(--text-light); font-size:13px;"> — wird ${age}</span>` : ''}
+                        <div style="font-size:12px; color:var(--text-light);">
+                            ${dayName}, ${bdayDate.toLocaleDateString('de-DE')} (in ${c.daysUntil} Tag${c.daysUntil !== 1 ? 'en' : ''})
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="sendBirthdayMessage('${c.id}')">Vorbereiten</button>
+                </div>`;
+        });
+        html += '</div>';
+    }
+
+    if (todayClients.length === 0 && upcomingClients.length === 0) {
+        html = '<div style="background:var(--bg); border-radius:var(--radius-sm); padding:16px; color:var(--text-light); font-size:14px; margin-bottom:16px;">Keine Geburtstage in den naechsten 7 Tagen.</div>';
+    }
+
+    alerts.innerHTML = html;
+
+    // Render month view
+    renderBirthdayMonth(clientsWithBday);
+}
+
+function renderBirthdayMonth(clientsWithBday) {
+    const monthNames = ['Januar','Februar','Maerz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    document.getElementById('birthdayMonthTitle').textContent = monthNames[birthdayViewMonth] + ' ' + birthdayViewYear;
+
+    const inMonth = clientsWithBday
+        .filter(c => c.bday.month === birthdayViewMonth + 1)
+        .sort((a, b) => a.bday.day - b.bday.day);
+
+    const container = document.getElementById('birthdayMonthList');
+
+    if (inMonth.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Keine Geburtstage in diesem Monat.</p></div>';
+        return;
+    }
+
+    container.innerHTML = inMonth.map(c => {
+        const today = new Date();
+        const isToday = c.bday.day === today.getDate() && c.bday.month === today.getMonth() + 1;
+        const age = c.bday.year ? (birthdayViewYear - c.bday.year) : null;
+        return `
+            <div class="client-activity-card" style="${isToday ? 'border-color:var(--accent); background:rgba(201,168,124,0.05);' : ''}">
+                <div class="client-info" style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px; height:36px; border-radius:50%; background:${isToday ? 'var(--accent-light)' : 'var(--bg)'}; display:flex; align-items:center; justify-content:center; font-weight:700; color:${isToday ? 'var(--primary-dark)' : 'var(--text-light)'}; font-size:14px; flex-shrink:0;">
+                            ${c.bday.day}.
+                        </div>
+                        <div>
+                            <div class="name">${isToday ? '&#127874; ' : ''}${c.name}</div>
+                            <div class="details">
+                                ${c.bday.day}. ${monthNames[c.bday.month - 1]}${age ? ' &middot; wird ' + age + ' Jahre' : ''}
+                                ${c.phone ? ' &middot; ' + c.phone : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="sendBirthdayMessage('${c.id}')">Glueckwuensche</button>
+            </div>
+        `;
+    }).join('');
+}
+
+function changeBirthdayMonth(delta) {
+    if (delta === 0) {
+        birthdayViewMonth = new Date().getMonth();
+        birthdayViewYear = new Date().getFullYear();
+    } else {
+        birthdayViewMonth += delta;
+        if (birthdayViewMonth > 11) { birthdayViewMonth = 0; birthdayViewYear++; }
+        if (birthdayViewMonth < 0) { birthdayViewMonth = 11; birthdayViewYear--; }
+    }
+    renderBirthdays();
+}
+
+function sendBirthdayMessage(clientId) {
+    const client = allClients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const template = allTemplates.find(t => t.type === 'geburtstag');
+
+    let text;
+    if (template) {
+        text = (template.body || '')
+            .replace(/\{kundenname\}/g, client.name)
+            .replace(/\{studio\}/g, 'Skinconcept Hagner');
+    } else {
+        text = `Liebe ${client.name},\n\nherzlichen Glueckwunsch zum Geburtstag! Ich wuensche Ihnen einen wunderschoenen Tag.\n\nAls kleines Geschenk moechte ich Ihnen eine besondere Behandlung anbieten. Sprechen Sie mich gerne bei Ihrem naechsten Besuch darauf an.\n\nAlles Gute!\n\nHerzliche Gruesse\nTamara Hagner\nSkinconcept Hagner, Morbach`;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`Geburtstagsglueckwuensche fuer ${client.name} kopiert!`, 'success');
+    });
+}
+
+// ============ FOLLOW-UP / NACHSORGE (5-14 TAGE NACH BESUCH) ============
+let followupFilterMode = 'pending';
+
+function setFollowupFilter(mode, el) {
+    followupFilterMode = mode;
+    document.querySelectorAll('.fu-filter-btn').forEach(b => b.classList.remove('active-filter'));
+    if (el) el.classList.add('active-filter');
+    renderNachsorge();
+}
+
+function getFollowupWAMessage(client) {
+    const firstName = (client.name || '').split(' ')[0];
+    return `Hallo ${firstName}, hier ist Tamara von Skinconcept! Wie geht es deiner Haut nach der Behandlung? Falls du Fragen zur Pflege hast oder etwas auffaellt, melde dich jederzeit bei mir. Deine Tamara`;
+}
+
+function makeWALink(phone, message) {
+    if (!phone) return '';
+    const clean = phone.replace(/[\s\-()\/]/g, '').replace(/^0/, '49').replace(/^\+/, '');
+    return `https://wa.me/${clean}?text=${encodeURIComponent(message)}`;
+}
+
+function getAllNachsorgeClients() {
+    const today = new Date();
+    return allClients.filter(c => {
+        if (!c.lastVisit) return false;
+        const visitDate = new Date(c.lastVisit + 'T00:00:00');
+        const daysSince = Math.floor((today - visitDate) / 86400000);
+        return daysSince >= 4 && daysSince <= 14;
+    }).map(c => {
+        const daysSince = Math.floor((new Date() - new Date(c.lastVisit + 'T00:00:00')) / 86400000);
+        const isDone = c.nachsorgeErledigt && c.nachsorgeErledigt >= c.lastVisit;
+        return {...c, _fuDays: daysSince, _isDone: isDone};
+    }).sort((a, b) => a._fuDays - b._fuDays);
+}
+
+function renderNachsorge() {
+    const container = document.getElementById('nachsorgeList');
+    const allNachsorge = getAllNachsorgeClients();
+    const pendingCount = allNachsorge.filter(c => !c._isDone).length;
+
+    // Update tab badge
+    const badge = document.getElementById('nachsorgeCount');
+    if (pendingCount > 0) {
+        badge.textContent = pendingCount;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+
+    // Update alert banner on overview
+    const alertBanner = document.getElementById('fuAlertBanner');
+    if (alertBanner) {
+        if (pendingCount > 0) {
+            alertBanner.style.display = 'block';
+            document.getElementById('fuAlertCount').textContent = pendingCount;
+            document.getElementById('fuAlertLabel').textContent = pendingCount === 1 ? 'Kunde wartet auf Follow-up' : 'Kunden warten auf Follow-up';
+        } else {
+            alertBanner.style.display = 'none';
+        }
+    }
+
+    // Apply filter
+    let list = allNachsorge;
+    if (followupFilterMode === 'pending') list = list.filter(c => !c._isDone);
+    else if (followupFilterMode === 'done') list = list.filter(c => c._isDone);
+
+    if (list.length === 0) {
+        const emptyMsg = followupFilterMode === 'done'
+            ? 'Noch keine Follow-ups gesendet.'
+            : allNachsorge.length === 0
+                ? 'Aktuell keine Kunden im Follow-up Fenster (5-14 Tage nach Behandlung). Sobald ein Kunde eingecheckt wird, erscheint er hier automatisch nach 5 Tagen!'
+                : 'Alle Follow-ups erledigt! Super!';
+        container.innerHTML = `<div class="empty-state"><div class="icon">&#10003;</div><h3>${emptyMsg}</h3></div>`;
+        return;
+    }
+
+    container.innerHTML = list.map(c => {
+        const waMsg = getFollowupWAMessage(c);
+        const waUrl = makeWALink(c.phone, waMsg);
+
+        return `
+            <div class="nachsorge-card ${c._isDone ? 'done' : ''}">
+                <div class="nc-head">
+                    <div>
+                        <strong style="font-size:15px;">${c.name}</strong>
+                        <div style="font-size:13px; color:var(--text-light); margin-top:3px;">
+                            Besuch am ${formatDate(c.lastVisit)}
+                            ${c.phone ? ' &middot; ' + c.phone : ''}
+                        </div>
+                    </div>
+                    <span class="nc-day-badge">&#128339; Tag ${c._fuDays}</span>
+                </div>
+                <div class="nc-msg">${waMsg}</div>
+                <div class="nc-acts">
+                    <button class="btn-whatsapp" onclick="sendFollowupWA('${c.id}')" ${!waUrl ? 'disabled' : ''}>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.558 4.143 1.534 5.886L.057 23.7l5.966-1.453A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-1.888 0-3.674-.508-5.234-1.44l-.376-.223-3.895.949.992-3.622-.245-.39A9.77 9.77 0 0 1 2.18 12c0-5.422 4.398-9.82 9.82-9.82 5.422 0 9.82 4.398 9.82 9.82 0 5.422-4.398 9.82-9.82 9.82z"/></svg>
+                        WhatsApp senden
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="markNachsorgeErledigt('${c.id}')">
+                        ${c._isDone ? '&#10003; Erledigt' : 'Als erledigt markieren'}
+                    </button>
+                    ${!waUrl ? '<span class="phone-missing-hint">Telefonnummer fehlt — <a onclick="editClient(\''+c.id+'\')">nachtragen</a></span>' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function sendFollowupWA(clientId) {
+    const client = allClients.find(c => c.id === clientId);
+    if (!client || !client.phone) return;
+    const waMsg = getFollowupWAMessage(client);
+    const waUrl = makeWALink(client.phone, waMsg);
+    if (waUrl) {
+        window.open(waUrl, '_blank');
+        markNachsorgeErledigt(clientId);
+    }
+}
+
+function sendNachsorge(clientId) {
+    const client = allClients.find(c => c.id === clientId);
+    if (!client) return;
+    const text = getFollowupWAMessage(client);
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`Nachsorge-Nachricht fuer ${client.name} kopiert!`, 'success');
+    });
+}
+
+async function markNachsorgeErledigt(clientId) {
+    const today = todayStr();
+    try {
+        await db.collection('clients').doc(clientId).update({
+            nachsorgeErledigt: today,
+            lastContacted: today
+        });
+        const client = allClients.find(c => c.id === clientId);
+        if (client) {
+            client.nachsorgeErledigt = today;
+            client.lastContacted = today;
+        }
+        renderNachsorge();
+        renderOverview();
+        showToast('Follow-up erledigt!', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Fehler', 'error');
+    }
+}
+
+// ============ SCREENSHOT IMPORT (OCR) ============
+function initUpload() {
+    const zone = document.getElementById('uploadZone');
+    const input = document.getElementById('screenshotInput');
+
+    input.addEventListener('change', (e) => {
+        if (e.target.files[0]) processImage(e.target.files[0]);
+    });
+
+    zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) processImage(e.dataTransfer.files[0]);
+    });
+
+    // Paste from clipboard
+    document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) processImage(file);
+                break;
+            }
+        }
+    });
+}
+
+async function processImage(file) {
+    // Show preview
+    const preview = document.getElementById('screenshotPreview');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+
+    // Show progress
+    const progress = document.getElementById('ocrProgress');
+    const statusEl = document.getElementById('ocrStatus');
+    const barEl = document.getElementById('ocrProgressBar');
+    progress.classList.add('active');
+    statusEl.textContent = 'Bild wird vorbereitet...';
+    barEl.style.width = '10%';
+
+    try {
+        const result = await Tesseract.recognize(file, 'deu', {
+            logger: (m) => {
+                if (m.status === 'recognizing text') {
+                    const pct = Math.round(m.progress * 100);
+                    barEl.style.width = pct + '%';
+                    statusEl.textContent = `Text wird erkannt... ${pct}%`;
+                }
+            }
+        });
+
+        barEl.style.width = '100%';
+        statusEl.textContent = 'Analyse abgeschlossen! Kundennamen werden extrahiert...';
+
+        const ocrData = extractNames(result.data.text);
+        ocrDetectedDate = ocrData.date;
+        showExtractedNames(ocrData.names);
+
+        setTimeout(() => {
+            progress.classList.remove('active');
+        }, 1500);
+
+    } catch (err) {
+        console.error('OCR Error:', err);
+        statusEl.textContent = 'Fehler bei der Texterkennung. Bitte versuche es erneut.';
+        barEl.style.width = '0%';
+        showToast('OCR-Fehler: ' + err.message, 'error');
+    }
+}
+
+function extractNames(text) {
+    const allLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    // ===== DATE EXTRACTION (search entire text) =====
+    let detectedDate = null;
+    const monthMap = {
+        'januar':1,'jan':1,'january':1, 'februar':2,'feb':2,'february':2,
+        'märz':3,'maerz':3,'mär':3,'mar':3,'march':3,'mrz':3,
+        'april':4,'apr':4, 'mai':5,'may':5, 'juni':6,'jun':6,'june':6,
+        'juli':7,'jul':7,'july':7, 'august':8,'aug':8,
+        'september':9,'sep':9,'sept':9, 'oktober':10,'okt':10,'october':10,'oct':10,
+        'november':11,'nov':11, 'dezember':12,'dez':12,'december':12,'dec':12
+    };
+
+    for (const line of allLines) {
+        if (detectedDate) break;
+        const dotDate = line.match(/(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{4})/);
+        if (dotDate) {
+            const d = dotDate[1].padStart(2,'0'), m = dotDate[2].padStart(2,'0'), y = dotDate[3];
+            if (+m>=1 && +m<=12 && +d>=1 && +d<=31 && +y>=2020 && +y<=2035) { detectedDate = y+'-'+m+'-'+d; break; }
+        }
+        const textDate = line.match(/(\d{1,2})\.?\s*(januar|jan|january|februar|feb|february|märz|maerz|mär|mar|march|mrz|april|apr|mai|may|juni|jun|june|juli|jul|july|august|aug|september|sep|sept|oktober|okt|october|oct|november|nov|dezember|dez|december|dec)\w*\.?\s*,?\s*(\d{4})/i);
+        if (textDate) {
+            const d = textDate[1].padStart(2,'0'), mKey = textDate[2].toLowerCase().replace(/\.$/,''), m = monthMap[mKey], y = textDate[3];
+            if (m && +y>=2020 && +y<=2035) { detectedDate = y+'-'+String(m).padStart(2,'0')+'-'+d; break; }
+        }
+        const isoDate = line.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (isoDate && +isoDate[1]>=2020 && +isoDate[1]<=2035) { detectedDate = isoDate[0]; break; }
+        const shortYear = line.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2})(?!\d)/);
+        if (shortYear) {
+            const d = shortYear[1].padStart(2,'0'), m = shortYear[2].padStart(2,'0'), y = '20'+shortYear[3];
+            if (+m>=1 && +m<=12 && +d>=1 && +d<=31) { detectedDate = y+'-'+m+'-'+d; break; }
+        }
+    }
+
+    // ===== NAME EXTRACTION =====
+    const names = [];
+
+    const ignoreExact = new Set([
+        'transaktion','transaktionen','alle transaktionen','neue transaktion',
+        'kunde','kundin','kunden','kundenname','kundenliste','kundendetails',
+        'behandlung','behandlungen','alle behandlungen',
+        'service','services','dienstleistung','dienstleistungen',
+        'termin','termine','alle termine','neuer termin','nächster termin','naechster termin',
+        'kalender','terminkalender','terminübersicht','tagesansicht','wochenansicht',
+        'online buchung','online','buchung','buchungen','vor ort',
+        'preis','betrag','summe','gesamt','total','umsatz','netto','brutto','mwst','steuer',
+        'bezahlt','zahlung','zahlungsart','bar','karte','kartenzahlung','barzahlung',
+        'ec karte','ec-karte','kreditkarte','paypal','überweisung',
+        'storno','storniert','rabatt','gutschein','trinkgeld','anzahlung',
+        'datum','uhrzeit','zeit','dauer','status',
+        'tagesabschluss','kassenbuch','kassenabschluss','kassenbericht','bericht',
+        'tagesbericht','umsatzbericht','abschluss',
+        'filiale','mitarbeiter','mitarbeiterin','studio','salon',
+        'laufkundschaft','neukunde','neukundin','bestandskunde','walk in','walkin',
+        'keine bewertung','bewertung','bewertungen',
+        'notiz','notizen','kommentar','bemerkung','anmerkung',
+        'telefon','email','adresse','kontakt',
+        'abgesagt','cancelled','no show','noshow','nicht erschienen','ausgefallen',
+        'bestätigt','bestaetigt','ausstehend','warteliste',
+        'montag','dienstag','mittwoch','donnerstag','freitag','samstag','sonntag',
+        'mo','di','mi','do','fr','sa','so',
+        'januar','februar','märz','maerz','april','mai','juni','juli',
+        'august','september','oktober','november','dezember',
+        'treatwell','connect','dashboard','einstellungen','settings','profil',
+        'anmelden','abmelden','hilfe','support','filter','suche','suchen',
+        'exportieren','importieren','drucken','herunterladen','speichern',
+        'bearbeiten','löschen','loeschen','hinzufügen','hinzufuegen',
+        'zurück','zurueck','weiter','abbrechen','bestätigen','bestaetigen',
+        'skin check','skincheck','hydro care','hydrocare',
+        'fruchtsäure','fruchtsaeure','microneedling','micro needling',
+        'beratung','produktkauf','produktverkauf',
+        'facial','peeling','massage','maniküre','manikuere','pediküre','pedikuere',
+        'wimpern','augenbrauen','enthaarung','waxing','sugaring',
+        'anti aging','anti-aging','antiaging','lifting','botox','filler','hyaluron',
+        'laser','ipl','licht','ultraschall','radiofrequenz',
+        'reinigung','tiefenreinigung','ausreinigung',
+        'noon','noon aesthetics','noon facial','noon peel',
+        'vitamin','serum','creme','maske','ampulle','konzentrat',
+        'gesicht','körper','koerper','hände','haende','füße','fuesse',
+        'haut','hautpflege','pflege','skincare','beauty',
+        'collagen','kollagen','retinol','hyaluronsäure','hyaluronsaeure',
+        'sonnenschutz','spf','lichtschutz',
+        'akne','rosacea','pigment','pigmentierung','falten','narben',
+        'chemical peel','deep cleansing','power treatment','glow treatment',
+        'alle','mehr','weniger','anzeigen','ausblenden','details',
+        'heute','gestern','morgen','diese woche','dieser monat',
+        'offen','geschlossen','aktiv','inaktiv','erledigt','ausstehend',
+        'neu','alt','aktuell','archiv','verlauf',
+        'ja','nein','oder','und','mit','von','für','fuer','bei','nach','vor',
+        'pro','min','std','stunde','stunden','minuten',
+        'inkl','exkl','zzgl','ab','bis',
+        'info','information','hinweis','achtung','wichtig',
+        'seite','ergebnis','ergebnisse',
+        'keine','kein','nicht','noch',
+        'wird','werden','wurde','wurden',
+        'bitte','danke','hallo','willkommen',
+        'skinconcept','skinconcept hagner','hagner','tamara','tamara hagner'
+    ]);
+
+    const ignoreWordParts = new Set([
+        'transaktion','transaktionen','behandlung','behandlungen','service','termin',
+        'termine','buchung','buchungen','preis','betrag','summe','gesamt','total',
+        'umsatz','zahlung','storno','rabatt','gutschein','datum','status','dauer',
+        'bericht','salon','studio','filiale','bewertung','notiz','kontakt',
+        'telefon','email','adresse','filter','suche','online',
+        'facial','peeling','massage','waxing','sugaring','lifting','reinigung',
+        'noon','skincare','beauty','pflege','creme','serum','maske',
+        'check','care','peel','treatment','glow','power','deep','cleansing',
+        'heute','gestern','morgen','offen','erledigt','aktiv','alle',
+        'anzeigen','details','bearbeiten','speichern','abbrechen','exportieren',
+        'drucken','löschen','loeschen','zurück','zurueck','weiter',
+        'bestätigt','bestaetigt','ausstehend','storniert','abgesagt',
+        'inkl','exkl','zzgl','netto','brutto','mwst','steuer',
+        'karte','bar','paypal','anzahlung','trinkgeld',
+        'pro','min','std','minuten','stunde','stunden','uhr',
+        'keine','kein','nicht','noch','bitte','danke','info','hinweis',
+        'morbach','skinconcept',
+        // Treatwell Spaltenüberschriften & UI-Wörter
+        'zeit','typ','art','anzahl','nummer','nr','pos','position',
+        'rabatte','produkt','produkte','verkauf','kasse','abrechnung',
+        'übersicht','uebersicht','zusammenfassung','kategorie',
+        'mitarbeitende','team','personal','angestellte',
+        'tagesübersicht','tagesuebersicht','wochenübersicht','wochenuebersicht',
+        'einnahmen','ausgaben','differenz','saldo','guthaben','offen',
+        'erstellt','geändert','geaendert','aktualisiert',
+        'kunde','kundin','kunden','kundenname',
+        'gesamtsumme','gesammtsumme','zwischensumme','endsumme','teilsumme',
+        'gesamt','gesammt','summen','beträge','betraege'
+    ]);
+
+    function isIgnored(str) {
+        const lower = str.toLowerCase().trim();
+        if (lower.length < 4) return true;
+        if (ignoreExact.has(lower)) return true;
+        const words = lower.split(/\s+/);
+        if (words.some(w => ignoreWordParts.has(w))) return true;
+        return false;
+    }
+
+    function looksLikeName(str) {
+        const words = str.split(/\s+/);
+        if (words.length < 2 || words.length > 3) return false;
+        return words.every(w => w.length >= 2 && /^[A-ZÄÖÜÉÈÊÂ][a-zäöüßéèêáàâîïñ]+$/.test(w));
+    }
+
+    const stripPatterns = [
+        /\d{1,2}[:.]\d{2}(\s*(uhr|Uhr))?/g,
+        /\d+[.,]\d{2}\s*€?/g, /€\s*\d+[.,]\d{2}/g,
+        /\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4}/g,
+        /^\d+[.)\s]*/, /\s*#\d+/g, /\(\d+\)/g,
+        /\s*[-–—|:;]+\s*/g, /\bx\s*\d+/gi, /\d+\s*x\b/gi,
+    ];
+
+    for (const line of allLines) {
+        let cleaned = line;
+        for (const pat of stripPatterns) cleaned = cleaned.replace(pat, ' ');
+        cleaned = cleaned.replace(/\s+/g, ' ').trim();
+        if (cleaned.length < 5) continue;
+        if (/^[\d\s.,€$%#()+\-–—\/\\]+$/.test(cleaned)) continue;
+
+        const segments = cleaned.split(/\s{2,}|\t|\|/).map(s => s.trim()).filter(s => s.length >= 4);
+        for (const segment of segments) {
+            const commaMatch = segment.match(/^([A-ZÄÖÜ][a-zäöüß]{1,}),\s*([A-ZÄÖÜ][a-zäöüß]{1,})/);
+            if (commaMatch && !isIgnored(commaMatch[1]) && !isIgnored(commaMatch[2])) {
+                const name = commaMatch[2] + ' ' + commaMatch[1];
+                if (!isIgnored(name) && !names.includes(name)) names.push(name);
+                continue;
+            }
+            if (looksLikeName(segment) && !isIgnored(segment)) {
+                if (!names.includes(segment)) names.push(segment);
+                continue;
+            }
+            const allMatches = [...segment.matchAll(/([A-ZÄÖÜÉÈÊ][a-zäöüßéèêáàâ]{2,}\s+[A-ZÄÖÜÉÈÊ][a-zäöüßéèêáàâ]{2,})/g)];
+            for (const m of allMatches) {
+                const candidate = m[1].trim();
+                if (!isIgnored(candidate) && looksLikeName(candidate) && !names.includes(candidate)) names.push(candidate);
+            }
+        }
+    }
+
+    const seen = new Set();
+    const uniqueNames = names.filter(n => { const key = n.toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; });
+    return { names: uniqueNames, date: detectedDate };
+}
+
+function showExtractedNames(names) {
+    extractedNames = names.map(n => ({ name: n, selected: true }));
+    const container = document.getElementById('extractedResults');
+    container.style.display = 'block';
+
+    // Show date picker with detected date
+    const dateValue = ocrDetectedDate || todayStr();
+    const dateHint = ocrDetectedDate
+        ? '<span style="font-size:11px;color:var(--success);margin-left:8px;">aus Screenshot erkannt</span>'
+        : '<span style="font-size:11px;color:var(--warning);margin-left:8px;">nicht erkannt — bitte pruefen</span>';
+
+    // Insert date picker before the extracted list
+    let datePicker = document.getElementById('ocrDatePicker');
+    if (!datePicker) {
+        datePicker = document.createElement('div');
+        datePicker.id = 'ocrDatePicker';
+        container.insertBefore(datePicker, container.firstChild);
+    }
+    datePicker.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 16px;background:var(--bg3,var(--bg));border-radius:var(--radius-sm);border:1px solid var(--border);">
+            <span style="font-size:13px;font-weight:500;">Besuchsdatum:</span>
+            <input type="date" id="ocrVisitDate" value="${dateValue}" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);">
+            ${dateHint}
+        </div>
+    `;
+
+    renderExtractedList();
+}
+
+function renderExtractedList() {
+    const listEl = document.getElementById('extractedList');
+
+    if (extractedNames.length === 0) {
+        listEl.innerHTML = '<div class="empty-state"><p>Keine Namen erkannt. Du kannst manuell Eintraege hinzufuegen.</p></div>';
+        return;
+    }
+
+    // Check which names already exist in database
+    const existingNames = allClients.map(c => c.name.toLowerCase());
+
+    listEl.innerHTML = extractedNames.map((item, i) => {
+        const exists = existingNames.includes(item.name.toLowerCase());
+        return `
+            <div class="extracted-item">
+                <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="extractedNames[${i}].selected = this.checked">
+                <input type="text" value="${item.name}" onchange="extractedNames[${i}].name = this.value">
+                ${exists ? '<span class="badge badge-geplant" style="white-space:nowrap;">Bereits vorhanden</span>' : '<span class="badge badge-gepostet" style="white-space:nowrap;">Neu</span>'}
+                <button class="remove-btn" onclick="extractedNames.splice(${i},1); renderExtractedList();">&#10005;</button>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectAllExtracted() {
+    const allSelected = extractedNames.every(n => n.selected);
+    extractedNames.forEach(n => n.selected = !allSelected);
+    renderExtractedList();
+}
+
+function addManualEntry() {
+    extractedNames.push({ name: '', selected: true });
+    renderExtractedList();
+    // Focus the last input
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('#extractedList input[type="text"]');
+        if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 50);
+}
+
+async function importSelectedClients() {
+    const toImport = extractedNames.filter(n => n.selected && n.name.trim());
+    if (toImport.length === 0) {
+        showToast('Keine Kunden ausgewaehlt', 'error');
+        return;
+    }
+
+    // Use the date from the date picker (detected from screenshot or manually set)
+    const dateInput = document.getElementById('ocrVisitDate');
+    const visitDate = dateInput ? dateInput.value : todayStr();
+    let imported = 0;
+    let updated = 0;
+
+    for (const item of toImport) {
+        const name = item.name.trim();
+
+        // Check if client already exists (case-insensitive)
+        const existing = allClients.find(c => c.name.toLowerCase() === name.toLowerCase());
+
+        if (existing) {
+            // Update last visit date with the date from the screenshot
+            await db.collection('clients').doc(existing.id).update({
+                lastVisit: visitDate,
+                nextRecall: calcRecallDate(visitDate, existing.recallInterval || 3)
+            });
+            updated++;
+        } else {
+            // Create new client
+            await db.collection('clients').add({
+                name: name,
+                email: '',
+                phone: '',
+                lastVisit: visitDate,
+                recallInterval: 3,
+                notes: '',
+                lastContacted: '',
+                nextRecall: calcRecallDate(visitDate, 3),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            imported++;
+        }
+    }
+
+    showToast(`${imported} neue Kunden importiert, ${updated} aktualisiert (Besuch: ${formatDate(visitDate)})`, 'success');
+    resetImport();
+    loadClients();
+}
+
+function resetImport() {
+    extractedNames = [];
+    ocrDetectedDate = null;
+    document.getElementById('extractedResults').style.display = 'none';
+    const datePicker = document.getElementById('ocrDatePicker');
+    if (datePicker) datePicker.innerHTML = '';
+    document.getElementById('screenshotPreview').style.display = 'none';
+    document.getElementById('ocrProgress').classList.remove('active');
+    document.getElementById('screenshotInput').value = '';
+}
+
+// ============ TEMPLATES ============
+const DEFAULT_TEMPLATES = [
+    { type: 'willkommen', title: 'Willkommens-Nachricht', subject: 'Willkommen bei Skinconcept Hagner', body: 'Liebe {kundenname},\n\nvielen Dank fuer Ihren ersten Besuch bei Skinconcept Hagner.\n\nEs hat mich sehr gefreut, Sie kennenzulernen und gemeinsam den besten Weg fuer Ihre Hautpflege zu finden.\n\nBei Fragen zu Ihrer Behandlung oder Pflegeroutine bin ich jederzeit fuer Sie da.\n\nHerzliche Gruesse\nTamara Hagner\nSkinconcept Hagner, Morbach' },
+    { type: 'recall_3m', title: 'Recall - 3 Monate', subject: 'Zeit fuer Ihre naechste Behandlung', body: 'Liebe {kundenname},\n\nIhr letzter Besuch bei uns liegt nun 3 Monate zurueck. Fuer optimale Ergebnisse empfehle ich, Ihre Behandlung in regelmaessigen Abstaenden aufzufrischen.\n\nMoechten Sie einen neuen Termin vereinbaren? Ich berate Sie gerne, welche Behandlung aktuell am besten zu Ihrem Hautzustand passt.\n\nHerzliche Gruesse\nTamara Hagner\nSkinconcept Hagner, Morbach' },
+    { type: 'recall_6m', title: 'Recall - 6 Monate', subject: 'Wir vermissen Sie bei Skinconcept', body: 'Liebe {kundenname},\n\nein halbes Jahr ist seit Ihrem letzten Besuch vergangen. Ihre Haut verdient regelmaessige professionelle Pflege.\n\nIch wuerde mich freuen, Sie bald wieder bei uns begruessen zu duerfen und gemeinsam an Ihren Hautzielen zu arbeiten.\n\nVereinbaren Sie gerne einen Termin - ich freue mich auf Sie!\n\nHerzliche Gruesse\nTamara Hagner\nSkinconcept Hagner, Morbach' },
+    { type: 'nachsorge', title: 'Nachsorge-Anleitung', subject: 'Ihre Nachsorge nach der Behandlung', body: 'Liebe {kundenname},\n\nvielen Dank fuer Ihren heutigen Besuch. Hier Ihre Nachsorge-Empfehlungen nach der {behandlung}:\n\n- In den naechsten 24 Stunden keine direkte Sonne\n- Verwenden Sie die empfohlene Pflegeserie konsequent\n- Trinken Sie ausreichend Wasser\n- Vermeiden Sie Make-up in den ersten Stunden\n\nBei Fragen erreichen Sie mich jederzeit.\n\nHerzliche Gruesse\nTamara Hagner' },
+    { type: 'geburtstag', title: 'Geburtstagsglueckwuensche', subject: 'Herzlichen Glueckwunsch zum Geburtstag!', body: 'Liebe {kundenname},\n\nherzlichen Glueckwunsch zum Geburtstag! Ich wuensche Ihnen einen wunderschoenen Tag.\n\nAls kleines Geschenk moechte ich Ihnen eine besondere Behandlung anbieten. Sprechen Sie mich gerne bei Ihrem naechsten Besuch darauf an.\n\nAlles Gute!\n\nHerzliche Gruesse\nTamara Hagner\nSkinconcept Hagner' },
+    { type: 'danke', title: 'Dankeschoen nach Erstbesuch', subject: 'Vielen Dank fuer Ihren Besuch', body: 'Liebe {kundenname},\n\nvielen Dank fuer Ihr Vertrauen und Ihren Besuch am {datum}.\n\nIch hoffe, Sie fuehlen sich wohl mit dem Ergebnis Ihrer {behandlung}. Denken Sie daran, die besprochene Pflegeroutine einzuhalten fuer das beste Ergebnis.\n\nIch freue mich auf Ihren naechsten Besuch!\n\nHerzliche Gruesse\nTamara Hagner\nSkinconcept Hagner, Morbach' }
+];
+
+async function loadTemplates() {
+    try {
+        const snap = await db.collection('templates').orderBy('sortOrder').get();
+        allTemplates = [];
+        snap.forEach(doc => allTemplates.push({ id: doc.id, ...doc.data() }));
+
+        if (allTemplates.length === 0) {
+            for (let i = 0; i < DEFAULT_TEMPLATES.length; i++) {
+                const t = { ...DEFAULT_TEMPLATES[i], sortOrder: i, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+                const ref = await db.collection('templates').add(t);
+                allTemplates.push({ id: ref.id, ...t });
+            }
+        }
+
+        renderTemplates();
+    } catch (err) {
+        console.error('Error loading templates:', err);
+        allTemplates = DEFAULT_TEMPLATES.map((t, i) => ({ ...t, id: 'default_' + i }));
+        renderTemplates();
+    }
+}
+
+function renderTemplates() {
+    const container = document.getElementById('templateList');
+    if (allTemplates.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Keine Vorlagen vorhanden.</p></div>';
+        return;
+    }
+
+    const typeLabels = {
+        willkommen: 'Willkommen', recall_3m: 'Recall 3M', recall_6m: 'Recall 6M',
+        nachsorge: 'Nachsorge', geburtstag: 'Geburtstag', danke: 'Danke', sonstiges: 'Sonstiges'
+    };
+
+    container.innerHTML = allTemplates.map(t => `
+        <div class="card" style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                <div>
+                    <span class="badge badge-geplant">${typeLabels[t.type] || t.type}</span>
+                    <strong style="margin-left:8px;">${t.title}</strong>
+                    ${t.treatment ? `<small style="color:var(--text-light);"> - ${t.treatment}</small>` : ''}
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="copyTemplate('${t.id}')">Kopieren</button>
+                    <button class="btn btn-secondary btn-sm" onclick="editTemplate('${t.id}')">Bearbeiten</button>
+                    <button class="btn btn-sm" style="color:var(--danger);background:none;" onclick="deleteTemplate('${t.id}')">&#10005;</button>
+                </div>
+            </div>
+            ${t.subject ? `<div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Betreff: ${t.subject}</div>` : ''}
+            <div style="font-size:13px; white-space:pre-wrap; color:var(--text); line-height:1.5; max-height:100px; overflow:hidden;">${t.body || ''}</div>
+        </div>
+    `).join('');
+}
+
+function copyTemplate(id) {
+    const t = allTemplates.find(x => x.id === id);
+    if (!t) return;
+    const text = (t.subject ? 'Betreff: ' + t.subject + '\n\n' : '') + (t.body || '');
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Vorlage kopiert! Platzhalter ersetzen nicht vergessen.', 'success');
+    }).catch(() => {
+        showToast('Kopieren fehlgeschlagen', 'error');
+    });
+}
+
+function openTemplateModal() {
+    document.getElementById('templateModalTitle').textContent = 'Neue Vorlage';
+    document.getElementById('templateId').value = '';
+    document.getElementById('tmplType').value = 'willkommen';
+    document.getElementById('tmplTreatment').value = '';
+    document.getElementById('tmplTitle').value = '';
+    document.getElementById('tmplSubject').value = '';
+    document.getElementById('tmplBody').value = '';
+    document.getElementById('templateModal').classList.add('active');
+}
+
+function editTemplate(id) {
+    const t = allTemplates.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('templateModalTitle').textContent = 'Vorlage bearbeiten';
+    document.getElementById('templateId').value = id;
+    document.getElementById('tmplType').value = t.type || 'sonstiges';
+    document.getElementById('tmplTreatment').value = t.treatment || '';
+    document.getElementById('tmplTitle').value = t.title || '';
+    document.getElementById('tmplSubject').value = t.subject || '';
+    document.getElementById('tmplBody').value = t.body || '';
+    document.getElementById('templateModal').classList.add('active');
+}
+
+async function saveTemplate() {
+    const id = document.getElementById('templateId').value;
+    const data = {
+        type: document.getElementById('tmplType').value,
+        treatment: document.getElementById('tmplTreatment').value.trim(),
+        title: document.getElementById('tmplTitle').value.trim(),
+        subject: document.getElementById('tmplSubject').value.trim(),
+        body: document.getElementById('tmplBody').value,
+        sortOrder: allTemplates.length
+    };
+
+    if (!data.title) { showToast('Bitte Titel eingeben', 'error'); return; }
+
+    try {
+        if (id && !id.startsWith('default_')) {
+            await db.collection('templates').doc(id).update(data);
+            showToast('Vorlage aktualisiert', 'success');
+        } else {
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('templates').add(data);
+            showToast('Vorlage gespeichert', 'success');
+        }
+        closeModal('templateModal');
+        loadTemplates();
+    } catch (err) {
+        console.error(err);
+        showToast('Fehler beim Speichern', 'error');
+    }
+}
+
+async function deleteTemplate(id) {
+    if (!confirm('Vorlage wirklich loeschen?')) return;
+    if (id.startsWith('default_')) return;
+    try {
+        await db.collection('templates').doc(id).delete();
+        showToast('Vorlage geloescht', 'success');
+        loadTemplates();
+    } catch (err) {
+        showToast('Fehler', 'error');
+    }
+}
+
+// ============ CLIENTS ============
+async function loadClients() {
+    try {
+        const snap = await db.collection('clients').orderBy('name').get();
+        allClients = [];
+        snap.forEach(doc => allClients.push({ id: doc.id, ...doc.data() }));
+        renderClients();
+        renderRecall();
+        renderNachsorge();
+        renderBirthdays();
+        updateActivityCounts();
+        renderOverview();
+    } catch (err) {
+        console.error('Error loading clients:', err);
+    }
+}
+
+function renderClients(filter = '') {
+    const tbody = document.getElementById('clientList');
+    const filtered = filter
+        ? allClients.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()))
+        : allClients;
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>${filter ? 'Keine Treffer.' : 'Noch keine Kunden angelegt.'}</p></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(c => {
+        const recallDate = calcRecallDate(c.lastVisit, c.recallInterval || 3);
+        const isOverdue = recallDate && recallDate <= todayStr();
+        const contact = getContactStatus(c);
+        return `
+            <tr>
+                <td><strong>${c.name}</strong>${c.notes ? `<br><small style="color:var(--text-light)">${c.notes.substring(0,40)}</small>` : ''}</td>
+                <td>${c.email || '-'}</td>
+                <td>${c.phone || '-'}</td>
+                <td>${formatDate(c.lastVisit)}</td>
+                <td>
+                    <span class="contact-badge ${contact.status}" style="font-size:11px;">
+                        ${contact.status === 'contacted' ? '&#10003;' : '&#9679;'} ${contact.label}
+                    </span>
+                </td>
+                <td>
+                    ${recallDate
+                        ? `<span class="badge ${isOverdue ? 'badge-entwurf' : 'badge-geplant'}">${formatDate(recallDate)}</span>`
+                        : '-'}
+                </td>
+                <td>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn btn-secondary btn-sm" onclick="markContacted('${c.id}')" title="Als kontaktiert markieren">&#9993;</button>
+                        <button class="btn btn-secondary btn-sm" onclick="editClient('${c.id}')">Bearbeiten</button>
+                        <button class="btn btn-sm" style="color:var(--danger);background:none;" onclick="deleteClient('${c.id}')">&#10005;</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function filterClients() {
+    renderClients(document.getElementById('clientSearch').value);
+}
+
+function calcRecallDate(lastVisit, months) {
+    if (!lastVisit) return null;
+    const d = new Date(lastVisit + 'T00:00:00');
+    d.setMonth(d.getMonth() + Number(months));
+    return d.toISOString().slice(0, 10);
+}
+
+function openClientModal() {
+    document.getElementById('clientModalTitle').textContent = 'Neuer Kunde';
+    document.getElementById('clientId').value = '';
+    document.getElementById('clName').value = '';
+    document.getElementById('clEmail').value = '';
+    document.getElementById('clPhone').value = '';
+    document.getElementById('clLastVisit').value = '';
+    document.getElementById('clRecallInterval').value = '3';
+    document.getElementById('clNotes').value = '';
+    document.getElementById('clientModal').classList.add('active');
+}
+
+function editClient(id) {
+    const c = allClients.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('clientModalTitle').textContent = 'Kunde bearbeiten';
+    document.getElementById('clientId').value = id;
+    document.getElementById('clName').value = c.name || '';
+    document.getElementById('clEmail').value = c.email || '';
+    document.getElementById('clPhone').value = c.phone || '';
+    document.getElementById('clLastVisit').value = c.lastVisit || '';
+    document.getElementById('clRecallInterval').value = c.recallInterval || '3';
+    document.getElementById('clNotes').value = c.notes || '';
+    document.getElementById('clientModal').classList.add('active');
+}
+
+async function saveClient() {
+    const id = document.getElementById('clientId').value;
+    const data = {
+        name: document.getElementById('clName').value.trim(),
+        email: document.getElementById('clEmail').value.trim(),
+        phone: document.getElementById('clPhone').value.trim(),
+        lastVisit: document.getElementById('clLastVisit').value,
+        recallInterval: Number(document.getElementById('clRecallInterval').value),
+        notes: document.getElementById('clNotes').value.trim()
+    };
+
+    if (!data.name) { showToast('Bitte Name eingeben', 'error'); return; }
+
+    data.nextRecall = calcRecallDate(data.lastVisit, data.recallInterval) || '';
+
+    try {
+        if (id) {
+            await db.collection('clients').doc(id).update(data);
+            showToast('Kunde aktualisiert', 'success');
+        } else {
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            data.lastContacted = '';
+            await db.collection('clients').add(data);
+            showToast('Kunde gespeichert', 'success');
+        }
+        closeModal('clientModal');
+        loadClients();
+    } catch (err) {
+        console.error(err);
+        showToast('Fehler beim Speichern', 'error');
+    }
+}
+
+async function deleteClient(id) {
+    if (!confirm('Kunde wirklich loeschen?')) return;
+    try {
+        await db.collection('clients').doc(id).delete();
+        showToast('Kunde geloescht', 'success');
+        loadClients();
+    } catch (err) {
+        showToast('Fehler', 'error');
+    }
+}
+
+// ============ RECALL TRACKER ============
+function renderRecall() {
+    const container = document.getElementById('recallList');
+    const today = todayStr();
+
+    const dueClients = allClients
+        .filter(c => {
+            const recall = calcRecallDate(c.lastVisit, c.recallInterval || 3);
+            return recall && recall <= today;
+        })
+        .sort((a, b) => {
+            const ra = calcRecallDate(a.lastVisit, a.recallInterval || 3);
+            const rb = calcRecallDate(b.lastVisit, b.recallInterval || 3);
+            return ra.localeCompare(rb);
+        });
+
+    if (dueClients.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">&#10003;</div><h3>Alles erledigt!</h3><p>Aktuell sind keine Recalls faellig.</p></div>';
+        return;
+    }
+
+    container.innerHTML = dueClients.map(c => {
+        const recallDate = calcRecallDate(c.lastVisit, c.recallInterval || 3);
+        const daysSince = Math.floor((new Date() - new Date(recallDate)) / 86400000);
+        const contact = getContactStatus(c);
+        return `
+            <div class="card" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <strong>${c.name}</strong>
+                    <span class="contact-badge ${contact.status}" style="font-size:11px; margin-left:8px;">
+                        ${contact.status === 'contacted' ? '&#10003;' : '&#9679;'} ${contact.label}
+                    </span>
+                    <div style="font-size:13px; color:var(--text-light);">
+                        Letzter Besuch: ${formatDate(c.lastVisit)} | Recall faellig seit ${daysSince} Tag${daysSince !== 1 ? 'en' : ''}
+                    </div>
+                    ${c.phone ? `<div style="font-size:13px; color:var(--text-light);">Tel: ${c.phone}</div>` : ''}
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-primary btn-sm" onclick="sendRecall('${c.id}')">Nachricht kopieren</button>
+                    <button class="btn btn-secondary btn-sm" onclick="markContacted('${c.id}')">Kontaktiert</button>
+                    <button class="btn btn-secondary btn-sm" onclick="markRecallDone('${c.id}')">War da</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function sendRecall(clientId) {
+    const client = allClients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const interval = client.recallInterval || 3;
+    const tmplType = interval <= 3 ? 'recall_3m' : 'recall_6m';
+    const template = allTemplates.find(t => t.type === tmplType) || allTemplates.find(t => t.type.startsWith('recall'));
+
+    if (!template) {
+        showToast('Keine Recall-Vorlage gefunden', 'error');
+        return;
+    }
+
+    let text = (template.body || '')
+        .replace(/\{kundenname\}/g, client.name)
+        .replace(/\{studio\}/g, 'Skinconcept Hagner');
+
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`Recall-Nachricht fuer ${client.name} kopiert!`, 'success');
+    });
+}
+
+async function markRecallDone(clientId) {
+    try {
+        await db.collection('clients').doc(clientId).update({
+            lastVisit: todayStr(),
+            nextRecall: calcRecallDate(todayStr(), allClients.find(c => c.id === clientId)?.recallInterval || 3)
+        });
+        showToast('Als besucht markiert', 'success');
+        loadClients();
+    } catch (err) {
+        showToast('Fehler', 'error');
+    }
+}
+
+// ============ MODAL ============
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+    });
+});
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    loadTemplates();
+    loadClients();
+    initUpload();
+});
+</script>
+</body>
+</html>
