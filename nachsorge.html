@@ -373,6 +373,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="shared.js"></script>
+<script>let alleKunden = [];</script>
+<script src="trello_all_kunden.js"></script>
 <script>
 const WA_ICON = '<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
 
@@ -653,7 +655,7 @@ function getWeekStart(date) {
     return d;
 }
 
-// ============ SCREENSHOT OCR ============
+// ============ SCREENSHOT OCR (mit Fuzzy-Matching) ============
 const dropZone = document.getElementById('screenshotDrop');
 
 // Drag & drop
@@ -663,6 +665,91 @@ dropZone.addEventListener('drop', (e) => {
     e.preventDefault(); dropZone.classList.remove('dragover');
     if (e.dataTransfer.files.length) handleScreenshot(e.dataTransfer.files[0]);
 });
+
+// Build known customer index for fuzzy matching
+const knownNames = (typeof alleKunden !== 'undefined' ? alleKunden : []).map(k => k.name).filter(Boolean);
+// Add TW_CONTACTS if available
+if (typeof TW_CONTACTS !== 'undefined') {
+    TW_CONTACTS.forEach(c => {
+        const n = ((c.fn||'') + ' ' + (c.ln||'')).trim();
+        if (n && !knownNames.includes(n)) knownNames.push(n);
+    });
+}
+// Normalize helper
+function norm(s) { return s.toLowerCase().replace(/[^a-zäöüß]/g, ''); }
+
+// Levenshtein distance for fuzzy matching
+function levenshtein(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const m = [];
+    for (let i = 0; i <= b.length; i++) m[i] = [i];
+    for (let j = 0; j <= a.length; j++) m[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            m[i][j] = b[i-1] === a[j-1]
+                ? m[i-1][j-1]
+                : Math.min(m[i-1][j-1]+1, m[i][j-1]+1, m[i-1][j]+1);
+        }
+    }
+    return m[b.length][a.length];
+}
+
+// Find best matching known customer (returns {name, score} or null)
+function fuzzyMatch(candidate) {
+    const cn = norm(candidate);
+    if (cn.length < 3) return null;
+    let best = null, bestDist = Infinity;
+    for (const known of knownNames) {
+        const kn = norm(known);
+        // Quick skip if lengths are too different
+        if (Math.abs(cn.length - kn.length) > 4) continue;
+        const dist = levenshtein(cn, kn);
+        // Allow up to 30% of chars to be wrong
+        const threshold = Math.max(3, Math.floor(kn.length * 0.3));
+        if (dist < bestDist && dist <= threshold) {
+            bestDist = dist;
+            best = { name: known, score: dist };
+        }
+    }
+    return best;
+}
+
+// Preprocess image for better OCR
+function preprocessImage(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            // Scale up small images for better OCR
+            const scale = Math.max(1, 2000 / Math.max(img.width, img.height));
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+
+            // Draw scaled
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Increase contrast + convert to grayscale
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = imageData.data;
+            for (let i = 0; i < d.length; i += 4) {
+                // Grayscale
+                const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+                // Increase contrast
+                const contrast = 1.5;
+                const val = Math.min(255, Math.max(0, ((gray - 128) * contrast) + 128));
+                // Threshold for sharper text
+                const final = val > 140 ? 255 : 0;
+                d[i] = d[i+1] = d[i+2] = final;
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            canvas.toBlob(blob => resolve(blob), 'image/png');
+        };
+        img.src = URL.createObjectURL(file);
+    });
+}
 
 async function handleScreenshot(file) {
     if (!file || !file.type.startsWith('image/')) {
@@ -677,30 +764,38 @@ async function handleScreenshot(file) {
     document.getElementById('ocrResults').classList.remove('active');
 
     try {
-        status.textContent = 'Bild wird geladen...';
+        status.textContent = 'Bild wird optimiert...';
+        bar.style.width = '5%';
+
+        // Preprocess for better OCR
+        const processed = await preprocessImage(file);
+
+        status.textContent = 'Text wird erkannt...';
         bar.style.width = '10%';
 
-        const result = await Tesseract.recognize(file, 'deu', {
+        const result = await Tesseract.recognize(processed, 'deu', {
             logger: m => {
                 if (m.status === 'recognizing text') {
                     const pct = Math.round(m.progress * 100);
-                    bar.style.width = (10 + pct * 0.8) + '%';
+                    bar.style.width = (10 + pct * 0.7) + '%';
                     status.textContent = 'Text wird erkannt... ' + pct + '%';
                 }
             }
         });
 
-        bar.style.width = '95%';
-        status.textContent = 'Namen werden extrahiert...';
+        bar.style.width = '85%';
+        status.textContent = 'Namen werden abgeglichen (' + knownNames.length + ' Kunden)...';
 
         const text = result.data.text;
+        console.log('OCR RAW TEXT:', text);
+
         const names = extractNames(text);
 
         bar.style.width = '100%';
 
         if (names.length === 0) {
-            status.textContent = 'Keine Namen erkannt. Versuche ein schaerferes Foto.';
-            setTimeout(() => progress.classList.remove('active'), 3000);
+            status.textContent = 'Keine Namen erkannt. Versuche ein schaerferes Bild oder schneide den Kalender-Bereich zu.';
+            setTimeout(() => progress.classList.remove('active'), 4000);
             return;
         }
 
@@ -713,43 +808,114 @@ async function handleScreenshot(file) {
         setTimeout(() => progress.classList.remove('active'), 3000);
     }
 
-    // Reset file input
     document.getElementById('screenshotInput').value = '';
 }
 
 function extractNames(text) {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-    const names = [];
-    const namePattern = /^[A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß\-]+/;
-    const skipWords = ['montag','dienstag','mittwoch','donnerstag','freitag','samstag','sonntag',
-        'januar','februar','märz','april','mai','juni','juli','august','september','oktober','november','dezember',
-        'uhr','min','termin','kunde','kalender','treatwell','buchung','storniert','online','bar','karte',
-        'gesamt','summe','pause','frei','urlaub','krank','notiz','heute'];
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+    const found = [];
+    const foundNorm = new Set();
 
+    const skipWords = ['montag','dienstag','mittwoch','donnerstag','freitag','samstag','sonntag',
+        'januar','februar','maerz','märz','april','mai','juni','juli','august','september','oktober','november','dezember',
+        'uhr','min','termin','kunde','kalender','treatwell','buchung','storniert','online','bar','karte',
+        'gesamt','summe','pause','frei','urlaub','krank','notiz','heute','morgen','behandlung',
+        'microneedling','needling','peeling','facial','reinigung','massage','beratung','kontrolle'];
+
+    // STRATEGY 1: Direct fuzzy match every line against known customers
     lines.forEach(line => {
-        // Try to find names (First Last pattern)
-        const match = line.match(namePattern);
-        if (match) {
-            const candidate = match[0].trim();
-            const lower = candidate.toLowerCase();
-            // Filter out non-names
-            if (candidate.length >= 5 && candidate.length <= 40
-                && !skipWords.some(w => lower.includes(w))
-                && candidate.split(' ').length >= 2
-                && candidate.split(' ').length <= 4) {
-                if (!names.includes(candidate)) names.push(candidate);
-            }
+        // Remove common prefixes: times, numbers, dashes, bullets
+        let cleaned = line
+            .replace(/^\d{1,2}[:.]\d{2}\s*/g, '')  // "10:00 " or "10.00 "
+            .replace(/^\d{1,2}\s*[-–]\s*/g, '')      // "10 - "
+            .replace(/^[-–•·*]\s*/g, '')              // bullets
+            .replace(/\s*[-–|]\s*.*$/, '')            // remove everything after dash/pipe (treatment info)
+            .trim();
+
+        if (cleaned.length < 3) return;
+        const lower = cleaned.toLowerCase();
+        if (skipWords.some(w => lower === w || lower.startsWith(w + ' '))) return;
+
+        // Try fuzzy match against known customers
+        const match = fuzzyMatch(cleaned);
+        if (match && !foundNorm.has(norm(match.name))) {
+            found.push(match.name);
+            foundNorm.add(norm(match.name));
+            return;
         }
 
-        // Also try: last name, first name format
-        const commaMatch = line.match(/^([A-ZÄÖÜ][a-zäöüß\-]+),\s*([A-ZÄÖÜ][a-zäöüß]+)/);
-        if (commaMatch) {
-            const candidate = commaMatch[2] + ' ' + commaMatch[1];
-            if (!names.includes(candidate)) names.push(candidate);
+        // Also try with parts of the line (in case line has extra text)
+        const words = cleaned.split(/\s+/);
+        if (words.length >= 2) {
+            for (let i = 0; i < words.length - 1; i++) {
+                const twoWords = words[i] + ' ' + words[i+1];
+                const threeWords = i < words.length - 2 ? twoWords + ' ' + words[i+2] : null;
+
+                const m2 = fuzzyMatch(twoWords);
+                if (m2 && !foundNorm.has(norm(m2.name))) {
+                    found.push(m2.name);
+                    foundNorm.add(norm(m2.name));
+                    break;
+                }
+                if (threeWords) {
+                    const m3 = fuzzyMatch(threeWords);
+                    if (m3 && !foundNorm.has(norm(m3.name))) {
+                        found.push(m3.name);
+                        foundNorm.add(norm(m3.name));
+                        break;
+                    }
+                }
+            }
         }
     });
 
-    return names;
+    // STRATEGY 2: Also try classic pattern matching for names NOT in database (new customers)
+    const namePatterns = [
+        /([A-ZÄÖÜ][a-zäöüß]+)\s+([A-ZÄÖÜ][a-zäöüß\-]+)/g,           // "Andrea Hensel"
+        /([A-ZÄÖÜ][A-ZÄÖÜ]+)\s+([A-ZÄÖÜ][A-ZÄÖÜ]+)/g,               // "ANDREA HENSEL"
+        /([A-ZÄÖÜ][a-zäöüß\-]+),\s*([A-ZÄÖÜ][a-zäöüß]+)/g,          // "Hensel, Andrea"
+    ];
+
+    const fullText = lines.join('\n');
+    namePatterns.forEach(pattern => {
+        let m;
+        while ((m = pattern.exec(fullText)) !== null) {
+            let candidate;
+            if (m[0].includes(',')) {
+                candidate = m[2] + ' ' + m[1]; // flip "Last, First" to "First Last"
+            } else {
+                // If all caps, convert to title case
+                const w1 = m[1].length > 1 && m[1] === m[1].toUpperCase()
+                    ? m[1][0] + m[1].slice(1).toLowerCase() : m[1];
+                const w2 = m[2].length > 1 && m[2] === m[2].toUpperCase()
+                    ? m[2][0] + m[2].slice(1).toLowerCase() : m[2];
+                candidate = w1 + ' ' + w2;
+            }
+
+            const cn = norm(candidate);
+            if (cn.length < 5) continue;
+            if (skipWords.some(w => cn.includes(w))) continue;
+            if (foundNorm.has(cn)) continue;
+
+            // Only add if it looks like a real name (not already matched via fuzzy)
+            if (candidate.split(' ').length >= 2 && candidate.split(' ').length <= 4) {
+                // Check if there's a close match in known customers
+                const fm = fuzzyMatch(candidate);
+                if (fm) {
+                    if (!foundNorm.has(norm(fm.name))) {
+                        found.push(fm.name);
+                        foundNorm.add(norm(fm.name));
+                    }
+                } else {
+                    // Unknown customer — still add with marker
+                    found.push(candidate + ' (neu)');
+                    foundNorm.add(cn);
+                }
+            }
+        }
+    });
+
+    return found;
 }
 
 function showOcrResults(names) {
