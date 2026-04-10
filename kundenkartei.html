@@ -15,6 +15,7 @@
 <style>
 :root{--bg:#f5f3ef;--bg2:#ffffff;--bg3:#faf8f5;--bg4:#f0ede8;--hover:#ece8e2;--text:#1a1a1a;--text2:#4a4540;--muted:#8a8580;--gold:#b08d57;--gold2:#9a7a48;--gold-dim:rgba(176,141,87,.08);--green:#16a34a;--green-bg:rgba(22,163,74,.06);--yellow:#ca8a04;--yellow-bg:rgba(202,138,4,.06);--orange:#ea580c;--orange-bg:rgba(234,88,12,.06);--red:#dc2626;--red-bg:rgba(220,38,38,.06);--purple:#7c3aed;--purple-bg:rgba(124,58,237,.06);--blue:#2563eb;--blue-bg:rgba(37,99,235,.06);--border:rgba(0,0,0,.08);--r:12px}
 *{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100vw}
 body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-weight:300}
 
 /* HEADER */
@@ -240,12 +241,20 @@ body.client-open .back-btn{display:inline-flex}
   body.client-open .back-btn{display:inline-flex}
   .kh-metrics{grid-template-columns:repeat(2,1fr)}
   .form-grid{grid-template-columns:1fr}
-  .hdr{padding:12px 16px}
-  .brand h1{font-size:18px}
+  .hdr{padding:10px 12px;flex-wrap:wrap;gap:8px}
+  .brand{gap:8px}
+  .brand h1{font-size:16px;letter-spacing:2px}
+  .brand .sub{font-size:8px;letter-spacing:2px}
+  .hdr-right{width:100%;justify-content:flex-start;gap:6px;flex-wrap:wrap}
+  .hdr-right .btn{font-size:11px;padding:7px 10px}
   .kartei{height:auto;min-height:100%}
   .kh-top{flex-direction:column;gap:10px}
-  .kh-actions{width:100%;justify-content:flex-start}
+  .kh-actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
   .kh-contact{flex-direction:column;gap:6px}
+  .dash-nav{scrollbar-width:none}
+  .dash-nav::-webkit-scrollbar{display:none}
+  .modal{width:95vw;max-width:95vw;padding:16px}
+  .tw-drop{padding:16px!important}
 }
 @media(max-width:600px){
   .kh-name{font-size:22px}
@@ -314,12 +323,12 @@ body.client-open .back-btn{display:inline-flex}
 <body>
 
 <!-- DASHBOARD NAV BAR -->
-<div style="background: linear-gradient(135deg, #6B5344, #8B6F5C); padding: 8px 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 150;">
-  <a href="index.html" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 6px; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">&#8592; Studio Hub</a>
-  <span style="color: rgba(255,255,255,0.3); font-size: 12px;">|</span>
-  <a href="aufgaben.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Aufgaben</a>
-  <a href="nachsorge.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Nachsorge</a>
-  <a href="bestellungen.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Bestellungen</a>
+<div class="dash-nav" style="background: linear-gradient(135deg, #6B5344, #8B6F5C); padding: 8px 14px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 150; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+  <a href="index.html" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 4px; flex-shrink:0;">&#8592; Hub</a>
+  <span style="color: rgba(255,255,255,0.3); font-size: 12px; flex-shrink:0;">|</span>
+  <a href="aufgaben.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Aufgaben</a>
+  <a href="nachsorge.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Nachsorge</a>
+  <a href="bestellungen.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Bestellungen</a>
 </div>
 
 <!-- HEADER -->
@@ -1393,7 +1402,7 @@ function renderCauseCard(c,key){
 }
 
 function copyAnamLink(){
-  const url='https://skinconcept-anamnesebogen.netlify.app/anamnesebogen.html';
+  const url='https://skinconcept-hagner.github.io/skinconcept-studio/anamnesebogen.html';
   navigator.clipboard.writeText(url).then(()=>toast('Anamnesebogen-Link kopiert!')).catch(()=>toast('Link konnte nicht kopiert werden','warn'));
 }
 
