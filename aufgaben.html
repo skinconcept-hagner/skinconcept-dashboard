@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skinconcept Hagner - Aufgaben</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .task-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .filter-btn {
+            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-light); font-size: 13px;
+            font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .filter-btn:hover { border-color: var(--accent); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .filter-btn .count {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 20px; height: 20px; border-radius: 10px; font-size: 11px;
+            font-weight: 700; margin-left: 6px; padding: 0 5px;
+        }
+        .filter-btn.active .count { background: rgba(255,255,255,0.3); color: white; }
+        .filter-btn:not(.active) .count { background: var(--bg); }
+
+        .task-board { display: flex; flex-direction: column; gap: 10px; }
+        .task-item {
+            display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow); transition: all 0.2s; cursor: pointer;
+        }
+        .task-item:hover { box-shadow: var(--shadow-hover); border-color: var(--accent); }
+        .task-item.done { opacity: 0.6; }
+        .task-item.done .task-title { text-decoration: line-through; color: var(--text-light); }
+
+        .task-check {
+            width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border);
+            background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent;
+        }
+        .task-check:hover { border-color: var(--success); }
+        .task-check.checked { background: var(--success); border-color: var(--success); color: white; }
+
+        .task-body { flex: 1; min-width: 0; }
+        .task-title { font-size: 15px; font-weight: 600; color: var(--primary-dark); margin-bottom: 4px; }
+        .task-desc { font-size: 13px; color: var(--text-light); line-height: 1.5; margin-bottom: 8px; }
+        .task-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .task-tag {
+            padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+        }
+        .tag-tamara { background: #F3E8FF; color: #7C3AED; }
+        .tag-elena { background: #E0ECFF; color: #2563EB; }
+        .tag-alle { background: var(--accent-light); color: var(--primary-dark); }
+
+        .prio-hoch { border-left: 4px solid var(--danger); }
+        .prio-mittel { border-left: 4px solid var(--warning); }
+        .prio-normal { border-left: 4px solid var(--success); }
+
+        .task-due { font-size: 11px; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
+        .task-due.overdue { color: var(--danger); font-weight: 600; }
+        .task-due.today { color: var(--warning); font-weight: 600; }
+
+        .task-category { font-size: 11px; color: var(--text-light); padding: 2px 8px; background: var(--bg); border-radius: 8px; }
+
+        .task-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .task-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-light); cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .task-btn:hover { border-color: var(--accent); color: var(--primary); }
+        .task-btn.delete:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* Add task form */
+        .add-form { display: none; }
+        .add-form.open { display: block; }
+        .add-form .card { border: 2px solid var(--accent); }
+
+        /* Completed section */
+        .completed-toggle {
+            display: flex; align-items: center; gap: 8px; padding: 12px 0;
+            color: var(--text-light); font-size: 13px; cursor: pointer; border: none;
+            background: none; font-family: inherit; font-weight: 500;
+        }
+        .completed-toggle:hover { color: var(--primary); }
+        .completed-section { display: none; }
+        .completed-section.open { display: block; }
+
+        /* Stats bar */
+        .task-stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin-bottom: 24px;
+        }
+        .task-stat {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 16px; text-align: center; box-shadow: var(--shadow);
+        }
+        .task-stat-val { font-size: 28px; font-weight: 700; color: var(--primary-dark); }
+        .task-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-light); margin-top: 4px; }
+
+        /* Activity log */
+        .log-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .log-item:last-child { border-bottom: none; }
+        .log-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+        .log-dot.done { background: var(--success); }
+        .log-dot.added { background: var(--info); }
+        .log-time { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+        <div class="page-header">
+            <h2>Aufgaben</h2>
+            <p>Team-Aufgaben verwalten und verfolgen</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="task-stats">
+            <div class="task-stat">
+                <div class="task-stat-val" id="stat-open">0</div>
+                <div class="task-stat-label">Offen</div>
+            </div>
+            <div class="task-stat">
+                <div class="task-stat-val" id="stat-today">0</div>
+                <div class="task-stat-label">Heute faellig</div>
+            </div>
+            <div class="task-stat">
+                <div class="task-stat-val" id="stat-overdue">0</div>
+                <div class="task-stat-label">Ueberfaellig</div>
+            </div>
+            <div class="task-stat">
+                <div class="task-stat-val" id="stat-done-week">0</div>
+                <div class="task-stat-label">Diese Woche erledigt</div>
+            </div>
+        </div>
+
+        <!-- Add button -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <button class="btn btn-primary" onclick="toggleAddForm()">+ Neue Aufgabe</button>
+        </div>
+
+        <!-- Add form -->
+        <div class="add-form" id="addForm">
+            <div class="card">
+                <h3>Neue Aufgabe erstellen</h3>
+                <div class="form-row">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Titel</label>
+                        <input type="text" id="t-title" placeholder="Was muss erledigt werden?">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung (optional)</label>
+                    <textarea id="t-desc" placeholder="Details zur Aufgabe..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Zugewiesen an</label>
+                        <select id="t-assignee">
+                            <option value="Tamara">Tamara</option>
+                            <option value="Elena">Elena</option>
+                            <option value="Alle">Alle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Prioritaet</label>
+                        <select id="t-prio">
+                            <option value="normal">Normal</option>
+                            <option value="mittel">Mittel</option>
+                            <option value="hoch">Hoch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Faellig am</label>
+                        <input type="date" id="t-due">
+                    </div>
+                    <div class="form-group">
+                        <label>Kategorie</label>
+                        <select id="t-category">
+                            <option value="Allgemein">Allgemein</option>
+                            <option value="Bestellung">Bestellung</option>
+                            <option value="Kunde kontaktieren">Kunde kontaktieren</option>
+                            <option value="Studio">Studio</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Buchhaltung">Buchhaltung</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <button class="btn btn-primary" onclick="addTask()">Aufgabe erstellen</button>
+                    <button class="btn btn-secondary" onclick="toggleAddForm()">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="task-filters">
+            <button class="filter-btn active" data-filter="alle" onclick="setFilter('alle', this)">Alle <span class="count" id="cnt-alle">0</span></button>
+            <button class="filter-btn" data-filter="Tamara" onclick="setFilter('Tamara', this)">Tamara <span class="count" id="cnt-tamara">0</span></button>
+            <button class="filter-btn" data-filter="Elena" onclick="setFilter('Elena', this)">Elena <span class="count" id="cnt-elena">0</span></button>
+            <span style="width: 1px; background: var(--border); margin: 0 4px;"></span>
+            <button class="filter-btn" data-filter="Bestellung" onclick="setFilter('Bestellung', this)">Bestellungen <span class="count" id="cnt-bestellung">0</span></button>
+            <button class="filter-btn" data-filter="Kunde kontaktieren" onclick="setFilter('Kunde kontaktieren', this)">Kunden <span class="count" id="cnt-kunde">0</span></button>
+        </div>
+
+        <!-- Open tasks -->
+        <div class="task-board" id="taskBoard">
+            <div class="loading"><div class="spinner"></div> Lade Aufgaben...</div>
+        </div>
+
+        <!-- Completed toggle -->
+        <button class="completed-toggle" onclick="toggleCompleted()">
+            <span id="completed-arrow">&#9654;</span> Erledigte Aufgaben anzeigen (<span id="cnt-done">0</span>)
+        </button>
+        <div class="completed-section" id="completedSection">
+            <div class="task-board" id="doneBoard"></div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card" style="margin-top: 24px;">
+            <h3>Aktivitaeten-Log</h3>
+            <div id="activityLog">
+                <div class="empty-state"><p>Noch keine Aktivitaeten.</p></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <h3>Aufgabe bearbeiten</h3>
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+            <label>Titel</label>
+            <input type="text" id="edit-title">
+        </div>
+        <div class="form-group">
+            <label>Beschreibung</label>
+            <textarea id="edit-desc"></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Zugewiesen an</label>
+                <select id="edit-assignee">
+                    <option value="Tamara">Tamara</option>
+                    <option value="Elena">Elena</option>
+                    <option value="Alle">Alle</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Prioritaet</label>
+                <select id="edit-prio">
+                    <option value="normal">Normal</option>
+                    <option value="mittel">Mittel</option>
+                    <option value="hoch">Hoch</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Faellig am</label>
+                <input type="date" id="edit-due">
+            </div>
+            <div class="form-group">
+                <label>Kategorie</label>
+                <select id="edit-category">
+                    <option value="Allgemein">Allgemein</option>
+                    <option value="Bestellung">Bestellung</option>
+                    <option value="Kunde kontaktieren">Kunde kontaktieren</option>
+                    <option value="Studio">Studio</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Buchhaltung">Buchhaltung</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="saveEdit()">Speichern</button>
+            <button class="btn btn-secondary" onclick="closeEditModal()">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+let allTasks = [];
+let currentFilter = 'alle';
+let unsubTasks = null;
+
+// ============ LOAD TASKS (LIVE) ============
+function loadTasks() {
+    if (unsubTasks) unsubTasks();
+    unsubTasks = db.collection('studio_tasks').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+        allTasks = [];
+        snapshot.forEach(doc => {
+            allTasks.push({ ...doc.data(), _id: doc.id });
+        });
+        renderAll();
+    }, err => {
+        console.error('Error loading tasks:', err);
+        document.getElementById('taskBoard').innerHTML = '<div class="empty-state"><p>Fehler beim Laden der Aufgaben.</p></div>';
+    });
+}
+
+// ============ RENDER ============
+function renderAll() {
+    const today = todayStr();
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString().slice(0, 10);
+
+    const open = allTasks.filter(t => t.status !== 'done');
+    const done = allTasks.filter(t => t.status === 'done');
+    const doneThisWeek = done.filter(t => t.completedAt && t.completedAt >= weekAgoStr);
+
+    // Stats
+    document.getElementById('stat-open').textContent = open.length;
+    document.getElementById('stat-today').textContent = open.filter(t => t.due === today).length;
+    document.getElementById('stat-overdue').textContent = open.filter(t => t.due && t.due < today).length;
+    document.getElementById('stat-done-week').textContent = doneThisWeek.length;
+
+    // Counts for filters
+    document.getElementById('cnt-alle').textContent = open.length;
+    document.getElementById('cnt-tamara').textContent = open.filter(t => t.assignee === 'Tamara' || t.assignee === 'Alle').length;
+    document.getElementById('cnt-elena').textContent = open.filter(t => t.assignee === 'Elena' || t.assignee === 'Alle').length;
+    document.getElementById('cnt-bestellung').textContent = open.filter(t => t.category === 'Bestellung').length;
+    document.getElementById('cnt-kunde').textContent = open.filter(t => t.category === 'Kunde kontaktieren').length;
+    document.getElementById('cnt-done').textContent = done.length;
+
+    // Filter open tasks
+    let filtered = open;
+    if (currentFilter === 'Tamara') filtered = open.filter(t => t.assignee === 'Tamara' || t.assignee === 'Alle');
+    else if (currentFilter === 'Elena') filtered = open.filter(t => t.assignee === 'Elena' || t.assignee === 'Alle');
+    else if (currentFilter !== 'alle') filtered = open.filter(t => t.category === currentFilter);
+
+    // Sort: overdue first, then by priority, then by due date
+    const prioOrder = { hoch: 0, mittel: 1, normal: 2 };
+    filtered.sort((a, b) => {
+        const aOver = a.due && a.due < today ? -1 : 0;
+        const bOver = b.due && b.due < today ? -1 : 0;
+        if (aOver !== bOver) return aOver - bOver;
+        if (prioOrder[a.priority] !== prioOrder[b.priority]) return prioOrder[a.priority] - prioOrder[b.priority];
+        if (a.due && b.due) return a.due.localeCompare(b.due);
+        if (a.due) return -1;
+        if (b.due) return 1;
+        return 0;
+    });
+
+    // Render open tasks
+    const board = document.getElementById('taskBoard');
+    if (filtered.length === 0) {
+        board.innerHTML = '<div class="empty-state"><div class="icon">&#9989;</div><h3>Keine offenen Aufgaben</h3><p>Alles erledigt! Erstelle eine neue Aufgabe oben.</p></div>';
+    } else {
+        board.innerHTML = filtered.map(t => renderTaskItem(t, false)).join('');
+    }
+
+    // Render done tasks
+    const doneBoard = document.getElementById('doneBoard');
+    const recentDone = done.slice(0, 20);
+    doneBoard.innerHTML = recentDone.length ? recentDone.map(t => renderTaskItem(t, true)).join('') : '<div class="empty-state"><p>Noch keine erledigten Aufgaben.</p></div>';
+
+    // Render activity log
+    renderActivityLog(done);
+}
+
+function renderTaskItem(t, isDone) {
+    const today = todayStr();
+    let dueClass = '';
+    let dueText = '';
+    if (t.due) {
+        if (t.due < today && !isDone) { dueClass = 'overdue'; dueText = 'Ueberfaellig: ' + formatDate(t.due); }
+        else if (t.due === today && !isDone) { dueClass = 'today'; dueText = 'Heute faellig'; }
+        else { dueText = 'Faellig: ' + formatDate(t.due); }
+    }
+
+    const assigneeClass = t.assignee === 'Tamara' ? 'tag-tamara' : t.assignee === 'Elena' ? 'tag-elena' : 'tag-alle';
+
+    return `
+        <div class="task-item prio-${t.priority || 'normal'} ${isDone ? 'done' : ''}">
+            <button class="task-check ${isDone ? 'checked' : ''}" onclick="toggleTask('${t._id}', ${isDone})">
+                ${isDone ? '&#10003;' : ''}
+            </button>
+            <div class="task-body">
+                <div class="task-title">${escHtml(t.title)}</div>
+                ${t.description ? '<div class="task-desc">' + escHtml(t.description) + '</div>' : ''}
+                <div class="task-meta">
+                    <span class="task-tag ${assigneeClass}">${t.assignee}</span>
+                    ${t.category && t.category !== 'Allgemein' ? '<span class="task-category">' + t.category + '</span>' : ''}
+                    ${dueText ? '<span class="task-due ' + dueClass + '">' + dueText + '</span>' : ''}
+                </div>
+            </div>
+            <div class="task-actions">
+                ${!isDone ? '<button class="task-btn" onclick="openEditModal(\'' + t._id + '\')" title="Bearbeiten">&#9998;</button>' : ''}
+                <button class="task-btn delete" onclick="deleteTask('${t._id}')" title="Loeschen">&#10005;</button>
+            </div>
+        </div>
+    `;
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderActivityLog(doneTasks) {
+    const log = document.getElementById('activityLog');
+    const recent = doneTasks.filter(t => t.completedAt).slice(0, 10);
+    if (recent.length === 0) {
+        log.innerHTML = '<div class="empty-state"><p>Noch keine erledigten Aufgaben.</p></div>';
+        return;
+    }
+    log.innerHTML = recent.map(t => `
+        <div class="log-item">
+            <div class="log-dot done"></div>
+            <div>
+                <div><strong>${t.completedBy || 'Jemand'}</strong> hat "${escHtml(t.title)}" erledigt</div>
+                <div class="log-time">${t.completedAt ? formatDate(t.completedAt) : ''}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ============ ACTIONS ============
+function addTask() {
+    const title = document.getElementById('t-title').value.trim();
+    if (!title) { showToast('Bitte Titel eingeben.', 'error'); return; }
+
+    db.collection('studio_tasks').add({
+        title,
+        description: document.getElementById('t-desc').value.trim(),
+        assignee: document.getElementById('t-assignee').value,
+        priority: document.getElementById('t-prio').value,
+        due: document.getElementById('t-due').value || null,
+        category: document.getElementById('t-category').value,
+        status: 'open',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAtStr: todayStr()
+    }).then(() => {
+        showToast('Aufgabe erstellt!', 'success');
+        document.getElementById('t-title').value = '';
+        document.getElementById('t-desc').value = '';
+        document.getElementById('t-due').value = '';
+        document.getElementById('t-prio').value = 'normal';
+        document.getElementById('t-category').value = 'Allgemein';
+        toggleAddForm();
+    }).catch(err => {
+        console.error(err);
+        showToast('Fehler beim Speichern.', 'error');
+    });
+}
+
+function toggleTask(id, isDone) {
+    if (isDone) {
+        db.collection('studio_tasks').doc(id).update({
+            status: 'open', completedAt: null, completedBy: null
+        });
+    } else {
+        db.collection('studio_tasks').doc(id).update({
+            status: 'done',
+            completedAt: todayStr(),
+            completedBy: 'Team'
+        });
+        showToast('Erledigt!', 'success');
+    }
+}
+
+function deleteTask(id) {
+    if (!confirm('Aufgabe wirklich loeschen?')) return;
+    db.collection('studio_tasks').doc(id).delete().then(() => {
+        showToast('Geloescht.', '');
+    });
+}
+
+function openEditModal(id) {
+    const task = allTasks.find(t => t._id === id);
+    if (!task) return;
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-title').value = task.title || '';
+    document.getElementById('edit-desc').value = task.description || '';
+    document.getElementById('edit-assignee').value = task.assignee || 'Tamara';
+    document.getElementById('edit-prio').value = task.priority || 'normal';
+    document.getElementById('edit-due').value = task.due || '';
+    document.getElementById('edit-category').value = task.category || 'Allgemein';
+    document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+}
+
+function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    db.collection('studio_tasks').doc(id).update({
+        title: document.getElementById('edit-title').value.trim(),
+        description: document.getElementById('edit-desc').value.trim(),
+        assignee: document.getElementById('edit-assignee').value,
+        priority: document.getElementById('edit-prio').value,
+        due: document.getElementById('edit-due').value || null,
+        category: document.getElementById('edit-category').value
+    }).then(() => {
+        showToast('Gespeichert!', 'success');
+        closeEditModal();
+    });
+}
+
+// ============ UI HELPERS ============
+function toggleAddForm() {
+    document.getElementById('addForm').classList.toggle('open');
+}
+
+function setFilter(filter, el) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderAll();
+}
+
+function toggleCompleted() {
+    const section = document.getElementById('completedSection');
+    const arrow = document.getElementById('completed-arrow');
+    section.classList.toggle('open');
+    arrow.textContent = section.classList.contains('open') ? '\u25BC' : '\u25B6';
+}
+
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+});
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('t-due').value = todayStr();
+    loadTasks();
+});
+</script>
+</body>
+</html>
