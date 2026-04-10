@@ -128,7 +128,7 @@
     <main class="main">
         <!-- Greeting -->
         <div class="greeting-wrap">
-            <div class="greeting" id="greeting">Guten Tag, Tamara</div>
+            <div class="greeting" id="greeting">Guten Tag, Skinconcept</div>
             <div class="greeting-sub" id="todayDate"></div>
         </div>
 
@@ -206,9 +206,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const hour = new Date().getHours();
     const greetEl = document.getElementById('greeting');
-    if (hour < 12) greetEl.textContent = 'Guten Morgen, Tamara';
-    else if (hour < 17) greetEl.textContent = 'Guten Tag, Tamara';
-    else greetEl.textContent = 'Guten Abend, Tamara';
+    if (hour < 12) greetEl.textContent = 'Guten Morgen, Skinconcept';
+    else if (hour < 17) greetEl.textContent = 'Guten Tag, Skinconcept';
+    else greetEl.textContent = 'Guten Abend, Skinconcept';
 
     const now = new Date();
     document.getElementById('todayDate').textContent = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
