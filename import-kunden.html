@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skinconcept - Kunden-Import</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .import-progress { margin: 20px 0; }
+        .progress-bar-wrap {
+            background: var(--border); border-radius: 20px; height: 10px; overflow: hidden; margin-top: 8px;
+        }
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 20px; transition: width 0.2s; width: 0%;
+        }
+        .import-log {
+            max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.8;
+            padding: 16px; background: var(--bg); border-radius: var(--radius-sm);
+            border: 1px solid var(--border); margin-top: 16px;
+        }
+        .log-new { color: var(--success); }
+        .log-update { color: var(--info); }
+        .log-skip { color: var(--text-light); }
+        .log-error { color: var(--danger); }
+        .summary-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin: 20px 0;
+        }
+        .summary-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 16px; text-align: center;
+        }
+        .summary-card .num { font-size: 28px; font-weight: 700; }
+        .summary-card .lbl { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .summary-card.green .num { color: var(--success); }
+        .summary-card.blue .num { color: var(--info); }
+        .summary-card.gray .num { color: var(--text-light); }
+        .summary-card.red .num { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+        <div class="page-header">
+            <h2>Treatwell Kunden-Import</h2>
+            <p>Alle Kunden aus dem Treatwell-Export in die Datenbank importieren</p>
+        </div>
+
+        <div class="card" id="importCard">
+            <h3>Treatwell CSV-Import</h3>
+            <p style="color:var(--text-light); font-size:14px; margin-bottom:20px;">
+                Diese Seite importiert alle Kunden aus deiner Treatwell-Exportdatei direkt in die Datenbank.<br>
+                Bereits vorhandene Kunden werden erkannt und nicht doppelt angelegt.
+            </p>
+
+            <div id="preImport">
+                <div class="summary-grid">
+                    <div class="summary-card green">
+                        <div class="num" id="totalCount">-</div>
+                        <div class="lbl">Kunden in CSV</div>
+                    </div>
+                    <div class="summary-card blue">
+                        <div class="num" id="withEmail">-</div>
+                        <div class="lbl">Mit E-Mail</div>
+                    </div>
+                    <div class="summary-card blue">
+                        <div class="num" id="withPhone">-</div>
+                        <div class="lbl">Mit Telefon</div>
+                    </div>
+                    <div class="summary-card gray">
+                        <div class="num" id="withNotes">-</div>
+                        <div class="lbl">Mit Notizen</div>
+                    </div>
+                </div>
+
+                <div id="previewTable" style="max-height:300px; overflow-y:auto; margin-bottom:20px;">
+                    <div class="loading"><div class="spinner"></div> Datei wird geladen...</div>
+                </div>
+
+                <button class="btn btn-primary btn-full" id="startBtn" onclick="startImport()" disabled>
+                    Import starten
+                </button>
+            </div>
+
+            <div id="duringImport" style="display:none;">
+                <div class="import-progress">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span id="importStatus">Importiere...</span>
+                        <span id="importPercent">0%</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" id="importBar"></div>
+                    </div>
+                </div>
+                <div class="import-log" id="importLog"></div>
+            </div>
+
+            <div id="afterImport" style="display:none;">
+                <div style="text-align:center; padding:20px 0;">
+                    <div style="font-size:48px; margin-bottom:12px;">&#10003;</div>
+                    <h3 style="color:var(--success); margin-bottom:8px;">Import abgeschlossen!</h3>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-card green">
+                        <div class="num" id="resultNew">0</div>
+                        <div class="lbl">Neu angelegt</div>
+                    </div>
+                    <div class="summary-card blue">
+                        <div class="num" id="resultUpdated">0</div>
+                        <div class="lbl">Aktualisiert</div>
+                    </div>
+                    <div class="summary-card gray">
+                        <div class="num" id="resultSkipped">0</div>
+                        <div class="lbl">Uebersprungen</div>
+                    </div>
+                    <div class="summary-card red">
+                        <div class="num" id="resultErrors">0</div>
+                        <div class="lbl">Fehler</div>
+                    </div>
+                </div>
+                <a href="kunden.html" class="btn btn-primary btn-full" style="text-align:center;">Zur Kundenliste</a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+let parsedClients = [];
+let existingClients = [];
+
+// ============ CSV PARSING ============
+// Handles multiline fields (quoted), commas in quotes, etc.
+function parseCSV(text) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+
+        if (inQuotes) {
+            if (ch === '"') {
+                if (i + 1 < text.length && text[i + 1] === '"') {
+                    currentField += '"';
+                    i++;
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                currentField += ch;
+            }
+        } else {
+            if (ch === '"') {
+                inQuotes = true;
+            } else if (ch === ',') {
+                currentRow.push(currentField.trim());
+                currentField = '';
+            } else if (ch === '\n') {
+                currentRow.push(currentField.trim());
+                currentField = '';
+                if (currentRow.length > 1 || currentRow[0] !== '') {
+                    rows.push(currentRow);
+                }
+                currentRow = [];
+            } else if (ch !== '\r') {
+                currentField += ch;
+            }
+        }
+    }
+    // Last field/row
+    if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField.trim());
+        rows.push(currentRow);
+    }
+
+    return rows;
+}
+
+function cleanPhoneFromInfo(info) {
+    // Extract phone numbers from info field
+    const phoneMatch = info.match(/Phone number \(not validated\):\s*(\+?\d[\d\s\-]+)/);
+    return phoneMatch ? phoneMatch[1].trim() : null;
+}
+
+function cleanEmailFromInfo(info) {
+    const emailMatch = info.match(/Email address \(not validated\):\s*(\S+@\S+)/);
+    return emailMatch ? emailMatch[1].trim() : null;
+}
+
+function cleanInfoField(info) {
+    if (!info) return '';
+    // Remove phone/email validation notes
+    let cleaned = info.replace(/Phone number \(not validated\):\s*\+?\d[\d\s\-]+\n?/g, '');
+    cleaned = cleaned.replace(/Email address \(not validated\):\s*\S+@\S+\n?/g, '');
+    cleaned = cleaned.replace(/Gender \(not validated\):\s*\d+\n?/g, '');
+    cleaned = cleaned.replace(/Dieses Feld ist für zusätzliche Informationen über ihre Kunden\./g, '');
+    cleaned = cleaned.trim();
+    return cleaned;
+}
+
+function fixName(name, vorname, nachname) {
+    // Some entries have "Nachname Vorname" format in the Name field
+    // Use Vorname + Nachname columns when available
+    if (vorname && nachname) {
+        // Check if the order seems reversed (Nachname first)
+        if (name && name.startsWith(nachname) && nachname !== vorname) {
+            return vorname + ' ' + nachname;
+        }
+        return vorname + ' ' + nachname;
+    }
+    return name || '';
+}
+
+async function loadAndParseCSV() {
+    try {
+        const response = await fetch('Treatwell-Import/kundenexport.csv');
+        let text;
+
+        if (response.ok) {
+            text = await response.text();
+        } else {
+            // Try loading directly from known path
+            const resp2 = await fetch('../Downloads/Skinconcept Hagner Kundenexport 27.03.2026.csv');
+            if (resp2.ok) {
+                text = await resp2.text();
+            }
+        }
+
+        if (!text) {
+            // Ask user to select the file
+            return await loadViaFileInput();
+        }
+
+        processCSVText(text);
+    } catch (err) {
+        console.log('File not found locally, showing file picker');
+        return await loadViaFileInput();
+    }
+}
+
+function loadViaFileInput() {
+    return new Promise((resolve) => {
+        const previewDiv = document.getElementById('previewTable');
+        previewDiv.innerHTML = `
+            <div style="text-align:center; padding:30px;">
+                <p style="margin-bottom:16px;">Bitte waehle die Treatwell-Exportdatei aus:</p>
+                <label class="btn btn-primary" style="cursor:pointer;">
+                    CSV-Datei auswaehlen
+                    <input type="file" accept=".csv" style="display:none;" onchange="handleFileSelect(this)">
+                </label>
+            </div>
+        `;
+    });
+}
+
+function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        processCSVText(e.target.result);
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function processCSVText(text) {
+    const rows = parseCSV(text);
+    if (rows.length < 2) {
+        document.getElementById('previewTable').innerHTML = '<p style="color:var(--danger);">Keine Daten in der CSV gefunden.</p>';
+        return;
+    }
+
+    const headers = rows[0];
+    // Find column indices
+    const nameIdx = headers.findIndex(h => h.toLowerCase() === 'name');
+    const vornameIdx = headers.findIndex(h => h.toLowerCase() === 'vorname');
+    const nachnameIdx = headers.findIndex(h => h.toLowerCase() === 'nachname');
+    const phoneIdx = headers.findIndex(h => h.toLowerCase() === 'telefon');
+    const emailIdx = headers.findIndex(h => h.toLowerCase() === 'email');
+    const infoIdx = headers.findIndex(h => h.toLowerCase() === 'info');
+    const birthdayIdx = headers.findIndex(h => h.toLowerCase() === 'geburtsdatum');
+    const createdIdx = headers.findIndex(h => h.toLowerCase() === 'erstellt');
+    const bookingsIdx = headers.findIndex(h => h.toLowerCase().includes('buchungen'));
+
+    parsedClients = [];
+    const skipNames = ['treatwell support', 'treatwell', 'test'];
+
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 3) continue;
+
+        const rawName = row[nameIdx] || '';
+        const vorname = row[vornameIdx] || '';
+        const nachname = row[nachnameIdx] || '';
+        const name = fixName(rawName, vorname, nachname);
+
+        if (!name || name.length < 2) continue;
+        if (skipNames.includes(name.toLowerCase())) continue;
+
+        let phone = row[phoneIdx] || '';
+        let email = row[emailIdx] || '';
+        const info = row[infoIdx] || '';
+        const birthday = row[birthdayIdx] || '';
+        const created = row[createdIdx] || '';
+        const bookings = parseInt(row[bookingsIdx]) || 0;
+
+        // Try to extract phone/email from info if missing
+        if (!phone && info) {
+            const infoPhone = cleanPhoneFromInfo(info);
+            if (infoPhone) phone = infoPhone;
+        }
+        if (!email && info) {
+            const infoEmail = cleanEmailFromInfo(info);
+            if (infoEmail) email = infoEmail;
+        }
+
+        // Clean info
+        const notes = cleanInfoField(info);
+
+        // Parse created date to use as a rough "last visit" reference
+        let lastVisitEstimate = '';
+        if (created) {
+            const createdDate = created.split(' ')[0]; // "2025-12-01"
+            if (createdDate && createdDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                lastVisitEstimate = createdDate;
+            }
+        }
+
+        parsedClients.push({
+            name,
+            phone,
+            email,
+            notes,
+            birthday,
+            bookings,
+            lastVisitEstimate,
+            created: created.split(' ')[0] || ''
+        });
+    }
+
+    // Remove exact duplicates (same name), keep the one with more data
+    const deduped = new Map();
+    for (const c of parsedClients) {
+        const key = c.name.toLowerCase();
+        if (deduped.has(key)) {
+            const existing = deduped.get(key);
+            // Keep the one with more bookings or more recent
+            if (c.bookings > existing.bookings || c.created > existing.created) {
+                deduped.set(key, { ...c, phone: c.phone || existing.phone, email: c.email || existing.email, notes: c.notes || existing.notes });
+            }
+        } else {
+            deduped.set(key, c);
+        }
+    }
+    parsedClients = Array.from(deduped.values());
+
+    // Update stats
+    document.getElementById('totalCount').textContent = parsedClients.length;
+    document.getElementById('withEmail').textContent = parsedClients.filter(c => c.email).length;
+    document.getElementById('withPhone').textContent = parsedClients.filter(c => c.phone).length;
+    document.getElementById('withNotes').textContent = parsedClients.filter(c => c.notes).length;
+
+    // Show preview table
+    const previewDiv = document.getElementById('previewTable');
+    previewDiv.innerHTML = `
+        <div class="table-wrap" style="max-height:300px; overflow-y:auto;">
+            <table style="font-size:13px;">
+                <thead>
+                    <tr><th>#</th><th>Name</th><th>Telefon</th><th>E-Mail</th><th>Notizen</th><th>Buchungen</th></tr>
+                </thead>
+                <tbody>
+                    ${parsedClients.slice(0, 20).map((c, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td><strong>${c.name}</strong></td>
+                            <td>${c.phone || '-'}</td>
+                            <td>${c.email || '-'}</td>
+                            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.notes || '-'}</td>
+                            <td>${c.bookings}</td>
+                        </tr>
+                    `).join('')}
+                    ${parsedClients.length > 20 ? `<tr><td colspan="6" style="text-align:center; color:var(--text-light);">... und ${parsedClients.length - 20} weitere Kunden</td></tr>` : ''}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').textContent = `${parsedClients.length} Kunden jetzt importieren`;
+}
+
+// ============ IMPORT ============
+async function startImport() {
+    document.getElementById('preImport').style.display = 'none';
+    document.getElementById('duringImport').style.display = 'block';
+
+    const log = document.getElementById('importLog');
+    const bar = document.getElementById('importBar');
+    const status = document.getElementById('importStatus');
+    const percent = document.getElementById('importPercent');
+
+    // First, load existing clients to avoid duplicates
+    log.innerHTML = '<div class="log-skip">Lade bestehende Kundendaten...</div>';
+
+    try {
+        const snap = await db.collection('clients').get();
+        existingClients = [];
+        snap.forEach(doc => existingClients.push({ id: doc.id, ...doc.data() }));
+    } catch (err) {
+        existingClients = [];
+    }
+
+    log.innerHTML += `<div class="log-skip">${existingClients.length} bestehende Kunden gefunden.</div><hr style="border-color:var(--border); margin:8px 0;">`;
+
+    let newCount = 0, updateCount = 0, skipCount = 0, errorCount = 0;
+    const total = parsedClients.length;
+
+    // Process in batches of 5 for speed
+    for (let i = 0; i < total; i++) {
+        const c = parsedClients[i];
+        const pct = Math.round(((i + 1) / total) * 100);
+        bar.style.width = pct + '%';
+        percent.textContent = pct + '%';
+        status.textContent = `Importiere ${i + 1} von ${total}...`;
+
+        try {
+            // Check if client exists (case-insensitive name match)
+            const existing = existingClients.find(e => e.name && e.name.toLowerCase() === c.name.toLowerCase());
+
+            if (existing) {
+                // Update with new data if we have more info
+                const updates = {};
+                if (c.phone && !existing.phone) updates.phone = c.phone;
+                if (c.email && !existing.email) updates.email = c.email;
+                if (c.notes && !existing.notes) updates.notes = c.notes;
+                if (c.birthday && !existing.birthday) updates.birthday = c.birthday;
+
+                if (Object.keys(updates).length > 0) {
+                    await db.collection('clients').doc(existing.id).update(updates);
+                    log.innerHTML += `<div class="log-update">&#8635; ${c.name} — aktualisiert (${Object.keys(updates).join(', ')})</div>`;
+                    updateCount++;
+                } else {
+                    log.innerHTML += `<div class="log-skip">&#8212; ${c.name} — bereits vorhanden, nichts zu aktualisieren</div>`;
+                    skipCount++;
+                }
+            } else {
+                // Create new client
+                const newClient = {
+                    name: c.name,
+                    phone: c.phone || '',
+                    email: c.email || '',
+                    notes: c.notes || '',
+                    birthday: c.birthday || '',
+                    lastVisit: c.lastVisitEstimate || '',
+                    recallInterval: 3,
+                    lastContacted: '',
+                    nachsorgeErledigt: '',
+                    nextRecall: c.lastVisitEstimate ? calcRecallDate(c.lastVisitEstimate, 3) : '',
+                    treatwellBookings: c.bookings,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    importedFrom: 'treatwell-csv'
+                };
+
+                const ref = await db.collection('clients').add(newClient);
+                existingClients.push({ id: ref.id, ...newClient });
+                log.innerHTML += `<div class="log-new">&#10003; ${c.name} — neu angelegt${c.phone ? ' (Tel: ' + c.phone + ')' : ''}${c.email ? ' (E-Mail: ' + c.email + ')' : ''}</div>`;
+                newCount++;
+            }
+        } catch (err) {
+            log.innerHTML += `<div class="log-error">&#10007; ${c.name} — Fehler: ${err.message}</div>`;
+            errorCount++;
+        }
+
+        // Scroll log to bottom
+        log.scrollTop = log.scrollHeight;
+
+        // Small delay to not overwhelm Firebase
+        if (i % 10 === 0) await new Promise(r => setTimeout(r, 100));
+    }
+
+    // Show results
+    document.getElementById('duringImport').style.display = 'none';
+    document.getElementById('afterImport').style.display = 'block';
+    document.getElementById('resultNew').textContent = newCount;
+    document.getElementById('resultUpdated').textContent = updateCount;
+    document.getElementById('resultSkipped').textContent = skipCount;
+    document.getElementById('resultErrors').textContent = errorCount;
+}
+
+function calcRecallDate(lastVisit, months) {
+    if (!lastVisit) return '';
+    const d = new Date(lastVisit + 'T00:00:00');
+    d.setMonth(d.getMonth() + Number(months));
+    return d.toISOString().slice(0, 10);
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    loadAndParseCSV();
+});
+</script>
+</body>
+</html>
