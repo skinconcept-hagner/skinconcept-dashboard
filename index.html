@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b08d57">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Skinconcept">
+    <link rel="apple-touch-icon" href="icon.svg">
     <title>Skinconcept Hagner - Studio Hub</title>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -290,5 +296,7 @@ async function loadRecentActivity() {
     container.innerHTML = recent.map(a => `<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time.toLocaleDateString('de-DE')} ${a.time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</div></div></div>`).join('');
 }
 </script>
+
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}</script>
 </body>
 </html>
