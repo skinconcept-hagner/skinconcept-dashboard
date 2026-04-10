@@ -157,17 +157,47 @@
         }
         @media (max-width: 640px) {
             .header { padding: 16px; }
-            .header h1 { font-size: 18px; }
-            .tabs { padding: 0 8px; }
-            .tab { padding: 12px 12px; font-size: 13px; }
-            .content { padding: 0 12px; margin: 16px auto; }
-            .card { padding: 16px; }
-            .form-row { flex-direction: column; }
+            .header h1 { font-size: 16px; letter-spacing: 0; }
+            .header-sub { font-size: 11px; }
+            .header-right { width: 100%; }
+            .month-select { width: 100%; }
+            .tabs { padding: 0 4px; gap: 0; scrollbar-width: none; }
+            .tabs::-webkit-scrollbar { display: none; }
+            .tab { padding: 10px 10px; font-size: 12px; flex-shrink: 0; }
+            .content { padding: 0 8px; margin: 12px auto; }
+            .card { padding: 14px; margin-bottom: 14px; }
+            .card h2 { font-size: 15px; margin-bottom: 12px; }
+            .form-row { flex-direction: column; gap: 10px; }
             .form-group { width: 100%; }
-            .form-group input, .form-group select { width: 100%; }
-            .info-bar { padding: 12px 16px; }
-            .calendar-grid { grid-template-columns: repeat(4, 1fr); }
-            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-group input, .form-group select { width: 100% !important; }
+            .form-group label { font-size: 11px; }
+            .info-bar { padding: 10px 12px; flex-direction: column; gap: 4px; font-size: 12px; }
+            .calendar-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+            .cal-day { padding: 6px 4px; font-size: 11px; }
+            .cal-day .day-num { font-size: 12px; }
+            .cal-day .day-info { font-size: 9px; }
+            .cal-header { font-size: 10px; padding: 4px; }
+            .legend { gap: 8px; font-size: 11px; }
+            .summary-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .summary-card { padding: 14px 10px; }
+            .summary-card .value { font-size: 22px; }
+            .summary-card .label { font-size: 10px; }
+            /* Tabellen mobile: Karten-Layout */
+            .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { font-size: 12px; min-width: 420px; }
+            th { padding: 8px 6px; font-size: 10px; }
+            td { padding: 8px 6px; font-size: 12px; }
+            .btn { padding: 10px 14px; font-size: 13px; width: 100%; justify-content: center; }
+            .btn-send { padding: 14px 20px; font-size: 15px; }
+            .btn-danger { width: auto; }
+            pre#summary-detail { font-size: 12px; line-height: 1.6; }
+            .reminder { padding: 12px 14px; font-size: 13px; }
+            .empty-state { padding: 24px 12px; font-size: 13px; }
+        }
+        @media (max-width: 380px) {
+            .calendar-grid { grid-template-columns: repeat(3, 1fr); }
+            .summary-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 14px; }
         }
         /* PIN OVERLAY */
         .pin-overlay {
