@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skinconcept Hagner - Bestellungen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* EINKAUFSLISTE */
+        .ek-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+        .ek-tab {
+            padding: 14px 28px; font-size: 15px; font-weight: 600; color: var(--text-light);
+            cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent;
+            transition: all 0.2s; font-family: inherit;
+        }
+        .ek-tab:hover { color: var(--primary); }
+        .ek-tab.active { color: var(--primary); border-bottom-color: var(--accent); }
+        .ek-tab .tab-count {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 20px; height: 20px; border-radius: 10px; font-size: 11px;
+            font-weight: 700; margin-left: 6px; padding: 0 5px; background: var(--bg); color: var(--text-light);
+        }
+        .ek-tab.active .tab-count { background: var(--accent-light); color: var(--accent); }
+
+        .ek-section { display: none; }
+        .ek-section.active { display: block; }
+
+        /* Kategorie-Karten */
+        .ek-category {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden;
+        }
+        .ek-cat-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+        }
+        .ek-cat-title {
+            font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px;
+        }
+        .ek-cat-title .dot {
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+        .ek-cat-count {
+            font-size: 12px; color: var(--text-light); background: var(--bg); padding: 4px 10px; border-radius: 12px;
+        }
+
+        /* Quick-Add */
+        .ek-add-row {
+            display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg);
+        }
+        .ek-add-input {
+            flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 14px; font-family: inherit; color: var(--text); background: var(--bg-card); outline: none;
+        }
+        .ek-add-input:focus { border-color: var(--accent); }
+        .ek-add-input::placeholder { color: var(--text-light); }
+        .ek-add-btn {
+            padding: 10px 18px; border: none; border-radius: var(--radius-sm);
+            background: var(--primary); color: white; font-size: 14px; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.2s; white-space: nowrap;
+        }
+        .ek-add-btn:hover { background: var(--primary-dark); }
+
+        /* Einkaufs-Items */
+        .ek-items { padding: 0; }
+        .ek-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+            border-bottom: 1px solid var(--border); transition: background 0.15s;
+        }
+        .ek-item:last-child { border-bottom: none; }
+        .ek-item:hover { background: rgba(201,168,124,0.03); }
+        .ek-item.done { opacity: 0.45; }
+        .ek-item.done .ek-item-name { text-decoration: line-through; }
+
+        .ek-check {
+            width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border);
+            background: none; cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent;
+        }
+        .ek-check:hover { border-color: var(--success); }
+        .ek-check.checked { background: var(--success); border-color: var(--success); color: white; }
+
+        .ek-item-body { flex: 1; min-width: 0; }
+        .ek-item-name { font-size: 14px; font-weight: 500; }
+        .ek-item-meta { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .ek-item-note {
+            font-size: 12px; color: var(--text-light); margin-top: 2px; font-style: italic;
+        }
+
+        .ek-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .ek-item-btn {
+            width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-light); cursor: pointer; font-size: 12px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .ek-item-btn:hover { border-color: var(--accent); color: var(--primary); }
+        .ek-item-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+
+        .ek-empty {
+            padding: 24px 20px; text-align: center; color: var(--text-light); font-size: 13px;
+        }
+
+        /* Clear-done Button */
+        .ek-clear-done {
+            padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--bg-card); color: var(--text-light); font-size: 12px;
+            cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .ek-clear-done:hover { border-color: var(--danger); color: var(--danger); }
+
+        @media (max-width: 768px) {
+            .ek-add-row { flex-direction: column; }
+            .ek-tab { padding: 12px 16px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+        <div class="page-header">
+            <h2>Bestellungen</h2>
+            <p>Einkaufsliste & Bestellungen verwalten</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="ek-tabs">
+            <button class="ek-tab active" onclick="switchMainTab('liste', this)">Einkaufsliste <span class="tab-count" id="tcListe">0</span></button>
+            <button class="ek-tab" onclick="switchMainTab('orders', this)">Bestellungen <span class="tab-count" id="tcOrders">0</span></button>
+        </div>
+
+        <!-- ==================== EINKAUFSLISTE ==================== -->
+        <div class="ek-section active" id="sec-liste">
+
+            <!-- NOON -->
+            <div class="ek-category" id="cat-noon">
+                <div class="ek-cat-header">
+                    <div class="ek-cat-title">
+                        <span class="dot" style="background: #8B6F5C;"></span>
+                        Noon Aesthetics
+                    </div>
+                    <span class="ek-cat-count" id="cnt-noon">0 Artikel</span>
+                </div>
+                <div class="ek-add-row">
+                    <input type="text" class="ek-add-input" id="add-noon" placeholder="Produkt hinzufuegen..." onkeydown="if(event.key==='Enter')addItem('noon')">
+                    <input type="text" class="ek-add-input" id="note-noon" placeholder="Notiz (optional)" style="max-width: 200px;" onkeydown="if(event.key==='Enter')addItem('noon')">
+                    <button class="ek-add-btn" onclick="addItem('noon')">+</button>
+                </div>
+                <div class="ek-items" id="items-noon"></div>
+            </div>
+
+            <!-- SMETICS -->
+            <div class="ek-category" id="cat-smetics">
+                <div class="ek-cat-header">
+                    <div class="ek-cat-title">
+                        <span class="dot" style="background: #7C3AED;"></span>
+                        Smetics
+                    </div>
+                    <span class="ek-cat-count" id="cnt-smetics">0 Artikel</span>
+                </div>
+                <div class="ek-add-row">
+                    <input type="text" class="ek-add-input" id="add-smetics" placeholder="Produkt hinzufuegen..." onkeydown="if(event.key==='Enter')addItem('smetics')">
+                    <input type="text" class="ek-add-input" id="note-smetics" placeholder="Notiz (optional)" style="max-width: 200px;" onkeydown="if(event.key==='Enter')addItem('smetics')">
+                    <button class="ek-add-btn" onclick="addItem('smetics')">+</button>
+                </div>
+                <div class="ek-items" id="items-smetics"></div>
+            </div>
+
+            <!-- SONSTIGES -->
+            <div class="ek-category" id="cat-sonstiges">
+                <div class="ek-cat-header">
+                    <div class="ek-cat-title">
+                        <span class="dot" style="background: #2563EB;"></span>
+                        Sonstiges
+                        <span style="font-size: 12px; font-weight: 400; color: var(--text-light);">(Amazon, Rossmann, etc.)</span>
+                    </div>
+                    <span class="ek-cat-count" id="cnt-sonstiges">0 Artikel</span>
+                </div>
+                <div class="ek-add-row">
+                    <input type="text" class="ek-add-input" id="add-sonstiges" placeholder="Was wird gebraucht?" onkeydown="if(event.key==='Enter')addItem('sonstiges')">
+                    <input type="text" class="ek-add-input" id="note-sonstiges" placeholder="Wo bestellen? (optional)" style="max-width: 200px;" onkeydown="if(event.key==='Enter')addItem('sonstiges')">
+                    <button class="ek-add-btn" onclick="addItem('sonstiges')">+</button>
+                </div>
+                <div class="ek-items" id="items-sonstiges"></div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+                <button class="ek-clear-done" onclick="clearDone()">Erledigte entfernen</button>
+            </div>
+        </div>
+
+        <!-- ==================== BESTELLUNGEN ==================== -->
+        <div class="ek-section" id="sec-orders">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--warning-light); color: var(--warning);">&#128230;</div>
+                    <div class="stat-label">Offene Bestellungen</div>
+                    <div class="stat-value" id="statOpen">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon gold">&#8364;</div>
+                    <div class="stat-label">Bestellsumme (Monat)</div>
+                    <div class="stat-value" id="statTotal">-</div>
+                </div>
+            </div>
+
+            <!-- New Order Button + Filter -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                <button class="btn btn-primary" onclick="openOrderModal()">+ Neue Bestellung</button>
+                <div style="display:flex; gap:8px;">
+                    <select id="statusFilter" onchange="renderOrders()" style="padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:14px; background:var(--bg-card);">
+                        <option value="">Alle Status</option>
+                        <option value="bestellt">Bestellt</option>
+                        <option value="versandt">Versandt</option>
+                        <option value="geliefert">Geliefert</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Order List -->
+            <div id="orderCards">
+                <div class="loading"><div class="spinner"></div> Lade Bestellungen...</div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal">
+        <h3 id="orderModalTitle">Neue Bestellung</h3>
+        <input type="hidden" id="orderId">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Lieferant</label>
+                <input type="text" id="oSupplier" list="supplierSuggestions" placeholder="z.B. Noon Aesthetics">
+                <datalist id="supplierSuggestions"></datalist>
+            </div>
+            <div class="form-group">
+                <label>Bestelldatum</label>
+                <input type="date" id="oDate">
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div style="margin-bottom:14px;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.5px;">Positionen</label>
+            <div id="orderItems"></div>
+            <button class="btn btn-secondary btn-sm" onclick="addOrderItem()" style="margin-top:8px;">+ Position</button>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Erwartete Lieferung</label>
+                <input type="date" id="oExpectedDelivery">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="oStatus">
+                    <option value="bestellt">Bestellt</option>
+                    <option value="versandt">Versandt</option>
+                    <option value="geliefert">Geliefert</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Notizen</label>
+            <textarea id="oNotes" rows="2" placeholder="Optional..."></textarea>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveOrder()">Speichern</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('orderModal')">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="modal-overlay" id="editItemModal">
+    <div class="modal" style="max-width: 400px;">
+        <h3>Artikel bearbeiten</h3>
+        <input type="hidden" id="editItemId">
+        <div class="form-group">
+            <label>Produkt</label>
+            <input type="text" id="editItemName">
+        </div>
+        <div class="form-group">
+            <label>Notiz</label>
+            <input type="text" id="editItemNote" placeholder="z.B. Menge, Groesse, wo bestellen...">
+        </div>
+        <div class="form-group">
+            <label>Kategorie</label>
+            <select id="editItemCat">
+                <option value="noon">Noon Aesthetics</option>
+                <option value="smetics">Smetics</option>
+                <option value="sonstiges">Sonstiges</option>
+            </select>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveItemEdit()">Speichern</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('editItemModal')">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+// ======================================================
+// EINKAUFSLISTE
+// ======================================================
+let allListItems = [];
+let unsubList = null;
+
+function loadShoppingList() {
+    if (unsubList) unsubList();
+    unsubList = db.collection('shopping_list').orderBy('createdAt', 'desc').onSnapshot(snap => {
+        allListItems = [];
+        snap.forEach(doc => allListItems.push({ ...doc.data(), _id: doc.id }));
+        renderShoppingList();
+    }, err => {
+        console.error('Shopping list error:', err);
+    });
+}
+
+function renderShoppingList() {
+    const categories = ['noon', 'smetics', 'sonstiges'];
+    let totalOpen = 0;
+
+    categories.forEach(cat => {
+        const items = allListItems.filter(i => i.category === cat);
+        const openItems = items.filter(i => !i.done);
+        totalOpen += openItems.length;
+
+        document.getElementById('cnt-' + cat).textContent = openItems.length + ' Artikel';
+
+        const container = document.getElementById('items-' + cat);
+        if (items.length === 0) {
+            container.innerHTML = '<div class="ek-empty">Keine Artikel. Oben hinzufuegen!</div>';
+            return;
+        }
+
+        // Show open items first, then done
+        const sorted = [...items].sort((a, b) => {
+            if (a.done !== b.done) return a.done ? 1 : -1;
+            return 0;
+        });
+
+        container.innerHTML = sorted.map(item => `
+            <div class="ek-item ${item.done ? 'done' : ''}">
+                <button class="ek-check ${item.done ? 'checked' : ''}" onclick="toggleListItem('${item._id}', ${!item.done})">
+                    ${item.done ? '&#10003;' : ''}
+                </button>
+                <div class="ek-item-body">
+                    <div class="ek-item-name">${escHtml(item.name)}</div>
+                    ${item.note ? '<div class="ek-item-note">' + escHtml(item.note) + '</div>' : ''}
+                    <div class="ek-item-meta">
+                        Hinzugefuegt: ${item.addedDate || '–'}${item.addedBy ? ' von ' + item.addedBy : ''}
+                        ${item.done && item.doneDate ? ' &middot; Erledigt: ' + item.doneDate : ''}
+                    </div>
+                </div>
+                <div class="ek-item-actions">
+                    <button class="ek-item-btn" onclick="editListItem('${item._id}')" title="Bearbeiten">&#9998;</button>
+                    <button class="ek-item-btn del" onclick="deleteListItem('${item._id}')" title="Loeschen">&#10005;</button>
+                </div>
+            </div>
+        `).join('');
+    });
+
+    document.getElementById('tcListe').textContent = totalOpen;
+}
+
+function addItem(category) {
+    const input = document.getElementById('add-' + category);
+    const noteInput = document.getElementById('note-' + category);
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+
+    db.collection('shopping_list').add({
+        name,
+        note: noteInput.value.trim(),
+        category,
+        done: false,
+        doneDate: null,
+        addedDate: formatDate(todayStr()),
+        addedBy: '',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        input.value = '';
+        noteInput.value = '';
+        input.focus();
+        showToast('Hinzugefuegt!', 'success');
+    }).catch(err => {
+        console.error(err);
+        showToast('Fehler beim Speichern.', 'error');
+    });
+}
+
+function toggleListItem(id, done) {
+    db.collection('shopping_list').doc(id).update({
+        done,
+        doneDate: done ? formatDate(todayStr()) : null
+    });
+}
+
+function deleteListItem(id) {
+    if (!confirm('Artikel loeschen?')) return;
+    db.collection('shopping_list').doc(id).delete();
+}
+
+function editListItem(id) {
+    const item = allListItems.find(i => i._id === id);
+    if (!item) return;
+    document.getElementById('editItemId').value = id;
+    document.getElementById('editItemName').value = item.name;
+    document.getElementById('editItemNote').value = item.note || '';
+    document.getElementById('editItemCat').value = item.category;
+    document.getElementById('editItemModal').classList.add('active');
+}
+
+function saveItemEdit() {
+    const id = document.getElementById('editItemId').value;
+    db.collection('shopping_list').doc(id).update({
+        name: document.getElementById('editItemName').value.trim(),
+        note: document.getElementById('editItemNote').value.trim(),
+        category: document.getElementById('editItemCat').value
+    }).then(() => {
+        showToast('Gespeichert!', 'success');
+        closeModal('editItemModal');
+    });
+}
+
+async function clearDone() {
+    const doneItems = allListItems.filter(i => i.done);
+    if (doneItems.length === 0) { showToast('Keine erledigten Artikel.', ''); return; }
+    if (!confirm(doneItems.length + ' erledigte Artikel entfernen?')) return;
+
+    const batch = db.batch();
+    doneItems.forEach(i => batch.delete(db.collection('shopping_list').doc(i._id)));
+    await batch.commit();
+    showToast(doneItems.length + ' Artikel entfernt.', 'success');
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ======================================================
+// BESTELLUNGEN (bestehend)
+// ======================================================
+let allOrders = [];
+let allSuppliers = new Set();
+let orderItemCount = 0;
+
+async function loadOrders() {
+    try {
+        const snap = await db.collection('orders').orderBy('orderDate', 'desc').get();
+        allOrders = [];
+        allSuppliers = new Set();
+        let open = 0, shipped = 0, delivered = 0, monthTotal = 0;
+        const now = new Date();
+        const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+
+        snap.forEach(doc => {
+            const data = { id: doc.id, ...doc.data() };
+            allOrders.push(data);
+            if (data.supplier) allSuppliers.add(data.supplier);
+            if (data.status === 'bestellt') open++;
+            else if (data.status === 'versandt') shipped++;
+            else if (data.status === 'geliefert') delivered++;
+            if (data.orderDate >= monthStart) monthTotal += Number(data.totalAmount) || 0;
+        });
+
+        document.getElementById('statOpen').textContent = open;
+        document.getElementById('statTotal').textContent = formatCurrency(monthTotal);
+        document.getElementById('tcOrders').textContent = open + shipped;
+        document.getElementById('supplierSuggestions').innerHTML = [...allSuppliers].map(s => `<option value="${s}">`).join('');
+        renderOrders();
+    } catch (err) {
+        console.error('Error loading orders:', err);
+    }
+}
+
+function renderOrders() {
+    const filter = document.getElementById('statusFilter').value;
+    const filtered = filter ? allOrders.filter(o => o.status === filter) : allOrders;
+    const container = document.getElementById('orderCards');
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="card"><div class="empty-state"><div class="icon">&#128230;</div><h3>Keine Bestellungen</h3><p>Erstelle deine erste Bestellung mit dem Button oben.</p></div></div>';
+        return;
+    }
+
+    container.innerHTML = filtered.map(o => {
+        const items = o.items || [];
+        const statusClass = o.status === 'bestellt' ? 'badge-bestellt' : o.status === 'versandt' ? 'badge-versandt' : 'badge-geliefert';
+        return `
+            <div class="card" style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                            <strong style="font-size:16px;">${o.supplier || 'Unbekannt'}</strong>
+                            <span class="badge ${statusClass}">${o.status}</span>
+                        </div>
+                        <div style="font-size:13px; color:var(--text-light);">
+                            Bestellt: ${formatDate(o.orderDate)}
+                            ${o.expectedDelivery ? ' | Erwartet: ' + formatDate(o.expectedDelivery) : ''}
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:20px; font-weight:700; color:var(--primary-dark);">${formatCurrency(o.totalAmount || 0)}</div>
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            ${o.status === 'bestellt' ? `<button class="btn btn-secondary btn-sm" onclick="updateStatus('${o.id}','versandt')">&#8594; Versandt</button>` : ''}
+                            ${o.status === 'versandt' ? `<button class="btn btn-success btn-sm" onclick="updateStatus('${o.id}','geliefert')">&#10003; Geliefert</button>` : ''}
+                            <button class="btn btn-secondary btn-sm" onclick="editOrder('${o.id}')">Bearbeiten</button>
+                            <button class="btn btn-sm" style="color:var(--danger);background:none;" onclick="deleteOrder('${o.id}')">&#10005;</button>
+                        </div>
+                    </div>
+                </div>
+                ${items.length > 0 ? `
+                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+                        <table style="font-size:13px;">
+                            <tr style="color:var(--text-light);">
+                                <td style="padding:2px 12px 2px 0; font-weight:600;">Produkt</td>
+                                <td style="padding:2px 12px; font-weight:600;">Menge</td>
+                                <td style="padding:2px 12px; font-weight:600; text-align:right;">Preis</td>
+                            </tr>
+                            ${items.map(it => `
+                                <tr>
+                                    <td style="padding:2px 12px 2px 0;">${it.name}</td>
+                                    <td style="padding:2px 12px;">${it.quantity}x</td>
+                                    <td style="padding:2px 12px; text-align:right;">${formatCurrency(it.unitPrice * it.quantity)}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                ` : ''}
+                ${o.notes ? `<div style="margin-top:8px; font-size:13px; color:var(--text-light);">${o.notes}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function openOrderModal() {
+    document.getElementById('orderModalTitle').textContent = 'Neue Bestellung';
+    document.getElementById('orderId').value = '';
+    document.getElementById('oSupplier').value = '';
+    document.getElementById('oDate').value = todayStr();
+    document.getElementById('oExpectedDelivery').value = '';
+    document.getElementById('oStatus').value = 'bestellt';
+    document.getElementById('oNotes').value = '';
+    orderItemCount = 0;
+    document.getElementById('orderItems').innerHTML = '';
+    addOrderItem();
+    document.getElementById('orderModal').classList.add('active');
+}
+
+function editOrder(id) {
+    const o = allOrders.find(x => x.id === id);
+    if (!o) return;
+    document.getElementById('orderModalTitle').textContent = 'Bestellung bearbeiten';
+    document.getElementById('orderId').value = id;
+    document.getElementById('oSupplier').value = o.supplier || '';
+    document.getElementById('oDate').value = o.orderDate || '';
+    document.getElementById('oExpectedDelivery').value = o.expectedDelivery || '';
+    document.getElementById('oStatus').value = o.status || 'bestellt';
+    document.getElementById('oNotes').value = o.notes || '';
+    orderItemCount = 0;
+    document.getElementById('orderItems').innerHTML = '';
+    (o.items || []).forEach(it => {
+        addOrderItem();
+        document.getElementById(`itemName_${orderItemCount-1}`).value = it.name;
+        document.getElementById(`itemQty_${orderItemCount-1}`).value = it.quantity;
+        document.getElementById(`itemPrice_${orderItemCount-1}`).value = it.unitPrice;
+    });
+    if ((o.items || []).length === 0) addOrderItem();
+    document.getElementById('orderModal').classList.add('active');
+}
+
+function addOrderItem() {
+    const idx = orderItemCount++;
+    const container = document.getElementById('orderItems');
+    const row = document.createElement('div');
+    row.className = 'form-row';
+    row.style.marginTop = '8px';
+    row.id = `itemRow_${idx}`;
+    row.innerHTML = `
+        <div class="form-group" style="flex:2;"><input type="text" id="itemName_${idx}" placeholder="Produktname"></div>
+        <div class="form-group" style="flex:0.5;"><input type="number" id="itemQty_${idx}" placeholder="Menge" value="1" min="1"></div>
+        <div class="form-group" style="flex:1;"><input type="number" id="itemPrice_${idx}" placeholder="Stueckpreis" step="0.01"></div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:14px;">
+            <button class="btn btn-sm" style="color:var(--danger);background:none;" onclick="document.getElementById('itemRow_${idx}').remove()">&#10005;</button>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+async function saveOrder() {
+    const supplier = document.getElementById('oSupplier').value.trim();
+    if (!supplier) { showToast('Bitte Lieferant eingeben', 'error'); return; }
+    const items = [];
+    for (let i = 0; i < orderItemCount; i++) {
+        const nameEl = document.getElementById(`itemName_${i}`);
+        if (!nameEl) continue;
+        const name = nameEl.value.trim();
+        const qty = Number(document.getElementById(`itemQty_${i}`).value) || 1;
+        const price = Number(document.getElementById(`itemPrice_${i}`).value) || 0;
+        if (name) items.push({ name, quantity: qty, unitPrice: price });
+    }
+    const totalAmount = items.reduce((sum, it) => sum + (it.quantity * it.unitPrice), 0);
+    const data = {
+        supplier, orderDate: document.getElementById('oDate').value,
+        expectedDelivery: document.getElementById('oExpectedDelivery').value,
+        status: document.getElementById('oStatus').value,
+        notes: document.getElementById('oNotes').value.trim(), items, totalAmount
+    };
+    const id = document.getElementById('orderId').value;
+    try {
+        if (id) { await db.collection('orders').doc(id).update(data); showToast('Aktualisiert', 'success'); }
+        else { data.createdAt = firebase.firestore.FieldValue.serverTimestamp(); await db.collection('orders').add(data); showToast('Gespeichert', 'success'); }
+        closeModal('orderModal');
+        loadOrders();
+    } catch (err) { console.error(err); showToast('Fehler', 'error'); }
+}
+
+async function updateStatus(id, newStatus) {
+    try { await db.collection('orders').doc(id).update({ status: newStatus }); showToast(`Status: "${newStatus}"`, 'success'); loadOrders(); }
+    catch (err) { showToast('Fehler', 'error'); }
+}
+
+async function deleteOrder(id) {
+    if (!confirm('Bestellung loeschen?')) return;
+    try { await db.collection('orders').doc(id).delete(); showToast('Geloescht', 'success'); loadOrders(); }
+    catch (err) { showToast('Fehler', 'error'); }
+}
+
+// ======================================================
+// TABS & MODALS
+// ======================================================
+function switchMainTab(tab, el) {
+    document.querySelectorAll('.ek-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ek-section').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('sec-' + tab).classList.add('active');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
+});
+
+// ======================================================
+// INIT
+// ======================================================
+document.addEventListener('DOMContentLoaded', () => {
+    loadShoppingList();
+    loadOrders();
+});
+</script>
+</body>
+</html>
