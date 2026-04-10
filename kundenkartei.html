@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKINCONCEPT Kundenkartei</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<style>
+:root{--bg:#f5f3ef;--bg2:#ffffff;--bg3:#faf8f5;--bg4:#f0ede8;--hover:#ece8e2;--text:#1a1a1a;--text2:#4a4540;--muted:#8a8580;--gold:#b08d57;--gold2:#9a7a48;--gold-dim:rgba(176,141,87,.08);--green:#16a34a;--green-bg:rgba(22,163,74,.06);--yellow:#ca8a04;--yellow-bg:rgba(202,138,4,.06);--orange:#ea580c;--orange-bg:rgba(234,88,12,.06);--red:#dc2626;--red-bg:rgba(220,38,38,.06);--purple:#7c3aed;--purple-bg:rgba(124,58,237,.06);--blue:#2563eb;--blue-bg:rgba(37,99,235,.06);--border:rgba(0,0,0,.08);--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-weight:300}
+
+/* HEADER */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.brand{display:flex;align-items:baseline;gap:14px}
+.brand h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:5px;text-transform:uppercase}
+.brand .sub{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-weight:600}
+.hdr-right{display:flex;gap:8px;align-items:center}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;letter-spacing:.3px;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-dark{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+.btn-dark:hover{background:var(--bg4)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#b91c1c}
+
+/* LAYOUT */
+.app{display:flex;height:calc(100vh - 57px - 40px)}
+.sidebar{width:340px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:all .3s ease;box-shadow:1px 0 3px rgba(0,0,0,.03)}
+.main-content{flex:1;overflow-y:auto;padding:0}
+.back-btn{display:none;padding:10px 18px;font-size:13px;font-weight:500;color:var(--gold);cursor:pointer;border:none;background:none;font-family:'Outfit',sans-serif;letter-spacing:.3px;gap:6px;align-items:center}
+.back-btn:hover{color:var(--gold2)}
+body.client-open .sidebar{display:none}
+body.client-open .main-content{width:100%}
+body.client-open .back-btn{display:inline-flex}
+
+/* SIDEBAR */
+.sb-search{padding:14px;border-bottom:1px solid var(--border)}
+.sb-search input{width:100%;padding:10px 14px 10px 38px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:300;outline:none;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8580' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+.sb-search input::placeholder{color:var(--muted)}
+.sb-search input:focus{border-color:var(--gold)}
+.sb-filters{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.sf{padding:5px 10px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Outfit',sans-serif;font-size:11px;cursor:pointer;transition:all .2s}
+.sf:hover{border-color:var(--muted)}
+.sf.on{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.sb-stats{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.sb-stat{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.sb-stat .dot{width:6px;height:6px;border-radius:50%}
+.sb-list{flex:1;overflow-y:auto}
+.sb-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.sb-item:hover{background:var(--hover)}
+.sb-item.active{background:var(--gold-dim);border-left:3px solid var(--gold)}
+.sb-avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.sb-info{flex:1;min-width:0}
+.sb-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-detail{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-right{text-align:right;flex-shrink:0}
+.sb-days{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600}
+.sb-status{font-size:9px;text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+
+/* KARTEI EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);text-align:center;padding:40px}
+.empty-state .icon{font-size:64px;margin-bottom:20px;opacity:.3}
+.empty-state h2{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--text2);margin-bottom:8px}
+.empty-state p{font-size:13px;max-width:300px;line-height:1.6}
+
+/* KARTEI CARD */
+.kartei{padding:0;height:100%;display:flex;flex-direction:column}
+.kartei-header{padding:24px 28px 0;background:var(--bg2);border-bottom:1px solid var(--border)}
+.kh-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.kh-name{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;letter-spacing:1px}
+.kh-badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.kh-contact{display:flex;gap:20px;font-size:13px;color:var(--text2);margin-top:4px;flex-wrap:wrap}
+.kh-contact a{color:var(--gold);text-decoration:none}
+.kh-contact span{display:flex;align-items:center;gap:5px}
+.kh-actions{display:flex;gap:6px}
+.kh-metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:16px 0}
+.kh-metric{text-align:center;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px}
+.kh-metric-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--gold);line-height:1}
+.kh-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-top:4px}
+
+/* KARTEI TABS */
+.ktabs{display:flex;gap:0;padding:0 28px;border-bottom:none}
+.ktab{padding:12px 18px;font-size:12px;font-weight:400;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.5px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.ktab:hover{color:var(--text2)}
+.ktab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.ktab .cnt{background:var(--bg4);padding:1px 6px;border-radius:8px;font-size:10px}
+.ktab.active .cnt{background:var(--gold-dim);color:var(--gold)}
+
+/* KARTEI BODY */
+.kbody{flex:1;overflow-y:auto;padding:20px 28px 40px}
+.kpage{display:none}
+.kpage.active{display:block}
+
+/* SECTION CARDS */
+.scard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.scard h3{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;letter-spacing:1px;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.scard h3 .add-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--gold);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s}
+.scard h3 .add-btn:hover{background:var(--gold-dim);border-color:var(--gold)}
+
+/* FORM FIELDS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.form-full{grid-column:1/-1}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.fg input,.fg textarea,.fg select{padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:300;outline:none;transition:border-color .2s}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--gold)}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--muted)}
+.fg textarea{resize:vertical;min-height:60px;line-height:1.5}
+.fg select{appearance:none;cursor:pointer}
+
+/* CHIPS */
+.chip-list{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:500}
+.chip-gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(201,169,110,.3)}
+.chip-blue{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
+.chip-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.chip-red{background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.chip-purple{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.tl-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.tl-dot{position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;border:2px solid var(--gold);background:var(--bg2)}
+.tl-date{font-size:11px;color:var(--muted);margin-bottom:4px}
+.tl-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.tl-text{font-size:12px;color:var(--text2);line-height:1.5}
+.tl-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:11px;font-weight:500}
+.badge-g{background:var(--green-bg);color:var(--green)}.badge-y{background:var(--yellow-bg);color:var(--yellow)}.badge-o{background:var(--orange-bg);color:var(--orange)}.badge-r{background:var(--red-bg);color:var(--red)}
+.bdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.seg-badge{display:inline-flex;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.seg-vip{background:var(--purple-bg);color:var(--purple)}.seg-stamm{background:var(--blue-bg);color:var(--blue)}.seg-aktiv{background:var(--green-bg);color:var(--green)}.seg-schlafend{background:var(--yellow-bg);color:var(--yellow)}.seg-verloren{background:var(--red-bg);color:var(--red)}.seg-neu{background:rgba(255,255,255,.05);color:var(--muted)}
+
+/* ANAMNESE DISPLAY */
+.anam-section{margin-bottom:16px}
+.anam-section h4{font-size:12px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.anam-field{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.anam-field:last-child{border-bottom:none}
+.anam-label{color:var(--muted);font-weight:400}
+.anam-value{color:var(--text);font-weight:400;text-align:right;max-width:60%}
+
+/* PHOTO GRID */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.photo-card{aspect-ratio:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;cursor:pointer;transition:all .2s}
+.photo-card:hover{border-color:var(--gold);transform:scale(1.02)}
+.photo-card img{width:100%;height:100%;object-fit:cover}
+.photo-card .ph-date{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:10px;color:#fff}
+.photo-upload{aspect-ratio:1;border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:12px;gap:6px}
+.photo-upload:hover{border-color:var(--gold);color:var(--gold)}
+
+/* PRODUCT TABLE */
+.ptable{width:100%;border-collapse:collapse}
+.ptable th{padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border)}
+.ptable td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:var(--hover)}
+
+/* BEHANDLUNGSPLAN */
+.plan-step{display:flex;gap:14px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;align-items:flex-start}
+.plan-num{width:28px;height:28px;border-radius:8px;background:var(--gold-dim);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.plan-done .plan-num{background:var(--green-bg);color:var(--green)}
+.plan-body{flex:1}
+.plan-title{font-size:14px;font-weight:500;margin-bottom:2px}
+.plan-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.plan-done .plan-title{text-decoration:line-through;color:var(--muted)}
+.plan-check{cursor:pointer;padding:4px;color:var(--muted);transition:color .2s}
+.plan-check:hover{color:var(--green)}
+
+/* KONTAKT HISTORY */
+.kh-entry{display:flex;gap:12px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.kh-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.kh-icon.wa{background:rgba(37,211,102,.12);color:#25d366}
+.kh-icon.phone{background:var(--blue-bg);color:var(--blue)}
+.kh-icon.email{background:var(--purple-bg);color:var(--purple)}
+.kh-icon.studio{background:var(--gold-dim);color:var(--gold)}
+.kh-icon.sms{background:var(--green-bg);color:var(--green)}
+.kh-body{flex:1}
+.kh-body .date{font-size:11px;color:var(--muted)}
+.kh-body .channel{font-size:12px;font-weight:500}
+.kh-body .note{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* MODAL */
+.modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.3);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.12);animation:mIn .25s ease}
+@keyframes mIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:2px;margin-bottom:20px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+
+/* TOAST */
+.toast-box{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.1);display:flex;align-items:center;gap:8px;animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards}
+.toast.ok{border-left:3px solid var(--green)}.toast.warn{border-left:3px solid var(--orange)}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(20px)}}
+
+/* TREATWELL IMPORT AREA */
+.tw-import{background:linear-gradient(135deg,rgba(201,169,110,.06),rgba(201,169,110,.02));border:1px solid rgba(201,169,110,.2);border-radius:14px;padding:24px;margin-bottom:20px}
+.tw-import h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;margin-bottom:6px}
+.tw-import p{color:var(--text2);font-size:12px;margin-bottom:14px}
+.tw-drop{border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.tw-drop:hover,.tw-drop.over{border-color:var(--gold);background:var(--gold-dim)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+
+/* RESPONSIVE — iPad & Tablet */
+@media(max-width:1100px){
+  .sidebar{width:320px}
+  .ktabs{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
+  .ktab{padding:12px 14px;font-size:11px}
+  .kbody{padding:16px 20px 40px}
+  .kartei-header{padding:20px 20px 0}
+  .kh-metrics{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .sidebar{width:100%}
+  .app{flex-direction:column}
+  body:not(.client-open) .main-content{display:none}
+  body.client-open .sidebar{display:none}
+  body.client-open .main-content{display:block;height:calc(100vh - 57px)}
+  body.client-open .back-btn{display:inline-flex}
+  .kh-metrics{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .hdr{padding:12px 16px}
+  .brand h1{font-size:18px}
+}
+@media(max-width:600px){
+  .kh-name{font-size:24px}
+  .kh-metrics{grid-template-columns:1fr 1fr}
+  .ktab{padding:10px 10px;font-size:10px}
+  .photo-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+}
+
+/* NEW CLIENT NOTIFICATION */
+.new-client-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(12px);z-index:500;display:flex;align-items:center;justify-content:center;animation:ncFadeIn .4s ease}
+@keyframes ncFadeIn{from{opacity:0}to{opacity:1}}
+.nc-card{background:var(--bg2);border:2px solid var(--gold);border-radius:20px;padding:36px;max-width:500px;width:90vw;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.12);animation:ncSlideIn .5s ease}
+@keyframes ncSlideIn{from{transform:translateY(40px) scale(.95);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.nc-badge{display:inline-block;background:var(--gold);color:#fff;font-size:11px;font-weight:700;letter-spacing:3px;padding:4px 16px;border-radius:20px;margin-bottom:16px;animation:ncPulse 1.5s ease infinite}
+@keyframes ncPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,169,110,.4)}50%{box-shadow:0 0 0 12px rgba(201,169,110,0)}}
+.nc-icon{font-size:48px;margin-bottom:12px}
+.nc-card h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:1px;color:var(--text);margin-bottom:16px}
+.nc-name{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--gold);margin-bottom:10px;letter-spacing:1px}
+.nc-details{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin-bottom:14px}
+.nc-chips{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.nc-chip{padding:4px 12px;border-radius:14px;font-size:11px;font-weight:500;background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.nc-goal{padding:12px 16px;background:rgba(201,169,110,.06);border:1px solid rgba(201,169,110,.15);border-radius:10px;font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px;text-align:left}
+.nc-actions{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
+.nc-time{font-size:11px;color:var(--muted)}
+
+/* BARCODE SCANNER */
+.scanner-box{background:var(--bg4);border:2px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;position:relative}
+.scanner-box video,.scanner-box canvas{width:100%;display:block;border-radius:10px}
+.scanner-box .scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scanner-box .scan-line{width:70%;height:2px;background:var(--gold);box-shadow:0 0 12px var(--gold);animation:scanPulse 2s ease-in-out infinite}
+@keyframes scanPulse{0%,100%{opacity:.4;transform:scaleX(.9)}50%{opacity:1;transform:scaleX(1)}}
+.scanner-tabs{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.scanner-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg4);color:var(--muted);transition:all .2s;border:none;font-family:'Outfit',sans-serif}
+.scanner-tab.active{background:var(--gold-dim);color:var(--gold)}
+.scanner-tab:hover:not(.active){background:var(--bg4);color:var(--text2)}
+.barcode-input-wrap{display:flex;gap:8px;margin-bottom:14px}
+.barcode-input-wrap input{flex:1;padding:12px 16px;background:var(--bg2);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;font-weight:400;letter-spacing:2px;outline:none;transition:border-color .2s}
+.barcode-input-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.15)}
+.barcode-input-wrap input::placeholder{color:var(--muted);letter-spacing:0}
+.product-preview{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;display:none}
+.product-preview.found{display:block;border-color:var(--green);background:rgba(74,222,128,.04)}
+.product-preview.notfound{display:block;border-color:var(--orange);background:rgba(251,146,60,.04)}
+.product-preview .pp-name{font-size:15px;font-weight:500;margin-bottom:4px}
+.product-preview .pp-brand{font-size:12px;color:var(--gold)}
+.product-preview .pp-details{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6}
+.product-preview .pp-ean{font-size:11px;color:var(--muted);font-family:monospace;margin-top:4px}
+.scan-history{margin-top:12px}
+.scan-history h4{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.scan-history-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px;cursor:pointer;transition:all .2s}
+.scan-history-item:hover{border-color:var(--gold);background:var(--gold-dim)}
+
+/* PRINT */
+@media print{.sidebar,.hdr,.back-btn{display:none}.main-content{padding:20px}*{color:#000!important;background:#fff!important;border-color:#ddd!important}}
+</style>
+</head>
+<body>
+
+<!-- DASHBOARD NAV BAR -->
+<div style="background: linear-gradient(135deg, #6B5344, #8B6F5C); padding: 8px 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 150;">
+  <a href="index.html" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 6px; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">&#8592; Studio Hub</a>
+  <span style="color: rgba(255,255,255,0.3); font-size: 12px;">|</span>
+  <a href="aufgaben.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Aufgaben</a>
+  <a href="nachsorge.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Nachsorge</a>
+  <a href="bestellungen.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">Bestellungen</a>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="brand">
+    <button class="back-btn" onclick="goBackToList()">&#8592; Kundenliste</button>
+    <h1>Skin<b>Concept</b></h1>
+    <span class="sub">Kundenkartei</span>
+  </div>
+  <div class="hdr-right">
+<button class="btn btn-dark btn-sm" onclick="openImportModal()">Treatwell Import</button>
+    <button class="btn btn-dark btn-sm" onclick="exportCSV()">CSV Export</button>
+    <button class="btn btn-gold btn-sm" onclick="openNewClientModal()">+ Neuer Kunde</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+  <!-- SIDEBAR: Kundenliste -->
+  <div class="sidebar">
+    <div class="sb-search">
+      <input type="text" id="sbSearch" placeholder="Kunde suchen..." oninput="renderSidebar()">
+    </div>
+    <div class="sb-filters" id="sbFilters"></div>
+    <div class="sb-stats" id="sbStats"></div>
+    <div class="sb-list" id="sbList"></div>
+  </div>
+
+  <!-- MAIN: Karteikarte -->
+  <div class="main-content" id="mainContent">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">&#128203;</div>
+      <h2>Kundenkartei</h2>
+      <p>Waehle einen Kunden aus der Liste, um die vollstaendige Karteikarte zu oeffnen.</p>
+    </div>
+    <div class="kartei" id="kartei" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="importModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('importModal')">&times;</button>
+    <h2>Treatwell-Kassenbuch Import</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Speichere das Treatwell-Kassenbuch als HTML (Strg+S) und lade es hier hoch. Die Termine werden automatisch den Kunden zugeordnet.</p>
+    <div class="tw-drop" id="twDrop" onclick="document.getElementById('twFile').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleTWImport(event.dataTransfer.files[0])">
+      <p style="color:var(--gold);font-size:14px;font-weight:500">Treatwell-Kassenbuch hier ablegen oder klicken</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">HTML-Datei aus dem Treatwell-Kassenbuch</p>
+    </div>
+    <input type="file" id="twFile" accept=".html,.htm" style="display:none" onchange="handleTWImport(this.files[0])">
+    <div id="twResult" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="newClientModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('newClientModal')">&times;</button>
+    <h2>Neuen Kunden anlegen</h2>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="fg"><label>Vorname</label><input id="ncFn" placeholder="Vorname"></div>
+      <div class="fg"><label>Nachname</label><input id="ncLn" placeholder="Nachname"></div>
+      <div class="fg"><label>Telefon</label><input id="ncPh" placeholder="+49 176 ..."></div>
+      <div class="fg"><label>E-Mail</label><input id="ncEm" placeholder="email@beispiel.de"></div>
+      <div class="fg"><label>Geburtsdatum</label><input id="ncBd" placeholder="TT.MM.JJJJ"></div>
+      <div class="fg"><label>Adresse</label><input id="ncAddr" placeholder="Strasse, PLZ Ort"></div>
+    </div>
+    <button class="btn btn-gold" onclick="createNewClient()">Kunde anlegen</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="addModal">
+  <div class="modal" style="position:relative" id="addModalContent"></div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-box" id="toastBox"></div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<!-- TRELLO DATA -->
+<script>let alleKunden = [];</script>
+<script src="./trello_all_kunden.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   SKINCONCEPT KUNDENKARTEI
+   Professionelles Karteikartenystem mit Treatwell + Firebase
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── FIREBASE INIT ──
+firebase.initializeApp({
+  apiKey:"AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+  authDomain:"skinconcept-hagner.firebaseapp.com",
+  databaseURL:"https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"skinconcept-hagner",
+  storageBucket:"skinconcept-hagner.firebasestorage.app",
+  messagingSenderId:"101205413833",
+  appId:"1:101205413833:web:9734e0906dd71d1a9d2218"
+});
+const fbDb = firebase.database();
+
+// ── CONSTANTS ──
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const TODAY_STR = TODAY.toISOString().split('T')[0];
+const STORE_KEY = 'sc_kartei_v2';
+const ACTIONS_KEY = 'sc_kartei_actions_v2';
+
+// ── TREATWELL KONTAKTE ──
+const TW_CONTACTS=[{"fn":"Tamara","ln":"Hagner","ph":"+49 176 70860252","em":"skinconcept.hagner@gmail.com","bd":"","b":3},{"fn":"Caroline","ln":"Eibes","ph":"","em":"","bd":"","b":0},{"fn":"Roswita","ln":"Jakobs","ph":"+49 176 61742511","em":"","bd":"","b":0},{"fn":"Birgitt","ln":"Becker","ph":"+49 1514 6514280","em":"birgittbecker66@aim.com","bd":"","b":0},{"fn":"Maike","ln":"Rieb","ph":"+49 1575 3677005","em":"Maikesauer@web.de","bd":"","b":1},{"fn":"Andrea","ln":"hensel","ph":"+49 176 23839837","em":"hensel-a@web.de","bd":"","b":3},{"fn":"Nina","ln":"Herresthal","ph":"+49 163 8464478","em":"Herrresthal1989@gmx.de","bd":"","b":0},{"fn":"Petra","ln":"Behnke","ph":"+49 1511 7308319","em":"Petra.behnke68@icloud.com","bd":"","b":4},{"fn":"Jasmine","ln":"Dreher","ph":"+49 177 7522414","em":"jasminedreher@gmx.de","bd":"","b":0},{"fn":"Corina","ln":"Heinze","ph":"+49 162 7853353","em":"Corina.heinze@arcor.de","bd":"","b":0},{"fn":"Irina","ln":"Todorova","ph":"+49 176 82019433","em":"irenetodorova@gmail.com","bd":"","b":0},{"fn":"Lorscheter","ln":"Nadja","ph":"","em":"nadjalorscheter@gmx.de","bd":"","b":0},{"fn":"Natalia","ln":"Schmidt","ph":"+49 160 90622000","em":"natalja@onlinehome.de","bd":"","b":1},{"fn":"Rebecca","ln":"Wolf","ph":"+49 173 6138539","em":"Rebecca.wolf21@yahoo.de","bd":"","b":0},{"fn":"Mechthild","ln":"Binz","ph":"+49 1511 0444493","em":"Mechthild-binz@web.de","bd":"","b":3},{"fn":"Lisa","ln":"Grabend\u00fcnkel","ph":"+49 178 2888129","em":"lisa.gr@t-online.de","bd":"","b":5},{"fn":"Hanna","ln":"Bortova","ph":"+49 171 2193945","em":"","bd":"","b":0},{"fn":"Gabi","ln":"Barzen","ph":"+49 172 1517996","em":"gabi.barzen@googlemail.com","bd":"","b":1},{"fn":"Tanja","ln":"Mueller","ph":"+49 176 22032637","em":"tanja0679@googlemail.com","bd":"","b":0},{"fn":"Vanessa","ln":"Thiele","ph":"+49 171 4174760","em":"v.thiele@ymail.com","bd":"","b":0},{"fn":"Lisa","ln":"Treinen","ph":"+49 1523 4077277","em":"lisa-treinen@web.de","bd":"","b":2},{"fn":"Frauke","ln":"Buenting","ph":"+49 176 31822296","em":"fsbuenting@gmx.de","bd":"","b":0},{"fn":"Denise","ln":"Hissung","ph":"","em":"","bd":"","b":0},{"fn":"Esther","ln":"Bamberg","ph":"+49 162 2480762","em":"esther.zubrod@web.de","bd":"","b":0},{"fn":"Christina","ln":"Backes","ph":"","em":"christina-backes@t-online.de","bd":"","b":0},{"fn":"Melanie","ln":"Romer","ph":"+49 170 1877754","em":"melanieromer81@gmail.com","bd":"","b":0},{"fn":"Maja","ln":"Trierweiler","ph":"","em":"maja.trierweiler@web.de","bd":"","b":0},{"fn":"Emeliy","ln":"Lorenz","ph":"+49 163 3759484","em":"e.lorenz-@web.de","bd":"","b":0},{"fn":"Allanah","ln":"Naragy","ph":"+49 176 70591316","em":"hannah.allein@t-online.de","bd":"","b":0},{"fn":"Stefanie","ln":"Heib","ph":"","em":"","bd":"","b":0},{"fn":"Gretchen","ln":"Gravelle","ph":"","em":"gravelle4@gmail.com","bd":"","b":0}];
+
+// ── KASSENBUCH VISITS ──
+const KB_VISITS = [
+  {n:'Sabrina Gabriel',d:'2026-03-20'},{n:'Carmen Fetzer',d:'2026-03-20'},{n:'Lisa Grabenduenkel',d:'2026-03-20'},{n:'Jessica Wenz',d:'2026-03-20'},
+  {n:'Kira Fischer',d:'2026-03-19'},{n:'Carina Becker',d:'2026-03-19'},{n:'Daniela Conradt',d:'2026-03-19'},{n:'Hanna Polatynska',d:'2026-03-19'},{n:'Nadiene Kraemer',d:'2026-03-19'},
+  {n:'Andrea Hensel',d:'2026-03-18'},{n:'Nicole Weich',d:'2026-03-18'},{n:'Esther Jacob',d:'2026-03-18'},{n:'Jule Lorscheter',d:'2026-03-18'},{n:'Stefanie Kirsch',d:'2026-03-18'},{n:'Viktoria Nau',d:'2026-03-18'},{n:'Bianca Boujong',d:'2026-03-18'},{n:'Jasmin Fetzer',d:'2026-03-18'},{n:'Michael Bauer',d:'2026-03-18'},{n:'Elena Stoll',d:'2026-03-18'},{n:'Roman Uglesic',d:'2026-03-18'},
+  {n:'Andrea Fischer',d:'2026-03-17'},{n:'Laura Schlarb',d:'2026-03-17'},{n:'Sabrina Steinmetz',d:'2026-03-17'},{n:'Sabine Ritter',d:'2026-03-17'},
+  {n:'Sandra Fischer',d:'2026-03-16'},{n:'Iris Zimmer',d:'2026-03-16'},{n:'Julia Kaiser',d:'2026-03-16'},{n:'Steffes Verena',d:'2026-03-16'},{n:'Verena Ludwig',d:'2026-03-16'},{n:'Manuela Horne',d:'2026-03-16'},{n:'Natascha Zurgheisel',d:'2026-03-16'},{n:'Aljona Fuchs',d:'2026-03-16'},
+  {n:'Jenni Braun',d:'2026-03-14'},
+  {n:'Jessica Schabbach',d:'2026-03-13'},{n:'Petra Zens-Trossen',d:'2026-03-13'},{n:'Lena Ludwig',d:'2026-03-13'},{n:'Gina Winkler',d:'2026-03-13'},{n:'Isabell Eckardt',d:'2026-03-13'},
+  {n:'Patrizia Gruber',d:'2026-03-12'},{n:'Christine Weinz',d:'2026-03-12'},{n:'Daniela Bonert',d:'2026-03-12'},{n:'Heidi Jochem',d:'2026-03-12'},{n:'Kessler Madeleine',d:'2026-03-12'},
+  {n:'Irina Seltenreich',d:'2026-03-11'},{n:'Petra Merten',d:'2026-03-11'},{n:'Tanja Herges',d:'2026-03-11'},{n:'Susanne Schmittges',d:'2026-03-11'},{n:'Petra Muenster',d:'2026-03-11'},{n:'Emeliy Lorenz',d:'2026-03-11'},{n:'Nadja Belokoz',d:'2026-03-11'},{n:'Danica Faber',d:'2026-03-11'},{n:'Frauke Buenting',d:'2026-03-11'},{n:'Angelika Gutweiler',d:'2026-03-11'},{n:'Noel Mettler',d:'2026-03-11'},{n:'Anna Hess',d:'2026-03-11'},
+  {n:'Weber Doris',d:'2026-03-10'},{n:'Antonella Nepi',d:'2026-03-10'},{n:'Ilona Schuh',d:'2026-03-10'},{n:'Lea Daum',d:'2026-03-10'},
+  {n:'Katrin Schneider',d:'2026-03-09'},{n:'Denise Hissung',d:'2026-03-09'},{n:'Bianca Boujong',d:'2026-03-09'},{n:'Christina Klippel',d:'2026-03-09'},{n:'Lea Klippel',d:'2026-03-09'},{n:'Annalena Sommer',d:'2026-03-09'},{n:'Tanja Anocona',d:'2026-03-09'},
+  {n:'Corinna Rittmann',d:'2026-03-06'},{n:'Irina Resch',d:'2026-03-06'},
+  {n:'Stefanie Heib',d:'2026-03-05'},{n:'Tatjana Beister',d:'2026-03-05'},
+  {n:'Petra Trein',d:'2026-03-04'},{n:'Grazina Greweling',d:'2026-03-04'},{n:'Katja Felzen',d:'2026-03-04'},{n:'Ulrike Paelzer',d:'2026-03-04'},{n:'Birgitt Blesius',d:'2026-03-04'},{n:'Christina Klein',d:'2026-03-04'},
+  {n:'Elisabeth Reuther',d:'2026-03-03'},{n:'Sabine Loeh-Schneider',d:'2026-03-03'},{n:'Natascha Mensch',d:'2026-03-03'},{n:'Angelina Decker',d:'2026-03-03'},
+  {n:'Anna Thielen',d:'2026-03-02'},{n:'Denise Roth',d:'2026-03-02'},{n:'Christa Treitz',d:'2026-03-02'},{n:'Marie Laube',d:'2026-03-02'},{n:'Sandra Newen',d:'2026-03-02'},{n:'Ellen Esseln',d:'2026-03-02'},{n:'Houaida Jamal',d:'2026-03-02'},
+  {n:'Jennifer Thoesen',d:'2026-02-27'},{n:'Lena Hess',d:'2026-02-27'},{n:'Sabrina Gabriel',d:'2026-02-27'},{n:'Stephanie Plymale',d:'2026-02-27'},{n:'Sandra Schneberger-Schwinn',d:'2026-02-27'},
+  {n:'Jacqueline Kusterer',d:'2026-02-26'},{n:'Andrea Lamberti',d:'2026-02-26'},{n:'Claudia Ballat',d:'2026-02-26'},{n:'Martina Hoffmann',d:'2026-02-26'},{n:'Vanessa Thiele',d:'2026-02-26'},
+  {n:'Sarah Conen',d:'2026-02-25'},{n:'Christine Kaspari',d:'2026-02-25'},{n:'Annika Merscher',d:'2026-02-25'},{n:'Gianna Schieber',d:'2026-02-25'},{n:'Patrizia Raffrath',d:'2026-02-25'},{n:'Mara Mueller',d:'2026-02-25'},
+  {n:'Katja Alt-Bonneku',d:'2026-02-24'},{n:'Mechthild Emmelsberger',d:'2026-02-24'},{n:'Christina Becker',d:'2026-02-24'},{n:'Tanja Laudes',d:'2026-02-24'},{n:'Allanah Naragy',d:'2026-02-24'},
+  {n:'Steffes Verena',d:'2026-02-23'},{n:'Ann Katrin Finck',d:'2026-02-23'},{n:'Annete Knop',d:'2026-02-23'},{n:'Lisa Kappel',d:'2026-02-23'},{n:'Mitschke Julia',d:'2026-02-23'},
+  {n:'Bianca Kistner',d:'2026-02-20'},{n:'Sigrid Niewswodek',d:'2026-02-20'},{n:'Lisa Grabenduenkel',d:'2026-02-20'},{n:'Jessica Wenz',d:'2026-02-20'},{n:'Daniela Engel',d:'2026-02-20'},
+  {n:'Carina Sonne',d:'2026-02-19'},{n:'Sigrid Wagner',d:'2026-02-19'},{n:'Schweig Gabriele',d:'2026-02-19'},{n:'Annette Wenz',d:'2026-02-19'},{n:'Petra Behnke',d:'2026-02-19'},{n:'Petra Roder-Feilen',d:'2026-02-19'},
+  {n:'Linda Michels',d:'2026-02-18'},{n:'Petra Merten',d:'2026-02-18'},{n:'Nele Baecker',d:'2026-02-18'},{n:'Rebecca Scherer',d:'2026-02-18'},{n:'Jasmin Fetzer',d:'2026-02-18'},{n:'Carina Becker',d:'2026-02-18'},{n:'Maja Trierweiler',d:'2026-02-18'},{n:'Carmen Dietz',d:'2026-02-18'},{n:'Lisa Joy Pisharek',d:'2026-02-18'},{n:'Michelle Mueller',d:'2026-02-18'},{n:'Lisa Treinen',d:'2026-02-18'},
+  {n:'Andrea Fischer',d:'2026-02-17'},{n:'Anne Mettler',d:'2026-02-17'},{n:'Susanne Eckstein',d:'2026-02-17'},{n:'Andrea Ruessmann',d:'2026-02-17'},{n:'Sabrina Steinmetz',d:'2026-02-17'},{n:'Astrid Dahmen',d:'2026-02-17'},{n:'Michaela Pickard',d:'2026-02-17'},
+  {n:'Esther Jacob',d:'2026-02-11'},{n:'Nadiene Kraemer',d:'2026-02-11'},{n:'Patrizia Gruber',d:'2026-02-11'},{n:'Christina Backes',d:'2026-02-11'},{n:'Denise Porr',d:'2026-02-11'},{n:'Christine Weinz',d:'2026-02-11'},{n:'Angelika Gutweiler',d:'2026-02-11'},{n:'Anna Hess',d:'2026-02-11'},{n:'Petra Barrere',d:'2026-02-11'},
+  {n:'Kerstin Wagner',d:'2026-02-10'},{n:'Katrin Schneider',d:'2026-02-10'},{n:'Petra Zens-Trossen',d:'2026-02-10'},{n:'Maike Dietz',d:'2026-02-10'},{n:'Marion Dietz',d:'2026-02-10'},{n:'Sabine Ritter',d:'2026-02-10'},{n:'Sabine Loeh-Schneider',d:'2026-02-10'},
+  {n:'Sybille Penner',d:'2026-02-09'},{n:'Natalie Sommer',d:'2026-02-09'},{n:'Sandra Newen',d:'2026-02-09'},{n:'Esther Bamberg',d:'2026-02-09'},{n:'Anja Leinen',d:'2026-02-09'},{n:'Silke Bock',d:'2026-02-09'},
+  {n:'Carmen Fetzer',d:'2026-02-06'},{n:'Hanna Eltges',d:'2026-02-06'},{n:'Maren Schumann',d:'2026-02-06'},{n:'Luisa Knop',d:'2026-02-06'},{n:'Gina Winkler',d:'2026-02-06'},
+  {n:'Gaby Neuls',d:'2026-02-05'},
+  {n:'Grazina Greweling',d:'2026-02-04'},{n:'Isabella Diederich',d:'2026-02-04'},{n:'Christina Klein',d:'2026-02-04'},{n:'Anja Graeber',d:'2026-02-04'},{n:'Noel Mettler',d:'2026-02-04'},{n:'Isabell Eckardt',d:'2026-02-04'},{n:'Carla Rey',d:'2026-02-04'},
+  {n:'Stefanie Kirsch',d:'2026-02-03'},{n:'Birgitt Blesius',d:'2026-02-03'},{n:'Claudia Leis',d:'2026-02-03'},
+  {n:'Sabrina Gabriel',d:'2026-02-02'},{n:'Jule Lorscheter',d:'2026-02-02'},{n:'Mechthild Binz',d:'2026-02-02'},{n:'Denise Roth',d:'2026-02-02'},{n:'Tanja Anocona',d:'2026-02-02'},{n:'Natalie Offermann',d:'2026-02-02'},{n:'Jan Diederichs',d:'2026-02-02'},{n:'Michael Bauer',d:'2026-02-02'},{n:'Natascha Zurgheisel',d:'2026-02-02'},{n:'Aljona Fuchs',d:'2026-02-02'},
+  {n:'Katharina Knop',d:'2026-01-30'},
+  {n:'Laura Schlarb',d:'2026-01-29'},{n:'Katja Felzen',d:'2026-01-29'},
+  {n:'Sigrid Wagner',d:'2026-01-28'},{n:'Rebecca Scherer',d:'2026-01-28'},{n:'Lilith Eck',d:'2026-01-28'},{n:'Steffi Mettler-Tezlaff',d:'2026-01-28'},
+  {n:'Andrea Lamberti',d:'2026-01-27'},{n:'Martina Hoffmann',d:'2026-01-27'},{n:'Ilona Schuh',d:'2026-01-27'},{n:'Sabine Loeh-Schneider',d:'2026-01-27'},
+  {n:'Annete Knop',d:'2026-01-26'},{n:'Lisa Joy Pisharek',d:'2026-01-26'},{n:'Antonella Nepi',d:'2026-01-26'},{n:'Laura Rieb',d:'2026-01-26'},{n:'Jule Morgenthale',d:'2026-01-26'},
+  {n:'Jessy Schabbach',d:'2026-01-23'},{n:'Carina Becker',d:'2026-01-23'},{n:'Petra Priestersbach',d:'2026-01-23'},{n:'Darja Becker',d:'2026-01-23'},{n:'Anne-Kathrin Seyfart',d:'2026-01-23'},{n:'Daniela Engel',d:'2026-01-23'},
+  {n:'Carina Sonne',d:'2026-01-22'},
+  {n:'Andrea Hensel',d:'2026-01-21'},{n:'Sarah Conen',d:'2026-01-21'},{n:'Mechthild Emmelsberger',d:'2026-01-21'},{n:'Sandra Schneberger-Schwinn',d:'2026-01-21'},{n:'Mitschke Julia',d:'2026-01-21'},
+  {n:'Katja Alt-Bonneku',d:'2026-01-20'},{n:'Hanna Bortova',d:'2026-01-20'},{n:'Manuela Horne',d:'2026-01-20'},{n:'Hilas Burger',d:'2026-01-20'},{n:'Tanja Laudes',d:'2026-01-20'},{n:'Allanah Naragy',d:'2026-01-20'},
+  {n:'Christa Treitz',d:'2026-01-19'},{n:'Denise Hissung',d:'2026-01-19'},{n:'Annete Knop',d:'2026-01-19'},{n:'Danica Faber',d:'2026-01-19'},{n:'Daniela Conradt',d:'2026-01-19'},{n:'Silven Zyulkryanova',d:'2026-01-19'},{n:'Natascha Mensch',d:'2026-01-19'},{n:'Ellen Esseln',d:'2026-01-19'},{n:'Lea Daum',d:'2026-01-19'},
+  {n:'Jenni Braun',d:'2026-01-17'},{n:'Jessica Wenz',d:'2026-01-17'},
+  {n:'Anika Naik',d:'2026-01-16'},{n:'Jennifer Thoesen',d:'2026-01-16'},{n:'Stephanie Plymale',d:'2026-01-16'},{n:'Sascha Weiland',d:'2026-01-16'},{n:'Corinna Rittmann',d:'2026-01-16'},
+  {n:'Kerstin Wagner',d:'2026-01-15'},{n:'Christine Weinz',d:'2026-01-15'},{n:'Petra Barrere',d:'2026-01-15'},{n:'Jacqueline Kusterer',d:'2026-01-15'},{n:'Erika Schuh',d:'2026-01-15'},{n:'Annette Wenz',d:'2026-01-15'},{n:'Claudia Ballat',d:'2026-01-15'},{n:'Marie List',d:'2026-01-15'},{n:'Vanessa Thiele',d:'2026-01-15'},{n:'Kessler Madeleine',d:'2026-01-15'},
+  {n:'Tanja Herges',d:'2026-01-14'},{n:'Rebecca Scherer',d:'2026-01-14'},{n:'Ann Katrin Finck',d:'2026-01-14'},{n:'Susanne Schmittges',d:'2026-01-14'},{n:'Esther Jacob',d:'2026-01-14'},{n:'Rita Marx',d:'2026-01-14'},{n:'Patrizia Raffrath',d:'2026-01-14'},{n:'Anna Hess',d:'2026-01-14'},
+  {n:'Andrea Fischer',d:'2026-01-13'},{n:'Katrin Schneider',d:'2026-01-13'},{n:'Helma Blatt',d:'2026-01-13'},{n:'Petra Zens-Trossen',d:'2026-01-13'},{n:'Hildegard Schuh',d:'2026-01-13'},{n:'Linda Michels',d:'2026-01-13'},{n:'Michelle Mueller',d:'2026-01-13'},
+  {n:'Petra Merten',d:'2026-01-12'},{n:'Petra Behnke',d:'2026-01-12'},{n:'Sandra Newen',d:'2026-01-12'},{n:'Esther Bamberg',d:'2026-01-12'},{n:'Lisa Kappel',d:'2026-01-12'},
+  {n:'Tanja Anocona',d:'2026-01-09'},{n:'Maren Schumann',d:'2026-01-09'},{n:'Bianca Kistner',d:'2026-01-09'},{n:'Lisa Grabenduenkel',d:'2026-01-09'},{n:'Deborah Blum',d:'2026-01-09'},{n:'Sophie Marx',d:'2026-01-09'},
+  {n:'Sabrina Gabriel',d:'2026-01-08'},{n:'Schweig Gabriele',d:'2026-01-08'},{n:'Carmen Fetzer',d:'2026-01-08'},{n:'Carina Becker',d:'2026-01-08'},{n:'Sabine Ritter',d:'2026-01-08'},
+  {n:'Gretchen Gravelle',d:'2026-01-07'},{n:'Petra Trein',d:'2026-01-07'},{n:'Brigitte Faller',d:'2026-01-07'},{n:'Sabine Fortenbacher',d:'2026-01-07'},{n:'Natalie Sommer',d:'2026-01-07'},{n:'Jasmin Michels',d:'2026-01-07'},{n:'Christina Klein',d:'2026-01-07'},{n:'Gianna Schieber',d:'2026-01-07'},{n:'Annika Merscher',d:'2026-01-07'},{n:'Jasmin Fetzer',d:'2026-01-07'},{n:'Lisa Treinen',d:'2026-01-07'},
+  {n:'Angelika Gutweiler',d:'2026-01-06'},{n:'Christina Backes',d:'2026-01-06'},{n:'Andrea Ruessmann',d:'2026-01-06'},{n:'Angelina Decker',d:'2026-01-06'},
+  {n:'Denise Roth',d:'2026-01-05'},{n:'Susanne Eckstein',d:'2026-01-05'},{n:'Birgitt Blesius',d:'2026-01-05'},{n:'Noel Mettler',d:'2026-01-05'},{n:'Luisa Knop',d:'2026-01-05'},{n:'Jule Lorscheter',d:'2026-01-05'},{n:'Bettina List',d:'2026-01-05'},{n:'Daniel Schmidt',d:'2026-01-05'},{n:'Aljona Fuchs',d:'2026-01-05'},{n:'Natalie Sommer',d:'2026-01-05'},{n:'Lena Kliem',d:'2026-01-05'},
+  {n:'Katja Alt-Bonneku',d:'2025-12-23'},{n:'Darja Becker',d:'2025-12-23'},{n:'Melanie Romer',d:'2025-12-23'},{n:'Ilona Schuh',d:'2025-12-23'},{n:'Manuela Horne',d:'2025-12-23'},
+  {n:'Nele Baecker',d:'2025-12-22'},{n:'Mechthild Emmelsberger',d:'2025-12-22'},{n:'Tanja Mueller',d:'2025-12-22'},{n:'Isabell Eckardt',d:'2025-12-22'},{n:'Sandra Schneberger-Schwinn',d:'2025-12-22'},{n:'Marie Laube',d:'2025-12-22'},{n:'Silke Bock',d:'2025-12-22'},{n:'Nadiene Kraemer',d:'2025-12-22'},{n:'Anja Leinen',d:'2025-12-22'},{n:'Leni Wolff',d:'2025-12-22'},
+  {n:'Jenni Braun',d:'2025-12-20'},{n:'Mira Locher',d:'2025-12-20'},{n:'Lea Klippel',d:'2025-12-20'},{n:'Annette Wenz',d:'2025-12-20'},
+  {n:'Petra Zens-Trossen',d:'2025-12-19'},{n:'Christina Klein',d:'2025-12-19'},{n:'Stefanie Kirsch',d:'2025-12-19'},
+  {n:'Carina Sonne',d:'2025-12-18'},{n:'Carina Becker',d:'2025-12-18'},{n:'Katrin Schneider',d:'2025-12-18'},{n:'Patricia Wahl',d:'2025-12-18'},{n:'Nicole Bender-Unglesic',d:'2025-12-18'},{n:'Sara Tilmann-Lorenz',d:'2025-12-18'},{n:'Martini Karina',d:'2025-12-18'}
+];
+
+// ── HELPERS ──
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function uid(){return 'c'+Math.random().toString(36).substr(2,9)}
+function fmtDate(d){if(!d)return '–';if(d.includes('-')){const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}return d}
+function diffDays(dateStr){if(!dateStr)return 9999;return Math.max(0,Math.floor((TODAY-new Date(dateStr))/(864e5)))}
+function formatDays(d){if(d===0)return'Heute';if(d===1)return'1 Tag';if(d<7)return d+' Tage';if(d<30)return Math.floor(d/7)+' Wo.';if(d<365)return Math.floor(d/30)+' Mon.';const y=Math.floor(d/365),m=Math.floor((d%365)/30);return y+' J.'+(m>0?' '+m+' M.':'')}
+function normalize(s){return s.toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/-/g,' ').trim()}
+function getStatus(days,cid){
+  const base=days<=42?{key:'g',label:'Aktiv',color:'green',badge:'badge-g'}:days<=84?{key:'y',label:'Aufmerksamkeit',color:'yellow',badge:'badge-y'}:days<=182?{key:'o',label:'Überfällig',color:'orange',badge:'badge-o'}:{key:'r',label:'Verloren?',color:'red',badge:'badge-r'};
+  if(cid&&(base.key==='y'||base.key==='o'||base.key==='r')){
+    const kd=loadKartei()[cid];
+    if(kd&&kd.kontaktiert){base.contacted=true;base.kontaktiertDate=kd.kontaktiert}
+  }
+  return base;
+}
+function getSegment(c){const d=c.days;const v=c.visits||0;if(d>182)return{seg:'verloren',label:'Verloren',cls:'seg-verloren'};if(d>42)return{seg:'schlafend',label:'Schlafend',cls:'seg-schlafend'};if(v>=8)return{seg:'vip',label:'VIP',cls:'seg-vip'};if(v>=4)return{seg:'stamm',label:'Stammkunde',cls:'seg-stamm'};if(v>=1)return{seg:'aktiv',label:'Aktiv',cls:'seg-aktiv'};return{seg:'neu',label:'Neu',cls:'seg-neu'}}
+function formatPhone(ph){if(!ph)return'';return ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'')}
+function getWaUrl(ph,msg){const n=formatPhone(ph);if(!n)return'';return msg?'https://wa.me/'+n+'?text='+encodeURIComponent(msg):'https://wa.me/'+n}
+function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
+function toast(msg,type){const box=document.getElementById('toastBox');const t=document.createElement('div');t.className='toast '+(type||'ok');t.innerHTML=msg;box.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+// ── LOCAL STORAGE (Kartei-spezifische Daten) ──
+function loadKartei(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}catch{return{}}}
+function saveKartei(data){localStorage.setItem(STORE_KEY,JSON.stringify(data))}
+function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
+function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all)}
+
+// ── PARSE TRELLO ──
+function parseTrello(raw,i){
+  const desc=raw.desc||'';
+  const emailM=desc.match(/mailto:([\w.\-+]+@[\w.\-]+)/i)||desc.match(/([\w.\-+]+@[\w.\-]+\.\w{2,})/i);
+  const email=emailM?emailM[1].toLowerCase():'';
+  const phoneM=desc.match(/(\+?\d[\d\s\/\-]{7,})/);
+  let telefon=phoneM?phoneM[1].replace(/\s+/g,' ').trim():'';
+  const gebM=desc.match(/(\d{1,2})\\?\.(\d{1,2})\\?\.(\d{2,4})/);
+  let geburtsdatum='',gebDate=null;
+  if(gebM){const day=gebM[1].padStart(2,'0'),month=gebM[2].padStart(2,'0');let year=gebM[3];if(year.length===2)year=(parseInt(year)>50?'19':'20')+year;geburtsdatum=day+'.'+month+'.'+year;gebDate=new Date(parseInt(year),parseInt(month)-1,parseInt(day))}
+  let notizen=desc.replace(/\[.*?\]\(mailto:.*?\)/g,'').replace(/mailto:[\w.\-+@]+/g,'').replace(/([\w.\-+]+@[\w.\-]+\.\w{2,})/g,'').replace(/\+?\d[\d\s\/\-]{7,}/g,'').replace(/\d{1,2}\\?\.\d{1,2}\\?\.\d{2,4}/g,'').replace(/[\\[\]()"\u200C]/g,'').replace(/\n{2,}/g,'\n').trim();
+  notizen=notizen.split('\n').map(l=>l.trim()).filter(l=>l.length>1).join(', ');
+  let name=(raw.name||'').trim(),fn='',ln='';
+  if(name.includes(',')){const p=name.split(',');ln=p[0].trim();fn=p.slice(1).join(',').trim()}else{const p=name.split(' ');fn=p[0]||'';ln=p.slice(1).join(' ')||''}
+  const trelloDate=raw.lastActivity?raw.lastActivity.split('T')[0]:'';
+  return{id:raw.id||'t'+i,name,fn,ln,ph:telefon,em:email,bd:geburtsdatum,gebDate,lv:trelloDate,visits:0,notizen,missing:[],visitDates:[]}
+}
+
+// ── BUILD CLIENT LIST ──
+let clients=[];
+let selectedClient=null;
+let sidebarFilter='all';
+let anamneseCache={};
+
+function initClients(){
+  clients=alleKunden.map((raw,i)=>parseTrello(raw,i));
+
+  // KB visit dates per client
+  const kbMap={};
+  KB_VISITS.forEach(v=>{
+    const key=v.n.toLowerCase();
+    if(!kbMap[key])kbMap[key]={latest:v.d,count:1,dates:[v.d]};
+    else{kbMap[key].count++;kbMap[key].dates.push(v.d);if(v.d>kbMap[key].latest)kbMap[key].latest=v.d}
+  });
+
+  clients.forEach(c=>{
+    const fullName=normalize(c.fn+' '+c.ln);
+    const nameRev=normalize(c.ln+' '+c.fn);
+    const nameOrig=normalize(c.name);
+    let match=null;
+    for(const key of Object.keys(kbMap)){
+      const kn=normalize(key);
+      if(kn===fullName||kn===nameRev||kn===nameOrig){match=kbMap[key];break}
+    }
+    if(!match){
+      const fnLow=normalize(c.fn),lnLow=normalize(c.ln);
+      for(const key of Object.keys(kbMap)){
+        const parts=key.split(' ');const kfn=normalize(parts[0]);const kln=normalize(parts.slice(1).join(' '));
+        if(kfn===fnLow&&kln===lnLow){match=kbMap[key];break}
+        if(kfn===lnLow&&kln===fnLow){match=kbMap[key];break}
+      }
+    }
+    if(match){if(!c.lv||match.latest>c.lv)c.lv=match.latest;c.visits=Math.max(c.visits,match.count);c.visitDates=match.dates.sort().reverse()}
+  });
+
+  // Treatwell merge
+  const twMap={};
+  TW_CONTACTS.forEach(tw=>{
+    if(!tw.fn||tw.fn.length>40)return;
+    const key=normalize(tw.fn+' '+tw.ln);if(key.length<3)return;
+    if(!twMap[key]||tw.b>twMap[key].b)twMap[key]=tw;
+    const keyRev=normalize(tw.ln+' '+tw.fn);
+    if(!twMap[keyRev]||tw.b>twMap[keyRev].b)twMap[keyRev]=tw;
+  });
+
+  clients.forEach(c=>{
+    const tw=twMap[normalize(c.fn+' '+c.ln)]||twMap[normalize(c.ln+' '+c.fn)]||twMap[normalize(c.name)]||null;
+    if(tw){
+      if(!c.ph&&tw.ph)c.ph=tw.ph;
+      if(!c.em&&tw.em)c.em=tw.em;
+      if(!c.bd&&tw.bd){const parts=tw.bd.split('-');if(parts.length===3){c.bd=parts[0]+'.'+parts[1]+'.'+parts[2];c.gebDate=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]))}}
+      if(tw.b>0)c.visits=Math.max(c.visits||0,tw.b);
+    }
+    c.days=diffDays(c.lv);
+    c.missing=[];
+    if(!c.ph)c.missing.push('telefon');if(!c.em)c.missing.push('email');if(!c.bd)c.missing.push('geburtsdatum');
+    c.bdSoon=false;
+    if(c.gebDate){const bd=new Date(TODAY.getFullYear(),c.gebDate.getMonth(),c.gebDate.getDate());const diff=Math.floor((bd-TODAY)/(864e5));c.bdSoon=diff>=0&&diff<=14}
+  });
+
+  // Add manually created clients from localStorage
+  const kartei=loadKartei();
+  if(kartei.__newClients){
+    kartei.__newClients.forEach(nc=>{
+      if(!clients.find(c=>c.id===nc.id))clients.push(nc);
+    });
+  }
+
+  clients.sort((a,b)=>a.days-b.days);
+}
+
+// ── FIREBASE: LOAD ANAMNESE + AUTO-CREATE NEW CLIENTS (LIVE!) ──
+let anamFirstLoad=true;
+
+function processAnamEntry(entry){
+  const fn=(entry.vorname||'').trim();
+  const ln=(entry.name||'').trim();
+  const key=normalize(fn+' '+ln);
+  if(key.length<2)return null;
+  anamneseCache[key]=entry;
+
+  // Check if client already exists
+  const exists=clients.some(c=>{
+    const k1=normalize(c.fn+' '+c.ln);
+    const k2=normalize(c.ln+' '+c.fn);
+    const k3=normalize(c.name);
+    return k1===key||k2===key||k3===key;
+  });
+
+  if(!exists&&fn){
+    const nc={
+      id:uid(),
+      name:fn+' '+ln,fn,ln,
+      ph:(entry.telefon||'').trim(),
+      em:(entry.email||'').trim(),
+      bd:(entry.geburtsdatum||'').trim(),
+      gebDate:null,
+      lv:entry.datum||TODAY_STR,
+      days:diffDays(entry.datum||TODAY_STR),
+      visits:0,notizen:'',missing:[],visitDates:[],
+      autoCreated:true
+    };
+    if(nc.bd){const m=nc.bd.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);if(m)nc.gebDate=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]))}
+    nc.missing=[];
+    if(!nc.ph)nc.missing.push('telefon');if(!nc.em)nc.missing.push('email');if(!nc.bd)nc.missing.push('geburtsdatum');
+    nc.bdSoon=false;
+    if(nc.gebDate){const bd=new Date(TODAY.getFullYear(),nc.gebDate.getMonth(),nc.gebDate.getDate());const diff=Math.floor((bd-TODAY)/(864e5));nc.bdSoon=diff>=0&&diff<=14}
+
+    // Save Anamnese data into kartei
+    const kd=getClientKartei(nc.id);
+    if(entry.adresse)kd.adresse=entry.adresse;
+    if(entry.plz)kd.adresse=(entry.adresse||'')+', '+entry.plz;
+    if(entry.sachlagen_details)kd.allergien=entry.sachlagen_details;
+    if(entry.besuchsgrund)kd.notes='Hautziel: '+entry.besuchsgrund;
+    if(entry.hautproblem&&entry.hautproblem.length)kd.notes=(kd.notes?kd.notes+'\n':'')+'Hautprobleme: '+entry.hautproblem.join(', ');
+    saveClientKartei(nc.id,kd);
+
+    clients.unshift(nc);
+    clients.sort((a,b)=>a.days-b.days);
+    return nc;
+  }
+  return null;
+}
+
+function loadAnamnese(){
+  let totalNew=0;
+
+  function loadFromRef(refName){
+    return fbDb.ref(refName).once('value').then(snap=>{
+      const data=snap.val();
+      if(!data)return 0;
+      let count=0;
+      Object.values(data).forEach(entry=>{
+        const nc=processAnamEntry(entry);
+        if(nc)count++;
+      });
+      return count;
+    });
+  }
+
+  // Lade BEIDE Firebase-Referenzen (alter + neuer Bogen)
+  Promise.all([
+    loadFromRef('anamnese'),
+    loadFromRef('anamneseboegen')
+  ]).then(([c1,c2])=>{
+    totalNew=c1+c2;
+    console.log('Anamneseboegen geladen:',Object.keys(anamneseCache).length,', Neue Kunden:',totalNew);
+    if(totalNew>0){
+      renderSidebar();
+      toast(totalNew+' Kunden aus Anamneseboegen geladen');
+    }
+    if(selectedClient)renderKartei(selectedClient);
+    anamFirstLoad=false;
+
+    // ── LIVE LISTENER auf beide Refs ──
+    ['anamnese','anamneseboegen'].forEach(refName=>{
+      fbDb.ref(refName).on('child_added',function(childSnap){
+        if(anamFirstLoad)return;
+        const entry=childSnap.val();
+        if(!entry)return;
+        const nc=processAnamEntry(entry);
+        if(nc){
+          showNewClientNotification(nc,entry);
+          renderSidebar();
+        }
+      });
+      fbDb.ref(refName).on('child_changed',function(childSnap){
+        const entry=childSnap.val();
+        if(!entry)return;
+        const fn=(entry.vorname||'').trim();
+        const ln=(entry.name||'').trim();
+        const key=normalize(fn+' '+ln);
+        if(key.length>1)anamneseCache[key]=entry;
+        if(selectedClient){
+          const a=getAnamnese(selectedClient);
+          if(a)renderKartei(selectedClient);
+        }
+      });
+    });
+  }).catch(err=>console.log('Firebase error:',err));
+}
+
+// ── LIVE NOTIFICATION: Neuer Kunde ──
+function showNewClientNotification(nc,entry){
+  // Sound-Effekt (optional)
+  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.value=880;g.gain.value=0.1;o.start();g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);o.stop(ctx.currentTime+0.3)}catch(e){}
+
+  // Full-screen notification overlay
+  const overlay=document.createElement('div');
+  overlay.className='new-client-overlay';
+  overlay.innerHTML=`
+    <div class="nc-card">
+      <div class="nc-badge">NEU</div>
+      <div class="nc-icon">&#128203;</div>
+      <h2>Neuer Anamnesebogen eingegangen!</h2>
+      <div class="nc-name">${esc(nc.fn)} ${esc(nc.ln)}</div>
+      <div class="nc-details">
+        ${nc.ph?'<span>&#9742; '+esc(nc.ph)+'</span>':''}
+        ${nc.em?'<span>&#9993; '+esc(nc.em)+'</span>':''}
+        ${nc.bd?'<span>&#127874; '+esc(nc.bd)+'</span>':''}
+      </div>
+      ${entry.hautproblem&&entry.hautproblem.length?'<div class="nc-chips">'+entry.hautproblem.map(h=>'<span class="nc-chip">'+esc(h)+'</span>').join('')+'</div>':''}
+      ${entry.besuchsgrund?'<div class="nc-goal"><strong>Hautziel:</strong> '+esc(entry.besuchsgrund)+'</div>':''}
+      <div class="nc-actions">
+        <button class="btn btn-gold" onclick="this.closest(\'.new-client-overlay\').remove();selectClient(\'${nc.id}\')">Karteikarte oeffnen</button>
+        <button class="btn btn-dark" onclick="this.closest(\'.new-client-overlay\').remove()">Spaeter ansehen</button>
+      </div>
+      <div class="nc-time">Eingegangen: ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} Uhr</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Auto-close nach 30 Sekunden
+  setTimeout(()=>{if(overlay.parentNode)overlay.remove()},30000);
+}
+
+
+function getAnamnese(c){
+  const keys=[normalize(c.fn+' '+c.ln),normalize(c.ln+' '+c.fn),normalize(c.name)];
+  for(const k of keys){if(anamneseCache[k])return anamneseCache[k]}
+  return null;
+}
+
+// ── SIDEBAR ──
+function renderSidebar(){
+  const q=(document.getElementById('sbSearch').value||'').toLowerCase().trim();
+  const counts={all:clients.length,g:0,y:0,o:0,r:0,k:0};
+  clients.forEach(c=>{const s=getStatus(c.days,c.id);counts[s.key]++;if(s.contacted)counts.k++});
+
+  document.getElementById('sbFilters').innerHTML=
+    [{k:'all',l:'Alle '+counts.all},{k:'g',l:'Aktiv '+counts.g,c:'var(--green)'},{k:'y',l:'Achtung '+counts.y,c:'var(--yellow)'},{k:'o',l:'Ueberfaellig '+counts.o,c:'var(--orange)'},{k:'r',l:'Verloren '+counts.r,c:'var(--red)'},{k:'k',l:'Kontaktiert '+counts.k,c:'var(--blue)'}]
+    .map(f=>`<button class="sf${sidebarFilter===f.k?' on':''}" onclick="sidebarFilter='${f.k}';renderSidebar()">${f.l}</button>`).join('');
+
+  document.getElementById('sbStats').innerHTML=`
+    <span class="sb-stat"><span class="dot" style="background:var(--green)"></span>${counts.g} aktiv</span>
+    <span class="sb-stat"><span class="dot" style="background:var(--yellow)"></span>${counts.y} achtung</span>
+    <span class="sb-stat"><span class="dot" style="background:var(--orange)"></span>${counts.o} ueberfaellig</span>
+    <span class="sb-stat"><span class="dot" style="background:var(--red)"></span>${counts.r} verloren</span>
+    <span class="sb-stat"><span class="dot" style="background:var(--blue)"></span>${counts.k} kontaktiert</span>
+  `;
+
+  let list=clients;
+  if(sidebarFilter==='k')list=list.filter(c=>getStatus(c.days,c.id).contacted);
+  else if(sidebarFilter!=='all')list=list.filter(c=>getStatus(c.days,c.id).key===sidebarFilter);
+  if(q)list=list.filter(c=>(c.fn+' '+c.ln+' '+c.name+' '+c.ph+' '+c.em).toLowerCase().includes(q));
+
+  const show=list.slice(0,100);
+  document.getElementById('sbList').innerHTML=show.length?show.map(c=>{
+    const s=getStatus(c.days,c.id);
+    const sg=getSegment(c);
+    const initials=((c.fn||'?')[0]+(c.ln||'?')[0]).toUpperCase();
+    const col=avatarColor(c.fn+c.ln);
+    return`<div class="sb-item${selectedClient&&selectedClient.id===c.id?' active':''}" onclick="selectClient('${c.id}')">
+      <div class="sb-avatar" style="background:${col}20;color:${col}">${initials}</div>
+      <div class="sb-info">
+        <div class="sb-name">${esc(c.fn||c.name)} ${esc(c.ln||'')}</div>
+        <div class="sb-detail">${c.ph?esc(c.ph):(c.em?esc(c.em):'Keine Kontaktdaten')}${c.bdSoon?' &#127874;':''}${s.contacted?' <span style="color:var(--blue);font-weight:500">&#10003; kontaktiert</span>':''}</div>
+      </div>
+      <div class="sb-right">
+        <div class="sb-days" style="color:var(--${s.contacted?'blue':s.color})">${c.days<9999?c.days:'–'}</div>
+        <div class="sb-status" style="color:var(--${s.contacted?'blue':s.color})">${s.contacted?'Kontaktiert':(c.days<9999?'Tage':'')}</div>
+      </div>
+    </div>`;
+  }).join(''):'<div style="padding:40px;text-align:center;color:var(--muted)">Keine Kunden gefunden</div>';
+
+  if(list.length>100)document.getElementById('sbList').innerHTML+=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:11px">Zeige 100 von ${list.length}</div>`;
+}
+
+// ── SELECT CLIENT ──
+function selectClient(id){
+  const c=clients.find(x=>x.id===id);
+  if(!c)return;
+  selectedClient=c;
+  document.body.classList.add('client-open');
+  renderSidebar();
+  renderKartei(c);
+}
+
+function goBackToList(){
+  document.body.classList.remove('client-open');
+  selectedClient=null;
+  document.getElementById('kartei').style.display='none';
+  document.getElementById('emptyState').style.display='flex';
+  renderSidebar();
+}
+
+function deleteClient(id){
+  const c=clients.find(x=>x.id===id);
+  if(!c||!confirm('Kunde "'+c.name+'" wirklich loeschen? Alle Karteidaten gehen verloren.'))return;
+  clients=clients.filter(x=>x.id!==id);
+  const d=loadKartei();if(d[id]){delete d[id];localStorage.setItem(STORE_KEY,JSON.stringify(d))}
+  goBackToList();
+  toast('Kunde geloescht');
+}
+
+// ── RENDER KARTEIKARTE ──
+let currentKTab='stamm';
+
+function renderKartei(c){
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('kartei').style.display='flex';
+
+  const s=getStatus(c.days,c.id);
+  const sg=getSegment(c);
+  const kd=getClientKartei(c.id);
+  const anam=getAnamnese(c);
+  const waUrl=c.ph?getWaUrl(c.ph):'';
+
+  // Count items for tabs
+  const treatCount=kd.treatments?kd.treatments.length:0;
+  const planCount=kd.plan?kd.plan.length:0;
+  const prodCount=kd.products?kd.products.length:0;
+  const photoCount=kd.photos?kd.photos.length:0;
+  const contactCount=kd.contacts?kd.contacts.length:0;
+  const hautanalyseCount=kd.hautanalysen?kd.hautanalysen.length:0;
+
+  document.getElementById('kartei').innerHTML=`
+    <div class="kartei-header">
+      <div class="kh-top">
+        <div>
+          <div class="kh-name">${esc(c.fn||c.name)} ${esc(c.ln||'')}</div>
+          <div class="kh-badges">
+            <span class="seg-badge ${sg.cls}">${sg.label}</span>
+            <span class="badge ${s.badge}"><span class="bdot"></span>${s.label}</span>
+            ${s.contacted?'<span class="badge" style="background:var(--blue-bg);color:var(--blue)">&#10003; Kontaktiert am '+fmtDate(s.kontaktiertDate)+'</span>':''}
+            ${c.bdSoon?'<span class="badge" style="background:var(--purple-bg);color:var(--purple)">&#127874; Geburtstag!</span>':''}
+            ${anam?'<span class="badge" style="background:var(--green-bg);color:var(--green)">Anamnese vorhanden</span>':''}
+          </div>
+          <div class="kh-contact">
+            ${c.ph?'<span>&#9742; '+esc(c.ph)+'</span>':'<span style="color:var(--red)">Kein Telefon</span>'}
+            ${c.em?'<span>&#9993; <a href="mailto:'+esc(c.em)+'">'+esc(c.em)+'</a></span>':''}
+            ${c.bd?'<span>&#127874; '+esc(c.bd)+'</span>':''}
+          </div>
+        </div>
+        <div class="kh-actions">
+          ${waUrl?'<button class="btn btn-sm" style="background:#25d366;color:#fff" onclick="window.open(\''+waUrl+'\',\'_blank\')">WhatsApp</button>':''}
+          <button class="btn btn-dark btn-sm" onclick="logContact()">Kontakt loggen</button>
+          ${s.key!=='g'?(s.contacted?'<button class="btn btn-sm" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue)" onclick="unmarkContacted()">Kontaktiert &#10003;</button>':'<button class="btn btn-sm" style="background:var(--blue);color:#fff" onclick="markContacted()">Als kontaktiert markieren</button>'):''}
+          <button class="btn btn-dark btn-sm" onclick="window.print()">Drucken</button>
+          <button class="btn btn-red btn-sm" onclick="deleteClient('${c.id}')">Kunde loeschen</button>
+        </div>
+      </div>
+      <div class="kh-metrics">
+        <div class="kh-metric"><div class="kh-metric-val" style="color:var(--${s.color})">${c.days<9999?c.days:'–'}</div><div class="kh-metric-label">Tage her</div></div>
+        <div class="kh-metric"><div class="kh-metric-val">${c.visits||0}</div><div class="kh-metric-label">Besuche</div></div>
+        <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${fmtDate(c.lv)}</div><div class="kh-metric-label">Letzter Besuch</div></div>
+        <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${contactCount>0?fmtDate(kd.contacts[0].date):'–'}</div><div class="kh-metric-label">Letzter Kontakt</div></div>
+        <div class="kh-metric"><div class="kh-metric-val">${treatCount}</div><div class="kh-metric-label">Behandlungen</div></div>
+        <div class="kh-metric"><div class="kh-metric-val">${prodCount}</div><div class="kh-metric-label">Produkte</div></div>
+      </div>
+      <div class="ktabs">
+        <div class="ktab${currentKTab==='stamm'?' active':''}" onclick="switchKTab('stamm')">Stammdaten</div>
+        <div class="ktab${currentKTab==='anamnese'?' active':''}" onclick="switchKTab('anamnese')">Anamnese ${anam?'<span class="cnt">&#10003;</span>':''}</div>
+        <div class="ktab${currentKTab==='behandlungen'?' active':''}" onclick="switchKTab('behandlungen')">Behandlungen <span class="cnt">${treatCount}</span></div>
+        <div class="ktab${currentKTab==='plan'?' active':''}" onclick="switchKTab('plan')">Behandlungsplan <span class="cnt">${planCount}</span></div>
+        <div class="ktab${currentKTab==='produkte'?' active':''}" onclick="switchKTab('produkte')">Produkte <span class="cnt">${prodCount}</span></div>
+        <div class="ktab${currentKTab==='fotos'?' active':''}" onclick="switchKTab('fotos')">Fotos <span class="cnt">${photoCount}</span></div>
+        <div class="ktab${currentKTab==='hautanalyse'?' active':''}" onclick="switchKTab('hautanalyse')">Hautanalyse <span class="cnt">${hautanalyseCount}</span></div>
+        <div class="ktab${currentKTab==='termine'?' active':''}" onclick="switchKTab('termine')">Termine</div>
+        <div class="ktab${currentKTab==='kontakt'?' active':''}" onclick="switchKTab('kontakt')">Kontakthistorie <span class="cnt">${contactCount}</span></div>
+      </div>
+    </div>
+    <div class="kbody">
+      <!-- STAMMDATEN -->
+      <div class="kpage${currentKTab==='stamm'?' active':''}" id="kp-stamm">
+        <div class="scard">
+          <h3>Persönliche Daten</h3>
+          <div class="form-grid">
+            <div class="fg"><label>Vorname</label><input value="${esc(c.fn)}" onchange="updateClient('fn',this.value)"></div>
+            <div class="fg"><label>Nachname</label><input value="${esc(c.ln)}" onchange="updateClient('ln',this.value)"></div>
+            <div class="fg"><label>Telefon</label><input value="${esc(c.ph)}" onchange="updateClient('ph',this.value)"></div>
+            <div class="fg"><label>E-Mail</label><input value="${esc(c.em)}" onchange="updateClient('em',this.value)"></div>
+            <div class="fg"><label>Geburtsdatum</label><input value="${esc(c.bd)}" onchange="updateClient('bd',this.value)"></div>
+            <div class="fg"><label>Adresse</label><input value="${esc(kd.adresse||'')}" onchange="updateKarteiField('adresse',this.value)"></div>
+          </div>
+        </div>
+        <div class="scard">
+          <h3>Hautprofil</h3>
+          <div class="form-grid">
+            <div class="fg"><label>Hauttyp</label>
+              <select onchange="updateKarteiField('hauttyp',this.value)">
+                <option value="">Bitte waehlen...</option>
+                <option ${kd.hauttyp==='Normal'?'selected':''}>Normal</option>
+                <option ${kd.hauttyp==='Trocken'?'selected':''}>Trocken</option>
+                <option ${kd.hauttyp==='Fettig'?'selected':''}>Fettig</option>
+                <option ${kd.hauttyp==='Mischhaut'?'selected':''}>Mischhaut</option>
+                <option ${kd.hauttyp==='Empfindlich'?'selected':''}>Empfindlich</option>
+                <option ${kd.hauttyp==='Reif'?'selected':''}>Reif</option>
+              </select>
+            </div>
+            <div class="fg"><label>Allergien / Unvertraeglichkeiten</label><input value="${esc(kd.allergien||'')}" onchange="updateKarteiField('allergien',this.value)"></div>
+          </div>
+        </div>
+        <div class="scard">
+          <h3>Notizen</h3>
+          <div class="fg">
+            <textarea rows="4" placeholder="Allgemeine Notizen zum Kunden..." onchange="updateKarteiField('notes',this.value)">${esc(kd.notes||c.notizen||'')}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANAMNESE -->
+      <div class="kpage${currentKTab==='anamnese'?' active':''}" id="kp-anamnese">
+        ${anam?renderAnamnese(anam)+renderUrsachen(anam):`
+          <div class="scard" style="text-align:center;padding:40px">
+            <p style="color:var(--muted);font-size:14px;margin-bottom:12px">Kein Anamnesebogen vorhanden.</p>
+            <p style="color:var(--text2);font-size:12px">Der Kunde kann den digitalen Anamnesebogen ueber den Link ausfuellen. Die Daten erscheinen dann automatisch hier.</p>
+            <button class="btn btn-gold btn-sm" style="margin-top:14px" onclick="copyAnamLink()">Anamnesebogen-Link kopieren</button>
+          </div>`}
+      </div>
+
+      <!-- BEHANDLUNGEN -->
+      <div class="kpage${currentKTab==='behandlungen'?' active':''}" id="kp-behandlungen">
+        <div class="scard">
+          <h3>Behandlungsverlauf <button class="add-btn" onclick="openAddTreatment()">+ Behandlung</button></h3>
+          ${treatCount>0?`<div class="timeline">${kd.treatments.map((t,i)=>{
+            const ti=SC_TREATMENTS.find(x=>x.id===t.typeId||x.name===t.type);
+            return`<div class="tl-item">
+              <div class="tl-dot" ${ti?'style="border-color:'+ti.color+'"':''}></div>
+              <div class="tl-date">${fmtDate(t.date)} ${t.time?'&#183; '+esc(t.time):''}</div>
+              <div class="tl-title">${ti?ti.icon+' ':''}${esc(t.type)}</div>
+              <div class="tl-text">${esc(t.notes)}</div>
+              ${t.products?'<div class="tl-tags">'+t.products.split(',').map(p=>'<span class="chip chip-gold">'+esc(p.trim())+'</span>').join('')+'</div>':''}
+              <button class="btn btn-sm" style="margin-top:8px;padding:3px 8px;font-size:10px;background:var(--red-bg);color:var(--red);border:none" onclick="deleteTreatment(${i})">Loeschen</button>
+            </div>`;}).join('')}</div>`:'<p style="color:var(--muted);text-align:center;padding:20px">Noch keine Behandlungen dokumentiert.</p>'}
+        </div>
+        ${c.visitDates&&c.visitDates.length?`
+        <div class="scard">
+          <h3>Besuchshistorie (Kassenbuch)</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${c.visitDates.slice(0,20).map(d=>'<span class="chip chip-blue">'+fmtDate(d)+'</span>').join('')}
+            ${c.visitDates.length>20?'<span class="chip chip-blue">+'+( c.visitDates.length-20)+' weitere</span>':''}
+          </div>
+        </div>`:''}
+      </div>
+
+      <!-- BEHANDLUNGSPLAN -->
+      <div class="kpage${currentKTab==='plan'?' active':''}" id="kp-plan">
+        <div class="scard">
+          <h3>Behandlungsplan <button class="add-btn" onclick="openAddPlan()">+ Schritt</button></h3>
+          ${planCount>0?kd.plan.map((p,i)=>`
+            <div class="plan-step ${p.done?'plan-done':''}">
+              <div class="plan-num">${i+1}</div>
+              <div class="plan-body">
+                <div class="plan-title">${esc(p.title)}</div>
+                <div class="plan-desc">${esc(p.desc)}${p.date?' &#183; Geplant: '+fmtDate(p.date):''}</div>
+              </div>
+              <div class="plan-check" onclick="togglePlan(${i})" title="${p.done?'Rueckgaengig':'Als erledigt markieren'}">${p.done?'&#10003;':'&#9675;'}</div>
+            </div>
+          `).join(''):'<p style="color:var(--muted);text-align:center;padding:20px">Noch kein Behandlungsplan erstellt.</p>'}
+        </div>
+      </div>
+
+      <!-- PRODUKTE -->
+      <div class="kpage${currentKTab==='produkte'?' active':''}" id="kp-produkte">
+        <div class="scard">
+          <h3>Produktempfehlungen & Verkaeufe <button class="add-btn" onclick="openBarcodeScanner()" style="margin-right:4px">&#9783; Barcode</button><button class="add-btn" onclick="openAddProduct()">+ Manuell</button></h3>
+          ${prodCount>0?`<table class="ptable">
+            <thead><tr><th>Produkt</th><th>Marke</th><th>EAN</th><th>Typ</th><th>Datum</th><th>Notiz</th><th></th></tr></thead>
+            <tbody>${kd.products.map((p,i)=>`<tr>
+              <td style="font-weight:500">${esc(p.name)}</td>
+              <td>${esc(p.brand)}</td>
+              <td style="font-family:monospace;font-size:11px;color:var(--muted)">${p.ean?esc(p.ean):'–'}</td>
+              <td><span class="chip ${p.type==='Verkauft'?'chip-green':'chip-gold'}">${esc(p.type)}</span></td>
+              <td style="color:var(--muted)">${fmtDate(p.date)}</td>
+              <td style="color:var(--text2);font-size:12px">${esc(p.note)}</td>
+              <td><button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:var(--red-bg);color:var(--red);border:none" onclick="deleteProduct(${i})">&#10005;</button></td>
+            </tr>`).join('')}</tbody>
+          </table>`:'<p style="color:var(--muted);text-align:center;padding:20px">Noch keine Produkte erfasst.</p>'}
+        </div>
+      </div>
+
+      <!-- FOTOS -->
+      <div class="kpage${currentKTab==='fotos'?' active':''}" id="kp-fotos">
+        <div class="scard">
+          <h3>Fotodokumentation <button class="add-btn" onclick="document.getElementById('photoUpload').click()">+ Foto</button></h3>
+          <input type="file" id="photoUpload" accept="image/*" style="display:none" onchange="handlePhotoUpload(this.files[0])" multiple>
+          <div class="photo-grid">
+            ${(kd.photos||[]).map((p,i)=>`
+              <div class="photo-card" onclick="viewPhoto(${i})">
+                <img src="${p.data}" alt="Foto">
+                <div class="ph-date">${fmtDate(p.date)} ${p.label?'&#183; '+esc(p.label):''}</div>
+              </div>
+            `).join('')}
+            <div class="photo-upload" onclick="document.getElementById('photoUpload').click()">
+              <span style="font-size:24px">&#128247;</span>
+              <span>Foto hinzufuegen</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HAUTANALYSE -->
+      <div class="kpage${currentKTab==='hautanalyse'?' active':''}" id="kp-hautanalyse">
+        <div class="scard">
+          <h3>Hautanalyseberichte (Observ) <button class="add-btn" onclick="document.getElementById('hautanalyseUpload').click()">+ Bericht hochladen</button></h3>
+          <input type="file" id="hautanalyseUpload" accept="image/*,.pdf" style="display:none" onchange="handleHautanalyseUpload(this.files)" multiple>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+            ${(kd.hautanalysen||[]).map((h,i)=>`
+              <div class="scard" style="margin:0;cursor:pointer;position:relative" onclick="viewHautanalyse(${i})">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                  <div style="width:44px;height:44px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${h.type==='pdf'?'&#128196;':'&#128248;'}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.label||'Hautanalyse')}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtDate(h.date)}${h.type==='pdf'?' &#183; PDF':''}</div>
+                  </div>
+                </div>
+                ${h.type!=='pdf'&&h.data?'<img src="'+h.data+'" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover" alt="Hautanalyse">':'<div style="padding:20px;text-align:center;background:var(--bg4);border-radius:8px;color:var(--muted)">&#128196; PDF-Dokument</div>'}
+              </div>
+            `).join('')}
+            <div style="border:2px dashed var(--border);border-radius:var(--r);padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--muted);transition:all .2s" onclick="document.getElementById('hautanalyseUpload').click()" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              <span style="font-size:28px">&#128269;</span>
+              <span style="font-size:12px;letter-spacing:.5px">Observ-Bericht hochladen</span>
+              <span style="font-size:10px">Bilder oder PDF</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TERMINE -->
+      <div class="kpage${currentKTab==='termine'?' active':''}" id="kp-termine">
+        <div class="scard">
+          <h3>Terminuebersicht</h3>
+          <div class="kh-metrics" style="margin:0 0 16px">
+            <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${fmtDate(c.lv)}</div><div class="kh-metric-label">Letzter Termin</div></div>
+            <div class="kh-metric"><div class="kh-metric-val" style="color:var(--${s.color})">${formatDays(c.days)}</div><div class="kh-metric-label">Her</div></div>
+            <div class="kh-metric"><div class="kh-metric-val">${c.visits||0}</div><div class="kh-metric-label">Gesamt Besuche</div></div>
+          </div>
+          ${c.visitDates&&c.visitDates.length?`
+            <h4 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Alle bekannten Termine</h4>
+            <div class="timeline">${c.visitDates.slice(0,30).map(d=>`
+              <div class="tl-item" style="padding-bottom:8px;margin-bottom:8px">
+                <div class="tl-dot"></div>
+                <div class="tl-date">${fmtDate(d)}</div>
+              </div>
+            `).join('')}</div>
+          `:'<p style="color:var(--muted);text-align:center;padding:20px">Termine werden ueber Treatwell-Kassenbuch Import aktualisiert.</p>'}
+        </div>
+        <div class="tw-import">
+          <h3>Treatwell aktualisieren</h3>
+          <p>Lade ein neues Treatwell-Kassenbuch hoch, um die Termine dieses Kunden zu aktualisieren.</p>
+          <button class="btn btn-gold btn-sm" onclick="openImportModal()">Kassenbuch importieren</button>
+        </div>
+      </div>
+
+      <!-- KONTAKTHISTORIE -->
+      <div class="kpage${currentKTab==='kontakt'?' active':''}" id="kp-kontakt">
+        <div class="scard">
+          <h3>Kontakthistorie <button class="add-btn" onclick="logContact()">+ Kontakt</button></h3>
+          ${contactCount>0?kd.contacts.map((k,i)=>`
+            <div class="kh-entry">
+              <div class="kh-icon ${k.channel==='WhatsApp'?'wa':k.channel==='Telefon'?'phone':k.channel==='E-Mail'?'email':k.channel==='SMS'?'sms':'studio'}">
+                ${k.channel==='WhatsApp'?'&#9742;':k.channel==='Telefon'?'&#128222;':k.channel==='E-Mail'?'&#9993;':k.channel==='Im Studio'?'&#127968;':'&#128172;'}
+              </div>
+              <div class="kh-body">
+                <div class="date">${fmtDate(k.date)}</div>
+                <div class="channel">${esc(k.channel)} ${k.reason?' &#183; '+esc(k.reason):''}</div>
+                ${k.note?'<div class="note">'+esc(k.note)+'</div>':''}
+              </div>
+              <button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:var(--red-bg);color:var(--red);border:none;flex-shrink:0" onclick="deleteContact(${i})">&#10005;</button>
+            </div>
+          `).join(''):'<p style="color:var(--muted);text-align:center;padding:20px">Noch keine Kontakte erfasst.</p>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function switchKTab(tab){
+  currentKTab=tab;
+  if(selectedClient)renderKartei(selectedClient);
+}
+
+// ── ANAMNESE RENDERING (Studio-Style) ──
+const ANAM_SECTIONS=[
+  {icon:'👤',title:'Über dich',fields:[
+    {id:'vorname',label:'Vorname'},{id:'name',label:'Nachname'},{id:'geburtsdatum',label:'Geburtsdatum'},
+    {id:'telefon',label:'Telefon'},{id:'email',label:'E-Mail'},{id:'plz',label:'PLZ'},
+    {id:'adresse',label:'Adresse'},{id:'hautprobleme_seit',label:'Hautprobleme seit'}
+  ]},
+  {icon:'⚕️',title:'Gesundheitliche Angaben',fields:[
+    {id:'sachlagen',label:'Gesundheit',type:'chips'},{id:'sachlagen_details',label:'Details'}
+  ]},
+  {icon:'🍽',title:'Lebensumstände & Ernährung',fields:[
+    {id:'lebensumstaende',label:'Lebensumstände',type:'chips'}
+  ]},
+  {icon:'⚡',title:'Hormonstatus',fields:[
+    {id:'hormonstatus',label:'Hormonstatus',type:'chips'}
+  ]},
+  {icon:'💊',title:'Medikamente & Vitamine',fields:[
+    {id:'medikamente_checks',label:'Medikamente',type:'chips'},{id:'medikamente_weitere',label:'Weitere Medikamente'}
+  ]},
+  {icon:'✨',title:'Bisherige Behandlungen',fields:[
+    {id:'vorbehandlungen_aesthetisch',label:'Ästhetische Vorbehandlungen',type:'chips'},
+    {id:'vorbehandlungen_details',label:'Details'},{id:'braeunung',label:'Bräunung',type:'chips'}
+  ]},
+  {icon:'🧴',title:'Aktuelle Hautpflege',fields:[
+    {id:'haeusliche_pflege',label:'Pflegeroutine',type:'chips'},{id:'pflege_details',label:'Produkte / Marken'}
+  ]},
+  {icon:'🔍',title:'Hautprobleme',fields:[
+    {id:'hautproblem',label:'Hautprobleme',type:'chips'}
+  ]},
+  {icon:'🎯',title:'Hautziel',fields:[
+    {id:'besuchsgrund',label:'Grund für den Besuch'}
+  ]},
+  {icon:'💆',title:'Erfahrung mit Kosmetik',fields:[
+    {id:'erfahrung_medical',label:'Erfahrung'}
+  ]}
+];
+
+function renderAnamnese(a){
+  // Completeness berechnen
+  let total=0,filled=0;
+  ANAM_SECTIONS.forEach(sec=>{
+    sec.fields.forEach(f=>{
+      total++;
+      const v=a[f.id];
+      if(Array.isArray(v)?v.length>0:(v&&String(v).trim().length>0))filled++;
+    });
+  });
+  const pct=total>0?Math.round(filled/total*100):0;
+  const barColor=pct>=80?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+
+  let html='';
+
+  // Completeness Bar (wie Studio)
+  html+=`<div style="display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap;align-items:center">
+    <div style="text-align:center;min-width:60px"><div style="font-size:28px;font-weight:700;color:${barColor};font-family:Cormorant Garamond,serif">${pct}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Ausgefüllt</div></div>
+    <div style="text-align:center;min-width:60px"><div style="font-size:28px;font-weight:700;color:var(--gold);font-family:Cormorant Garamond,serif">${filled}/${total}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Felder</div></div>
+    <div style="text-align:center;min-width:60px"><div style="font-size:28px;font-weight:700;color:${a.unterschrift||a._unterschrift?'var(--green)':'var(--red)'}">${a.unterschrift||a._unterschrift?'✓':'✗'}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Datenschutz</div></div>
+    <div style="text-align:center;min-width:60px"><div style="font-size:14px;font-weight:500;color:var(--text2)">${a.datum?fmtDate(a.datum):(a._at?fmtDate(a._at.split('T')[0]):'–')}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Ausgefüllt am</div></div>
+  </div>`;
+
+  // Sections (wie Studio: mit Status-Pill und Feld-Rows)
+  ANAM_SECTIONS.forEach(sec=>{
+    let secFilled=0,secTotal=sec.fields.length;
+    sec.fields.forEach(f=>{
+      const v=a[f.id];
+      if(Array.isArray(v)?v.length>0:(v&&String(v).trim().length>0))secFilled++;
+    });
+    const status=secFilled===secTotal?'complete':secFilled>0?'partial':'empty';
+    const statusLabel=status==='complete'?'Vollständig':status==='partial'?'Teilweise':'Leer';
+    const statusColor=status==='complete'?'var(--green)':status==='partial'?'var(--yellow)':'var(--red)';
+    const statusBg=status==='complete'?'var(--green-bg)':status==='partial'?'var(--yellow-bg)':'var(--red-bg)';
+
+    html+=`<div class="scard" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:10px">
+        <span style="font-size:16px">${sec.icon}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.5px;text-transform:uppercase;flex:1">${sec.title}</span>
+        <span style="padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;background:${statusBg};color:${statusColor}">${statusLabel}</span>
+      </div>`;
+
+    sec.fields.forEach(f=>{
+      const v=a[f.id];
+      const hasFill=Array.isArray(v)?v.length>0:(v&&String(v).trim().length>0);
+      const statusIcon=hasFill?'✓':'✗';
+      const iconColor=hasFill?'var(--green)':'var(--red)';
+      const iconBg=hasFill?'var(--green-bg)':'var(--red-bg)';
+      const rowBg=hasFill?'rgba(74,222,128,.03)':'rgba(248,113,113,.03)';
+
+      html+=`<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:3px;background:${rowBg}">
+        <div style="width:20px;height:20px;border-radius:50%;background:${iconBg};color:${iconColor};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px">${statusIcon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.3px;text-transform:uppercase">${f.label}</div>`;
+
+      if(f.type==='chips'){
+        if(hasFill){
+          const selected=Array.isArray(v)?v:[];
+          html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">';
+          selected.forEach(s=>{
+            html+=`<span style="padding:3px 10px;border-radius:14px;font-size:11px;font-weight:500;background:var(--gold-dim);border:1px solid rgba(201,169,110,.3);color:var(--gold)">${esc(s)}</span>`;
+          });
+          html+='</div>';
+        } else {
+          html+='<div style="font-size:12px;color:var(--red);opacity:.6;font-style:italic;margin-top:2px">Nicht ausgefüllt</div>';
+        }
+      } else {
+        if(hasFill){
+          html+=`<div style="font-size:13px;color:var(--text);line-height:1.5;margin-top:2px">${esc(String(v))}</div>`;
+        } else {
+          html+='<div style="font-size:12px;color:var(--red);opacity:.6;font-style:italic;margin-top:2px">Nicht ausgefüllt</div>';
+        }
+      }
+      html+='</div></div>';
+    });
+    html+='</div>';
+  });
+
+  return html;
+}
+
+function anamField(label,value){
+  return`<div class="anam-field"><span class="anam-label">${esc(label)}</span><span class="anam-value">${esc(value)}</span></div>`;
+}
+
+// ── URSACHEN-ANALYSE (aus Studio-Tool) ──
+const PL={akne:"Akne",unreinehaut:"Unreine Haut",rosacea:"Rosacea / Couperose",pigmentierung:"Pigmentstörungen",hautalterung:"Elastizitätsverlust",trockenheit:"Trockene Haut",empfindlichkeit:"Irritierte Haut",poren_verstopft:"Verstopfte Poren",poren_gross:"Vergrößerte Poren",fettigehaut:"Fettige Haut"};
+const PDB={
+  akne:"akne",unreinehaut:"akne",rosacea:"rosacea",pigmentierung:"pigmentierung",hautalterung:"hautalterung",trockenheit:"trockenheit",empfindlichkeit:"empfindlichkeit",poren_verstopft:"poren",poren_gross:"poren",fettigehaut:"fettigehaut",
+  "Akne":"akne","Unreine Haut":"akne","Fettige Haut":"fettigehaut",
+  "Verstopfte Poren":"poren","Vergrößerte Poren":"poren","Vergroesserte Poren":"poren",
+  "Rosacea / Couperose":"rosacea","Irritierte / Empfindliche Haut":"empfindlichkeit",
+  "Trockene Haut":"trockenheit","Verlust von Hautelastizität":"hautalterung","Verlust von Hautelastizitaet":"hautalterung",
+  "Pigmentstörungen":"pigmentierung","Pigmentstoerungen":"pigmentierung"
+};
+const CC={Hormonal:{bg:"rgba(168,85,247,0.10)",b:"#a855f7",i:"\u26A1"},Darm:{bg:"rgba(34,197,94,0.10)",b:"#22c55e",i:"\uD83D\uDD2C"},Ernährung:{bg:"rgba(251,146,60,0.10)",b:"#fb923c",i:"\uD83C\uDF7D"},Stress:{bg:"rgba(239,68,68,0.10)",b:"#ef4444",i:"\uD83E\uDDE0"},Nährstoffe:{bg:"rgba(59,130,246,0.10)",b:"#3b82f6",i:"\uD83D\uDC8A"},Leber:{bg:"rgba(234,179,8,0.10)",b:"#eab308",i:"\uD83E\uDEC0"},Entzündung:{bg:"rgba(244,63,94,0.10)",b:"#f43f5e",i:"\uD83D\uDD25"},Medikamente:{bg:"rgba(20,184,166,0.10)",b:"#14b8a6",i:"\uD83D\uDC89"},Schlaf:{bg:"rgba(99,102,241,0.10)",b:"#6366f1",i:"\uD83C\uDF19"},Autoimmun:{bg:"rgba(236,72,153,0.10)",b:"#ec4899",i:"\uD83D\uDEE1"}};
+const CAUSES={
+  akne:[
+    {cat:"Hormonal",title:"Hormonelles Ungleichgewicht (Androgenüberschuss)",desc:"Androgene (v.a. Testosteron, DHT) stimulieren die Talgdrüsen direkt. Erhöhte Androgenspiegel führen zu vermehrter Talgproduktion und Verhornung.",signs:"Pickel an Kinn, Kieferlinie, Hals. Zyklusabhängig, verschlimmert sich vor der Periode.",condition:"PCOS (ca. 10% aller Frauen)",doctor:"Gynäkologe, ggf. Endokrinologe",blood:"Testosteron (gesamt+frei), DHEA-S, SHBG",action:"Spearmint-Tee (2 Tassen/Tag senkt freies Testosteron)",nutrients:"Zink 30mg/Tag, Vit B6, Omega-3, Vit D"},
+    {cat:"Darm",title:"Gestörte Darm-Haut-Achse",desc:"70-80% des Immunsystems sitzt im Darm. Eine gestörte Darmflora kann systemische Entzündungen auslösen, die sich in der Haut zeigen.",signs:"Blähungen, Verstopfung/Durchfall, Nahrungsmittelunverträglichkeiten.",doctor:"Gastroenterologe, Heilpraktiker",blood:"Zonulin, Calprotectin, Stuhlflora-Analyse",action:"Probiotika: L. rhamnosus, B. lactis. Fermentierte Lebensmittel.",nutrients:"L-Glutamin 5g/Tag, Zink-Carnosin, Omega-3"},
+    {cat:"Ernährung",title:"Ernährungsbedingte Entzündungen",desc:"Hoher Zuckerkonsum und Milchprodukte erhöhen IGF-1, das die Talgproduktion stimuliert.",signs:"Entzündliche Pickel, besonders nach Süßigkeiten oder Milchprodukten.",doctor:"Ernährungsberater",blood:"HbA1c, Insulin nuchtern",action:"Zucker und Milchprodukte reduzieren. Omega-3-reiche Ernährung.",nutrients:"Omega-3 (2g/Tag), Zink, Chrom"},
+    {cat:"Stress",title:"Stressbedingte Hautreaktion",desc:"Cortisol aktiviert die Talgdrüsen und schwächt die Hautbarriere. Chronischer Stress führt zu systemischer Entzündung.",signs:"Plötzliche Verschlechterung in stressigen Phasen, Juckreiz.",doctor:"Hausarzt, Psychologe",blood:"Cortisol (Speichel-Tagesprofil)",action:"Meditation, Sport, ausreichend Schlaf (7-8h).",nutrients:"Magnesium 400mg, Ashwagandha, B-Vitamine"},
+    {cat:"Nährstoffe",title:"Nährstoffmängel",desc:"Zink, Vitamin A und Omega-3 sind essenziell für die Hautregeneration und Entzündungskontrolle.",signs:"Langsame Wundheilung, trockene Stellen neben öligen Bereichen.",doctor:"Hausarzt, Heilpraktiker",blood:"Zink, Vitamin D, Ferritin, Omega-3-Index",action:"Ernährung anpassen, gezielt supplementieren.",nutrients:"Zink 30mg, Vitamin D 4000IE, Omega-3 2g"},
+    {cat:"Leber",title:"Überlastete Entgiftung (Leber)",desc:"Die Leber baut überschüssige Hormone ab. Bei Überlastung zirkulieren Stoffwechselprodukte länger.",signs:"Fahler Teint, Pickel an Stirn und Schläfe.",doctor:"Internist, Heilpraktiker",blood:"GOT, GPT, GGT, Bilirubin",action:"Alkohol reduzieren, Bitterstoffe (Artischocke, Löwenzahn).",nutrients:"Mariendistel, NAC, B-Vitamine"}
+  ],
+  rosacea:[
+    {cat:"Entzündung",title:"Chronische Mikro-Entzündung",desc:"Bei Rosacea liegt eine chronische Entzündung der Gesichtshaut vor, oft mit erhöhtem Cathelicidin (LL-37).",signs:"Rötungen, Flush, erweiterte Äderchen, Hitzegefühl.",doctor:"Dermatologe",blood:"CRP, ANA (Autoimmun-Screening)",action:"Trigger meiden (Alkohol, scharf, heiße Getränke). Sanfte Pflege.",nutrients:"Omega-3, Vitamin D, Probiotika"},
+    {cat:"Darm",title:"Darm-Rosacea-Verbindung (SIBO)",desc:"Studien zeigen: Rosacea-Patienten haben häufig SIBO (Dünndarm-Fehlbesiedlung). Eine Behandlung kann Rosacea verbessern.",signs:"Blähungen nach dem Essen, Völlegefühl, unregelmäßiger Stuhl.",doctor:"Gastroenterologe",blood:"Atemtest (H2/CH4), Stuhlflora",action:"SIBO-Behandlung, Probiotika, FODMAP-arme Ernährung.",nutrients:"Zink-Carnosin, L-Glutamin, Berberin"},
+    {cat:"Stress",title:"Stressgetriggerte Rosacea-Schübe",desc:"Stress aktiviert das sympathische Nervensystem und führt zu Gefäßerweiterung im Gesicht.",signs:"Flush/Rötung bei Stress, Anspannung, Aufregung.",doctor:"Hausarzt, Dermatologe",blood:"Cortisol-Tagesprofil",action:"Stressmanagement, kühlende Pflege bei Schüben.",nutrients:"Magnesium, Ashwagandha, Niacinamid topisch"}
+  ],
+  pigmentierung:[
+    {cat:"Hormonal",title:"Hormonell bedingte Hyperpigmentierung (Melasma)",desc:"Östrogen und Progesteron stimulieren die Melanin-Produktion. Häufig durch Pille oder Schwangerschaft.",signs:"Symmetrische braune Flecken an Stirn, Wangen, Oberlippe.",doctor:"Gynäkologe, Dermatologe",blood:"Östrogen, Progesteron, Schilddrüse (TSH, fT3, fT4)",action:"UV-Schutz LSF50+ täglich! Ggf. Pille absetzen besprechen.",nutrients:"Vitamin C Serum, Niacinamid, Tranexamsäure topisch"},
+    {cat:"Entzündung",title:"Postinflammatorische Hyperpigmentierung",desc:"Nach Entzündungen (Pickel, Verletzungen) produziert die Haut überschüssiges Melanin.",signs:"Dunkle Flecken an Stellen früherer Pickel/Verletzungen.",doctor:"Dermatologe",blood:"Nicht erforderlich",action:"Nicht kratzen/drücken, konsequenter UV-Schutz.",nutrients:"Vitamin C, Niacinamid 5%, Azelainsäure"}
+  ],
+  hautalterung:[
+    {cat:"Nährstoffe",title:"Oxidativer Stress & Kollagen-Abbau",desc:"Freie Radikale schädigen Kollagen und Elastin. Ab 25 sinkt die Kollagen-Produktion um ca. 1% pro Jahr.",signs:"Feine Linien, Elastizitätsverlust, matter Teint.",doctor:"Hausarzt, Anti-Aging-Mediziner",blood:"Vitamin D, Omega-3-Index, Antioxidantien-Status",action:"Antioxidantien-reiche Ernährung, UV-Schutz.",nutrients:"Kollagen-Peptide 10g/Tag, Vitamin C 1g, Astaxanthin, CoQ10"},
+    {cat:"Hormonal",title:"Hormonelle Hautalterung (Östrogen-Mangel)",desc:"In den Wechseljahren sinkt das Östrogen, was zu Kollagen-Verlust und Trockenheit führt.",signs:"Dünnere Haut, Trockenheit, Faltenbildung beschleunigt.",doctor:"Gynäkologe, Endokrinologe",blood:"Östrogen, FSH, LH",action:"Hormonersatztherapie besprechen. Reichhaltige Pflege.",nutrients:"Phytoöstrogene (Soja, Rotklee), Hyaluronsäure"}
+  ],
+  trockenheit:[
+    {cat:"Nährstoffe",title:"Essenzielle Fettsäuren-Mangel",desc:"Omega-3 und Omega-6 sind Bausteine der Hautbarriere (Ceramide). Ein Mangel führt zu transepidermalem Wasserverlust.",signs:"Raue, schuppige Haut, Spannungsgefühl, Juckreiz.",doctor:"Hausarzt",blood:"Omega-3-Index (Ziel: >8%)",action:"Fettreichen Fisch 2x/Woche, Leinöl, Avocado.",nutrients:"Omega-3 (2-3g EPA/DHA), Vitamin E, GLA (Nachtkerzenöl)"},
+    {cat:"Darm",title:"Nährstoff-Malabsorption",desc:"Bei gestörter Darmbarriere werden Fettsäuren und fettlösliche Vitamine schlechter aufgenommen.",signs:"Trotz guter Ernährung trockene Haut, Blähungen.",doctor:"Gastroenterologe",blood:"Vitamin A, D, E, Zonulin",action:"Darmgesundheit stärken, Probiotika.",nutrients:"L-Glutamin, Probiotika, fettlösliche Vitamine"}
+  ],
+  empfindlichkeit:[
+    {cat:"Entzündung",title:"Gestörte Hautbarriere",desc:"Eine beschädigte Hautbarriere (zu aggressive Pflege, Umwelt) lässt Reizstoffe eindringen und Wasser entweichen.",signs:"Brennen, Rötung bei neuen Produkten, Spannungsgefühl.",doctor:"Dermatologe",blood:"Nicht erforderlich",action:"Minimal-Routine: nur milde Reinigung + Barriere-Creme + SPF.",nutrients:"Ceramide, Niacinamid 5%, Panthenol"},
+    {cat:"Autoimmun",title:"Autoimmune Hautreaktion",desc:"Das Immunsystem reagiert überschießend auf eigenes Gewebe oder harmlose Stoffe.",signs:"Wiederkehrende Ekzeme, starke Reaktionen auf viele Produkte.",doctor:"Dermatologe, Allergologe, Immunologe",blood:"ANA, IgE gesamt, spezifische IgE",action:"Allergietest machen. Hypoallergene Pflege.",nutrients:"Vitamin D, Omega-3, Quercetin, Probiotika"}
+  ],
+  poren:[
+    {cat:"Hormonal",title:"Hormonell vergrößerte Poren",desc:"Androgene stimulieren die Talgdrüsen. Erhöhte Talgproduktion weitet die Poren.",signs:"Ölige T-Zone, vergrößerte Poren an Nase und Wangen.",doctor:"Gynäkologe bei Verdacht auf PCOS",blood:"Testosteron, DHEA-S",action:"Regelmäßiges BHA-Peeling (Salicylsäure), Niacinamid.",nutrients:"Zink, Vitamin A, Niacinamid topisch 10%"},
+    {cat:"Ernährung",title:"Ernährungsbedingte Talgproduktion",desc:"Insulinspitzen durch Zucker und einfache Kohlenhydrate erhöhen die Talgproduktion.",signs:"Ölige Haut nach Süßigkeiten/Weißmehl.",doctor:"Ernährungsberater",blood:"HbA1c, Insulin nuchtern",action:"Blutzucker stabilisieren: Vollkorn, Protein, gesunde Fette.",nutrients:"Chrom 200mcg, Zimt-Extrakt, Omega-3"}
+  ],
+  fettigehaut:[
+    {cat:"Hormonal",title:"Androgenbedingte Talgüberproduktion",desc:"Erhöhte Androgene oder erhöhte Empfindlichkeit der Talgdrüsen gegenüber Androgenen.",signs:"Glänzende Haut bereits kurz nach der Reinigung.",doctor:"Gynäkologe, Endokrinologe",blood:"Testosteron, DHEA-S, SHBG",action:"Nicht austrocknen! Leichte, ölfreie Feuchtigkeitspflege.",nutrients:"Zink, Vitamin B5 (Pantothensäure) 500mg, Niacinamid"},
+    {cat:"Stress",title:"Stressbedingte Talgproduktion",desc:"Cortisol erhöht direkt die Talgdrüsen-Aktivität.",signs:"Öligere Haut in stressigen Phasen.",doctor:"Hausarzt",blood:"Cortisol (Speichel)",action:"Stressreduktion, ausreichend Schlaf.",nutrients:"Magnesium, Ashwagandha, Rhodiola"}
+  ]
+};
+
+const TX_PLAN={akne:["Skin Check","HydroCare Tiefenreinigung","Fruchtsäurebehandlung","Microneedling"],unreinehaut:["Skin Check","HydroCare Klärend","Fruchtsäure"],rosacea:["Skin Check","HydroCare Sensitive"],pigmentierung:["Skin Check","Fruchtsäure","Microneedling + Wirkstoff"],hautalterung:["Skin Check","HydroCare Anti-Aging","Microneedling"],trockenheit:["Skin Check","HydroCare Intensiv"],empfindlichkeit:["Skin Check","HydroCare Calming"],poren_verstopft:["Skin Check","HydroCare Tiefenreinigung","Fruchtsäure"],poren_gross:["Skin Check","Fruchtsäure","Microneedling"],fettigehaut:["Skin Check","HydroCare Balance","Fruchtsäure"]};
+
+let openCauses={};
+
+function analyzeAnamnese(a){
+  const pr=a.hautproblem||[];
+  if(!pr.length)return{high:[],rest:[]};
+  const s=a.sachlagen||[],l=a.lebensumstaende||[],h=a.hormonstatus||[],m=a.medikamente_checks||[];
+  let all=[];
+  pr.forEach(p=>{
+    const key=PDB[p]||p;
+    const cs=CAUSES[key];if(!cs)return;
+    cs.forEach(c=>{
+      let v=0;
+      if(c.cat==="Hormonal"){if(h.some(x=>["Zyklussschwankungen","Wechseljahre","Schwangerschaft"].includes(x)))v+=3;if(m.includes("Pille"))v+=2}
+      if(c.cat==="Darm"){if(l.includes("Unregelmäßige Essgewohnheiten"))v+=2;if(s.includes("Autoimmunerkrankung"))v+=2}
+      if(c.cat==="Stress"){if(s.includes("Hohes Stresslevel"))v+=4;if(h.includes("Schlafstörungen"))v+=2}
+      if(c.cat==="Ernährung"){if(l.includes("Regelmäßiger Zuckerkonsum"))v+=3;if(l.includes("Regelmäßig Fast-Food"))v+=2}
+      if(c.cat==="Leber"){if(l.includes("Regelmäßiger Alkoholkonsum"))v+=3}
+      if(c.cat==="Medikamente"){if(m.length>0)v+=2}
+      if(c.cat==="Nährstoffe"){if(l.includes("Niedriger Wasserkonsum"))v+=2}
+      if(c.cat==="Schlaf"){if(h.includes("Schlafstörungen"))v+=3}
+      if(c.cat==="Autoimmun"){if(s.includes("Autoimmunerkrankung"))v+=4;if(s.includes("Immundefiziterkrankung"))v+=3}
+      all.push({...c,problem:PL[p]||p,priority:v});
+    });
+  });
+  all.sort((a,b)=>b.priority-a.priority);
+  const seen={};
+  const unique=all.filter(c=>{if(seen[c.title])return false;seen[c.title]=1;return true});
+  return{high:unique.filter(c=>c.priority>=3),rest:unique.filter(c=>c.priority<3)};
+}
+
+function renderUrsachen(a){
+  const pr=a.hautproblem||[];
+  if(!pr.length)return'<div class="scard"><h3>Ursachen-Analyse</h3><p style="color:var(--muted);text-align:center;padding:20px">Keine Hautprobleme im Anamnesebogen angegeben.</p></div>';
+
+  const res=analyzeAnamnese(a);
+  let html='<div class="scard"><h3>&#128300; Ursachen-Analyse</h3>';
+  html+='<div style="padding:12px;background:var(--gold-dim);border:1px solid rgba(201,169,110,.15);border-radius:10px;margin-bottom:16px;font-size:12px;color:var(--text2)"><strong style="color:var(--gold)">&#128161; Tippe auf eine Ursache</strong> für die vollständige Auswertung mit Arztempfehlung, Blutwerten und Nährstoffen.</div>';
+
+  if(res.high.length){
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:18px">&#9888;&#65039;</span><span style="font-size:14px;font-weight:600;color:var(--gold);font-family:Cormorant Garamond,serif;letter-spacing:1px">HÖCHSTE RELEVANZ</span></div>';
+    html+='<p style="font-size:12px;color:var(--muted);margin-bottom:14px">Basierend auf den Kundenangaben — prioritär besprechen.</p>';
+    res.high.forEach((c,i)=>{html+=renderCauseCard(c,'h'+i)});
+  }
+  if(res.rest.length){
+    html+='<div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:'+(res.high.length?'24':'0')+'px 0 12px">Weitere moegliche Ursachen</div>';
+    res.rest.forEach((c,i)=>{html+=renderCauseCard(c,'r'+i)});
+  }
+  html+='<div style="padding:10px 14px;background:var(--gold-dim);border:1px solid rgba(201,169,110,.15);border-radius:10px;margin-top:16px;font-size:11px;color:var(--muted)"><strong style="color:var(--gold)">Hinweis:</strong> Dies ist keine medizinische Diagnose, sondern eine Orientierungshilfe fuer das Beratungsgespraech.</div>';
+  html+='</div>';
+
+  // Behandlungsempfehlung
+  html+='<div class="scard"><h3>&#10024; Empfohlene Behandlungen</h3>';
+  html+='<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Mind. 4-6 Behandlungen fuer sichtbare Ergebnisse.</div>';
+  const seenTx={};
+  pr.forEach(p=>{
+    const plan=TX_PLAN[p]||TX_PLAN[PDB[p]];if(!plan)return;
+    html+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:6px">'+(PL[p]||esc(p))+'</div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:6px">'+plan.map((t,i)=>'<span class="chip chip-gold" style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;font-weight:700;background:var(--gold);color:#fff;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center">'+(i+1)+'</span>'+esc(t)+'</span>').join('')+'</div></div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderCauseCard(c,key){
+  const cc=CC[c.cat]||{bg:'rgba(255,255,255,.05)',b:'#555',i:'*'};
+  const isOpen=!!openCauses[key];
+  let h=`<div style="background:${cc.bg};border:1px solid ${cc.b}33;border-left:3px solid ${cc.b};border-radius:12px;margin-bottom:10px;overflow:hidden">`;
+  h+=`<div style="padding:14px;cursor:pointer" onclick="openCauses['${key}']=!openCauses['${key}'];if(selectedClient){var sb=document.querySelector('.kbody');var st=sb?sb.scrollTop:0;renderKartei(selectedClient);requestAnimationFrame(function(){if(sb)sb.scrollTop=st})}">`;
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1">';
+  h+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap"><span style="font-size:14px">${cc.i}</span>`;
+  h+=`<span style="padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;border:1px solid ${cc.b};color:${cc.b}">${esc(c.cat)}</span>`;
+  if(c.priority>=3)h+='<span style="padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:var(--red);color:#fff">Hohe Relevanz</span>';
+  h+='</div>';
+  h+=`<div style="font-size:14px;font-weight:500;color:var(--text)">${esc(c.title)}</div>`;
+  if(c.problem)h+=`<div style="font-size:11px;color:var(--muted);margin-top:2px">&rarr; ${esc(c.problem)}</div>`;
+  h+='</div>';
+  h+=`<span style="color:var(--muted);font-size:16px;transform:${isOpen?'rotate(180deg)':'none'};transition:transform .2s;flex-shrink:0;margin-left:12px">&#9662;</span>`;
+  h+='</div></div>';
+
+  if(isOpen){
+    h+='<div style="border-top:1px solid rgba(255,255,255,.06)">';
+    const rows=[
+      {i:'&#128269;',l:'Was passiert im Koerper',v:c.desc},
+      {i:'&#128065;',l:'Anzeichen bei der Kundin',v:c.signs,bg:'rgba(255,255,255,.03)'},
+      {i:'&#9888;&#65039;',l:'Moegliche Grunderkrankung',v:c.condition},
+      {i:'&#129658;',l:'Welcher Arzt',v:c.doctor,bg:'rgba(255,255,255,.03)'},
+      {i:'&#129656;',l:'Blutwerte pruefen lassen',v:c.blood},
+      {i:'&#9989;',l:'Was kann die Kundin tun',v:c.action,bg:'rgba(74,222,128,.04)'},
+      {i:'&#128138;',l:'Nährstoffe & Dosierungen',v:c.nutrients,bg:'rgba(96,165,250,.04)'}
+    ];
+    rows.forEach(r=>{
+      if(!r.v)return;
+      h+=`<div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);${r.bg?'background:'+r.bg:''}">`;
+      h+=`<div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">${r.i} ${r.l}</div>`;
+      h+=`<p style="font-size:13px;color:var(--text2);line-height:1.6;margin:0">${esc(r.v)}</p></div>`;
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function copyAnamLink(){
+  const url='https://skinconcept-anamnesebogen.netlify.app/anamnesebogen.html';
+  navigator.clipboard.writeText(url).then(()=>toast('Anamnesebogen-Link kopiert!')).catch(()=>toast('Link konnte nicht kopiert werden','warn'));
+}
+
+// ── UPDATE CLIENT DATA ──
+function updateClient(field,value){
+  if(!selectedClient)return;
+  selectedClient[field]=value;
+  if(field==='bd'){
+    const m=value.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
+    if(m){selectedClient.gebDate=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]))}
+  }
+  // Update missing
+  selectedClient.missing=[];
+  if(!selectedClient.ph)selectedClient.missing.push('telefon');
+  if(!selectedClient.em)selectedClient.missing.push('email');
+  if(!selectedClient.bd)selectedClient.missing.push('geburtsdatum');
+  renderSidebar();
+  toast('Gespeichert');
+}
+
+function updateKarteiField(field,value){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd[field]=value;
+  saveClientKartei(selectedClient.id,kd);
+  toast('Gespeichert');
+}
+
+// ── ADD TREATMENT ──
+const SC_TREATMENTS=[
+  {id:'neukundenbehandlung',name:'Neukundenbehandlung',icon:'&#9734;',desc:'Erstbehandlung inkl. Hautanalyse & Beratung',color:'var(--gold)'},
+  {id:'skincheck',name:'Skincheck',icon:'&#128269;',desc:'Hautanalyse & Zustandsbewertung',color:'var(--blue)'},
+  {id:'hydrocare-gross',name:'HydroCare Gross',icon:'&#128167;',desc:'Intensiv-Feuchtigkeitsbehandlung',color:'var(--blue)'},
+  {id:'hydrocare-klein',name:'HydroCare Klein',icon:'&#128166;',desc:'Express-Feuchtigkeitsbehandlung',color:'var(--blue)'},
+  {id:'nanoglow',name:'NanoGlow',icon:'&#10024;',desc:'Nano-Infusion fuer strahlende Haut',color:'var(--purple)'},
+  {id:'microneedling',name:'Microneedling',icon:'&#9881;',desc:'Kollagenstimulation & Hauterneuerung',color:'var(--red)'},
+  {id:'chemical-peel',name:'Chemical Peel',icon:'&#9883;',desc:'Chemisches Peeling fuer Hauterneuerung',color:'var(--orange)'},
+  {id:'exocean',name:'Exocean',icon:'&#127754;',desc:'Marine Wirkstoffbehandlung fuer tiefe Regeneration',color:'var(--blue)'}
+];
+let selectedTreatmentId=null;
+
+function openAddTreatment(){
+  selectedTreatmentId=null;
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <h2>Behandlung dokumentieren</h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px">Behandlung auswaehlen:</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px" id="treatmentPicker">
+      ${SC_TREATMENTS.map(t=>`
+        <div id="tp-${t.id}" onclick="pickTreatment('${t.id}')" style="padding:14px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;background:var(--bg2)" onmouseover="this.style.borderColor='${t.color}'" onmouseout="if(selectedTreatmentId!=='${t.id}')this.style.borderColor='var(--border)'">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <span style="font-size:20px">${t.icon}</span>
+            <span style="font-size:14px;font-weight:500">${t.name}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted)">${t.desc}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="treatmentForm" style="display:none">
+      <div style="padding:12px 16px;background:var(--gold-dim);border:1px solid rgba(176,141,87,.2);border-radius:10px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <span id="tfIcon" style="font-size:20px"></span>
+        <span id="tfName" style="font-size:14px;font-weight:600;color:var(--gold)"></span>
+        <button onclick="openAddTreatment()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;font-family:Outfit,sans-serif">Andere waehlen</button>
+      </div>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg"><label>Datum</label><input type="date" id="atDate" value="${TODAY_STR}"></div>
+        <div class="fg"><label>Uhrzeit</label><input type="time" id="atTime"></div>
+        <div class="fg form-full"><label>Verwendete Produkte</label><input id="atProducts" placeholder="z.B. Noon Serum, Smetics Cleanser, Skinconcept Mask..."></div>
+        <div class="fg form-full"><label>Notizen / Behandlungsverlauf</label><textarea id="atNotes" rows="4" placeholder="Hautzustand, Reaktion, Ergebnis, naechste Schritte..."></textarea></div>
+      </div>
+      <button class="btn btn-gold" onclick="saveTreatment()">Behandlung speichern</button>
+    </div>
+  `;
+  openModal('addModal');
+}
+
+function pickTreatment(id){
+  selectedTreatmentId=id;
+  const t=SC_TREATMENTS.find(x=>x.id===id);
+  if(!t)return;
+  document.querySelectorAll('#treatmentPicker > div').forEach(el=>{el.style.borderColor='var(--border)';el.style.background='var(--bg2)'});
+  const picked=document.getElementById('tp-'+id);
+  picked.style.borderColor=t.color;
+  picked.style.background='var(--gold-dim)';
+  document.getElementById('tfIcon').innerHTML=t.icon;
+  document.getElementById('tfName').textContent=t.name;
+  document.getElementById('treatmentForm').style.display='block';
+}
+
+function saveTreatment(){
+  if(!selectedClient||!selectedTreatmentId)return;
+  const t=SC_TREATMENTS.find(x=>x.id===selectedTreatmentId);
+  const kd=getClientKartei(selectedClient.id);
+  kd.treatments.unshift({
+    date:document.getElementById('atDate').value,
+    time:document.getElementById('atTime').value,
+    type:t?t.name:selectedTreatmentId,
+    typeId:selectedTreatmentId,
+    products:document.getElementById('atProducts').value,
+    notes:document.getElementById('atNotes').value
+  });
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  renderKartei(selectedClient);
+  toast('Behandlung gespeichert');
+}
+
+function deleteTreatment(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.treatments.splice(idx,1);
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+  toast('Behandlung geloescht');
+}
+
+// ── ADD PLAN STEP ──
+function openAddPlan(){
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <h2>Behandlungsschritt planen</h2>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="fg form-full"><label>Behandlung / Massnahme</label>
+        <select id="apTitle">
+          <option value="">-- Behandlung waehlen --</option>
+          ${SC_TREATMENTS.map(t=>'<option value="'+t.name+'">'+t.icon+' '+t.name+'</option>').join('')}
+          <option value="">Sonstige (unten eingeben)</option>
+        </select>
+      </div>
+      <div class="fg form-full"><label>Oder eigene Bezeichnung</label><input id="apTitleCustom" placeholder="z.B. Nachbehandlung, Kontrolle..."></div>
+      <div class="fg"><label>Geplantes Datum</label><input type="date" id="apDate"></div>
+      <div class="fg"><label>Intervall</label>
+        <select id="apInterval">
+          <option value="">Einmalig</option><option>Alle 2 Wochen</option><option>Alle 4 Wochen</option><option>Alle 6 Wochen</option><option>Alle 8 Wochen</option>
+        </select>
+      </div>
+      <div class="fg form-full"><label>Beschreibung / Ziel</label><textarea id="apDesc" rows="3" placeholder="Was soll erreicht werden?"></textarea></div>
+    </div>
+    <button class="btn btn-gold" onclick="savePlanStep()">Schritt hinzufuegen</button>
+  `;
+  openModal('addModal');
+}
+
+function savePlanStep(){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.plan.push({
+    title:document.getElementById('apTitle').value||document.getElementById('apTitleCustom').value,
+    date:document.getElementById('apDate').value,
+    interval:document.getElementById('apInterval').value,
+    desc:document.getElementById('apDesc').value,
+    done:false
+  });
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  renderKartei(selectedClient);
+  toast('Behandlungsschritt geplant');
+}
+
+function togglePlan(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.plan[idx].done=!kd.plan[idx].done;
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+}
+
+// ── ADD PRODUCT ──
+let scannerActive=false;
+let scanMode='manual'; // 'manual','camera'
+let lastScannedEAN='';
+let scannedProductInfo=null;
+
+// Eigene Produktdatenbank (wird per localStorage erweitert)
+const PRODUCT_DB_KEY='sc_product_db';
+function loadProductDB(){try{return JSON.parse(localStorage.getItem(PRODUCT_DB_KEY)||'{}')}catch{return{}}}
+function saveProductDB(db){localStorage.setItem(PRODUCT_DB_KEY,JSON.stringify(db))}
+
+function openAddProduct(){
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal');stopScanner()">&times;</button>
+    <h2>Produkt erfassen</h2>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="fg"><label>Produktname</label><input id="ppName" placeholder="z.B. HydroCare Serum"></div>
+      <div class="fg"><label>Marke</label>
+        <select id="ppBrand">
+          <option>Noon Aesthetics</option><option>Smetics</option><option>Skinconcept</option>
+        </select>
+      </div>
+      <div class="fg"><label>Typ</label>
+        <select id="ppType">
+          <option>Empfohlen</option><option>Verkauft</option><option>Probe</option><option>Nachkauf</option>
+        </select>
+      </div>
+      <div class="fg"><label>Datum</label><input type="date" id="ppDate" value="${TODAY_STR}"></div>
+      <div class="fg"><label>EAN / Barcode</label><input id="ppEAN" placeholder="z.B. 4260108830012" style="font-family:monospace;letter-spacing:1px"></div>
+      <div class="fg"><label>Notiz</label><input id="ppNote" placeholder="z.B. Fuer die Nachtpflege empfohlen"></div>
+    </div>
+    <button class="btn btn-gold" onclick="saveProduct()">Produkt speichern</button>
+  `;
+  openModal('addModal');
+}
+
+// ── BARCODE SCANNER MODAL ──
+function openBarcodeScanner(){
+  scannedProductInfo=null;
+  lastScannedEAN='';
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal');stopScanner()">&times;</button>
+    <h2>&#9783; Barcode Scanner</h2>
+    <p style="color:var(--text2);font-size:12px;margin-bottom:14px">Scanne den Barcode eines Produkts mit der Kamera oder gib den EAN-Code manuell ein. USB/Bluetooth-Scanner funktionieren automatisch.</p>
+
+    <div class="scanner-tabs">
+      <button class="scanner-tab${scanMode==='manual'?' active':''}" onclick="switchScanMode('manual')">&#9000; Manuell / USB-Scanner</button>
+      <button class="scanner-tab${scanMode==='camera'?' active':''}" onclick="switchScanMode('camera')">&#128247; Kamera-Scanner</button>
+    </div>
+
+    <!-- MANUAL / USB INPUT -->
+    <div id="scanManual" style="${scanMode==='manual'?'':'display:none'}">
+      <div class="barcode-input-wrap">
+        <input type="text" id="barcodeInput" placeholder="EAN-Code eingeben oder scannen..." autofocus
+          onkeydown="if(event.key==='Enter'){event.preventDefault();lookupBarcode(this.value.trim())}"
+          oninput="autoDetectScan(this)">
+        <button class="btn btn-gold" onclick="lookupBarcode(document.getElementById('barcodeInput').value.trim())">Suchen</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:12px">&#128161; USB/Bluetooth-Scanner: Einfach scannen — der Code wird automatisch erkannt und gesucht.</p>
+    </div>
+
+    <!-- CAMERA SCANNER -->
+    <div id="scanCamera" style="${scanMode==='camera'?'':'display:none'}">
+      <div class="scanner-box" id="scannerView">
+        <div id="scannerTarget" style="width:100%;height:260px;background:var(--bg4);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px">
+          Kamera wird gestartet...
+        </div>
+        <div class="scan-overlay"><div class="scan-line"></div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-dark btn-sm" onclick="startCameraScanner()">&#128247; Kamera starten</button>
+        <button class="btn btn-dark btn-sm" onclick="stopScanner()">&#9632; Stoppen</button>
+      </div>
+    </div>
+
+    <!-- PRODUCT PREVIEW -->
+    <div class="product-preview" id="scanPreview"></div>
+
+    <!-- PRODUCT FORM (after scan) -->
+    <div id="scanProductForm" style="display:none">
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg"><label>Produktname</label><input id="spName"></div>
+        <div class="fg"><label>Marke</label>
+          <select id="spBrand">
+            <option>Noon Aesthetics</option><option>Smetics</option><option>Skinconcept</option>
+          </select>
+        </div>
+        <div class="fg"><label>Typ</label>
+          <select id="spType">
+            <option>Empfohlen</option><option>Verkauft</option><option>Probe</option><option>Nachkauf</option>
+          </select>
+        </div>
+        <div class="fg"><label>Datum</label><input type="date" id="spDate" value="${TODAY_STR}"></div>
+        <div class="fg"><label>EAN</label><input id="spEAN" readonly style="font-family:monospace;letter-spacing:1px;color:var(--muted)"></div>
+        <div class="fg"><label>Notiz</label><input id="spNote" placeholder="z.B. Fuer die Nachtpflege"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gold" onclick="saveScannedProduct()">Produkt speichern</button>
+        <button class="btn btn-dark" onclick="resetScanner()">Weiteren Barcode scannen</button>
+      </div>
+    </div>
+
+    <!-- SCAN HISTORY -->
+    <div class="scan-history" id="scanHistory"></div>
+  `;
+  openModal('addModal');
+  renderScanHistory();
+
+  // Focus the input for USB scanner
+  setTimeout(()=>{const inp=document.getElementById('barcodeInput');if(inp)inp.focus()},100);
+}
+
+function switchScanMode(mode){
+  scanMode=mode;
+  stopScanner();
+  openBarcodeScanner();
+  if(mode==='camera')setTimeout(startCameraScanner,300);
+}
+
+// ── AUTO-DETECT USB SCANNER (rapid input) ──
+let scanBuffer='';
+let scanTimer=null;
+
+function autoDetectScan(input){
+  clearTimeout(scanTimer);
+  scanBuffer=input.value;
+  // USB scanners type very fast — if 8+ digits arrive within 100ms, auto-trigger
+  scanTimer=setTimeout(()=>{
+    const val=scanBuffer.trim();
+    if(val.length>=8&&/^\d+$/.test(val)){
+      lookupBarcode(val);
+    }
+    scanBuffer='';
+  },150);
+}
+
+// ── CAMERA SCANNER (QuaggaJS) ──
+function startCameraScanner(){
+  const target=document.getElementById('scannerTarget');
+  if(!target)return;
+  target.innerHTML='';
+
+  if(typeof Quagga==='undefined'){
+    target.innerHTML='<span style="color:var(--red)">Kamera-Bibliothek nicht geladen. Bitte Internetverbindung pruefen.</span>';
+    return;
+  }
+
+  Quagga.init({
+    inputStream:{
+      name:'Live',
+      type:'LiveStream',
+      target:target,
+      constraints:{
+        facingMode:'environment',
+        width:{ideal:640},
+        height:{ideal:480}
+      }
+    },
+    decoder:{
+      readers:['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader']
+    },
+    locate:true,
+    frequency:10
+  },function(err){
+    if(err){
+      console.log('Quagga init error:',err);
+      target.innerHTML='<span style="color:var(--red);padding:20px;text-align:center;display:block">Kamera konnte nicht gestartet werden.<br><span style="font-size:11px;color:var(--muted)">Tipp: Erlaube den Kamerazugriff im Browser oder nutze den manuellen Modus.</span></span>';
+      return;
+    }
+    scannerActive=true;
+    Quagga.start();
+  });
+
+  Quagga.onDetected(function(result){
+    if(!result||!result.codeResult)return;
+    const code=result.codeResult.code;
+    if(code&&code.length>=8&&code!==lastScannedEAN){
+      lastScannedEAN=code;
+      // Feedback
+      const view=document.getElementById('scannerView');
+      if(view)view.style.borderColor='var(--green)';
+      setTimeout(()=>{if(view)view.style.borderColor='var(--border)'},600);
+
+      stopScanner();
+      lookupBarcode(code);
+    }
+  });
+}
+
+function stopScanner(){
+  if(scannerActive&&typeof Quagga!=='undefined'){
+    try{Quagga.stop()}catch(e){}
+    scannerActive=false;
+  }
+}
+
+// ── BARCODE LOOKUP ──
+function lookupBarcode(ean){
+  if(!ean||ean.length<8)return;
+  lastScannedEAN=ean;
+
+  const preview=document.getElementById('scanPreview');
+  const form=document.getElementById('scanProductForm');
+  if(preview)preview.innerHTML='<p style="color:var(--gold)">&#8987; Suche Produkt fuer EAN '+esc(ean)+'...</p>';
+  if(preview)preview.className='product-preview found';
+  if(preview)preview.style.display='block';
+
+  // 1. Check local product database first
+  const localDB=loadProductDB();
+  if(localDB[ean]){
+    showProductResult(localDB[ean],ean,true);
+    return;
+  }
+
+  // 2. Try Open Beauty Facts API
+  fetch('https://world.openbeautyfacts.org/api/v0/product/'+encodeURIComponent(ean)+'.json')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.status===1&&data.product){
+        const p=data.product;
+        const info={
+          name:p.product_name||p.product_name_de||'',
+          brand:p.brands||'',
+          category:p.categories||'',
+          image:p.image_front_small_url||'',
+          ingredients:p.ingredients_text_de||p.ingredients_text||''
+        };
+        showProductResult(info,ean,false);
+        return;
+      }
+      // 3. Try Open Food Facts as fallback (some cosmetics are there too)
+      return fetch('https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(ean)+'.json');
+    })
+    .then(r=>{if(r)return r.json()})
+    .then(data=>{
+      if(data&&data.status===1&&data.product){
+        const p=data.product;
+        const info={
+          name:p.product_name||p.product_name_de||'',
+          brand:p.brands||'',
+          category:p.categories||'',
+          image:p.image_front_small_url||'',
+          ingredients:''
+        };
+        showProductResult(info,ean,false);
+      }else{
+        showProductNotFound(ean);
+      }
+    })
+    .catch(()=>showProductNotFound(ean));
+}
+
+function showProductResult(info,ean,isLocal){
+  const preview=document.getElementById('scanPreview');
+  const form=document.getElementById('scanProductForm');
+
+  preview.className='product-preview found';
+  preview.style.display='block';
+  preview.innerHTML=`
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      ${info.image?'<img src="'+info.image+'" style="width:60px;height:60px;object-fit:contain;border-radius:8px;background:#fff;flex-shrink:0">':''}
+      <div style="flex:1">
+        <div class="pp-name">${esc(info.name||'Unbekanntes Produkt')}</div>
+        <div class="pp-brand">${esc(info.brand)}</div>
+        ${info.category?'<div class="pp-details">'+esc(info.category)+'</div>':''}
+        ${info.ingredients?'<div class="pp-details" style="max-height:60px;overflow-y:auto"><strong>Inhaltsstoffe:</strong> '+esc(info.ingredients.substring(0,200))+'</div>':''}
+        <div class="pp-ean">EAN: ${esc(ean)} ${isLocal?'<span class="chip chip-blue" style="margin-left:6px">Eigene DB</span>':''}</div>
+      </div>
+    </div>
+  `;
+
+  // Fill form
+  if(form){
+    form.style.display='block';
+    document.getElementById('spName').value=info.name||'';
+    document.getElementById('spEAN').value=ean;
+    // Try to match brand to select
+    const brandSel=document.getElementById('spBrand');
+    const brandLow=(info.brand||'').toLowerCase();
+    let matched=false;
+    for(let i=0;i<brandSel.options.length;i++){
+      if(brandSel.options[i].text.toLowerCase().includes(brandLow)||brandLow.includes(brandSel.options[i].text.toLowerCase())){
+        brandSel.selectedIndex=i;matched=true;break;
+      }
+    }
+    if(!matched)brandSel.value='Sonstige';
+  }
+
+  scannedProductInfo=info;
+  saveScanToHistory(ean,info);
+}
+
+function showProductNotFound(ean){
+  const preview=document.getElementById('scanPreview');
+  const form=document.getElementById('scanProductForm');
+
+  preview.className='product-preview notfound';
+  preview.style.display='block';
+  preview.innerHTML=`
+    <div class="pp-name" style="color:var(--orange)">Produkt nicht in der Datenbank gefunden</div>
+    <div class="pp-ean">EAN: ${esc(ean)}</div>
+    <p style="font-size:12px;color:var(--text2);margin-top:6px">Kein Problem! Gib die Produktdaten unten manuell ein. Das Produkt wird fuer zukuenftige Scans in deiner eigenen Datenbank gespeichert.</p>
+  `;
+
+  if(form){
+    form.style.display='block';
+    document.getElementById('spName').value='';
+    document.getElementById('spEAN').value=ean;
+    document.getElementById('spBrand').value='Sonstige';
+  }
+
+  scannedProductInfo=null;
+  saveScanToHistory(ean,null);
+}
+
+function resetScanner(){
+  scannedProductInfo=null;
+  lastScannedEAN='';
+  const preview=document.getElementById('scanPreview');
+  const form=document.getElementById('scanProductForm');
+  if(preview){preview.style.display='none';preview.innerHTML=''}
+  if(form)form.style.display='none';
+  const inp=document.getElementById('barcodeInput');
+  if(inp){inp.value='';inp.focus()}
+  if(scanMode==='camera')startCameraScanner();
+}
+
+// ── SAVE SCANNED PRODUCT ──
+function saveScannedProduct(){
+  if(!selectedClient)return;
+  const name=document.getElementById('spName').value.trim();
+  if(!name){toast('Bitte Produktname eingeben','warn');return}
+
+  const ean=document.getElementById('spEAN').value.trim();
+  const brand=document.getElementById('spBrand').value;
+
+  // Save to client kartei
+  const kd=getClientKartei(selectedClient.id);
+  kd.products.unshift({
+    name:name,
+    brand:brand,
+    type:document.getElementById('spType').value,
+    date:document.getElementById('spDate').value,
+    note:document.getElementById('spNote').value,
+    ean:ean
+  });
+  saveClientKartei(selectedClient.id,kd);
+
+  // Save to local product database for future scans
+  if(ean){
+    const db=loadProductDB();
+    db[ean]={name:name,brand:brand,category:'',image:'',ingredients:''};
+    saveProductDB(db);
+  }
+
+  closeModal('addModal');
+  stopScanner();
+  renderKartei(selectedClient);
+  toast('Produkt "'+esc(name)+'" gespeichert!');
+}
+
+// ── SCAN HISTORY ──
+const SCAN_HISTORY_KEY='sc_scan_history';
+function loadScanHistory(){try{return JSON.parse(localStorage.getItem(SCAN_HISTORY_KEY)||'[]')}catch{return[]}}
+function saveScanHistoryData(h){localStorage.setItem(SCAN_HISTORY_KEY,JSON.stringify(h.slice(0,20)))}
+
+function saveScanToHistory(ean,info){
+  const h=loadScanHistory();
+  // Remove duplicate
+  const idx=h.findIndex(x=>x.ean===ean);
+  if(idx>=0)h.splice(idx,1);
+  h.unshift({ean,name:info?info.name:'Unbekannt',brand:info?info.brand:'',date:TODAY_STR});
+  saveScanHistoryData(h);
+  renderScanHistory();
+}
+
+function renderScanHistory(){
+  const el=document.getElementById('scanHistory');
+  if(!el)return;
+  const h=loadScanHistory();
+  if(!h.length){el.innerHTML='';return}
+  el.innerHTML=`<h4>Letzte Scans</h4>${h.slice(0,8).map(s=>`
+    <div class="scan-history-item" onclick="lookupBarcode('${esc(s.ean)}')">
+      <span style="font-family:monospace;color:var(--gold);font-size:11px">${esc(s.ean)}</span>
+      <span style="flex:1">${esc(s.name||'Unbekannt')}</span>
+      <span style="color:var(--muted);font-size:10px">${esc(s.brand)}</span>
+    </div>
+  `).join('')}`;
+}
+
+function saveProduct(){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const ean=(document.getElementById('ppEAN')?document.getElementById('ppEAN').value:'').trim();
+  kd.products.unshift({
+    name:document.getElementById('ppName').value,
+    brand:document.getElementById('ppBrand').value,
+    type:document.getElementById('ppType').value,
+    date:document.getElementById('ppDate').value,
+    note:document.getElementById('ppNote').value,
+    ean:ean
+  });
+  saveClientKartei(selectedClient.id,kd);
+
+  // Save to product DB if EAN
+  if(ean){
+    const db=loadProductDB();
+    db[ean]={name:document.getElementById('ppName').value,brand:document.getElementById('ppBrand').value};
+    saveProductDB(db);
+  }
+
+  closeModal('addModal');
+  renderKartei(selectedClient);
+  toast('Produkt gespeichert');
+}
+
+function deleteProduct(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.products.splice(idx,1);
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+}
+
+// ── PHOTOS ──
+function handlePhotoUpload(file){
+  if(!file||!selectedClient)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const kd=getClientKartei(selectedClient.id);
+    const label=prompt('Foto-Beschreibung (optional):','');
+    kd.photos.unshift({data:e.target.result,date:TODAY_STR,label:label||''});
+    saveClientKartei(selectedClient.id,kd);
+    renderKartei(selectedClient);
+    toast('Foto gespeichert');
+  };
+  reader.readAsDataURL(file);
+}
+
+function viewPhoto(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const p=kd.photos[idx];
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <img src="${p.data}" style="width:100%;border-radius:10px;margin-bottom:12px" alt="Foto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="color:var(--muted);font-size:13px">${fmtDate(p.date)} ${p.label?'&#183; '+esc(p.label):''}</span>
+      <button class="btn btn-red btn-sm" onclick="deletePhoto(${idx})">Loeschen</button>
+    </div>
+  `;
+  openModal('addModal');
+}
+
+function deletePhoto(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.photos.splice(idx,1);
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  renderKartei(selectedClient);
+}
+
+// ── HAUTANALYSE ──
+function handleHautanalyseUpload(files){
+  if(!files||!files.length||!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  if(!kd.hautanalysen)kd.hautanalysen=[];
+  let loaded=0;
+  Array.from(files).forEach(file=>{
+    const isPdf=file.type==='application/pdf';
+    const label=prompt('Bezeichnung fuer "'+file.name+'" (z.B. Erstanalyse, Kontrolle):',file.name.replace(/\.[^.]+$/,''));
+    const reader=new FileReader();
+    reader.onload=function(e){
+      kd.hautanalysen.unshift({data:e.target.result,date:TODAY_STR,label:label||file.name,type:isPdf?'pdf':'image',filename:file.name});
+      loaded++;
+      if(loaded===files.length){
+        saveClientKartei(selectedClient.id,kd);
+        renderKartei(selectedClient);
+        toast(loaded+' Hautanalyse-Bericht'+(loaded>1?'e':'')+' gespeichert');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function viewHautanalyse(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const h=kd.hautanalysen[idx];
+  const isPdf=h.type==='pdf';
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <h2 style="margin-bottom:4px">${esc(h.label||'Hautanalyse')}</h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px">${fmtDate(h.date)}${h.filename?' &middot; '+esc(h.filename):''}</p>
+    ${isPdf?'<iframe src="'+h.data+'" style="width:100%;height:500px;border:none;border-radius:10px;background:#fff"></iframe>':'<img src="'+h.data+'" style="width:100%;border-radius:10px;margin-bottom:12px" alt="Hautanalyse">'}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+      <button class="btn btn-dark btn-sm" onclick="renameHautanalyse(${idx})">Umbenennen</button>
+      <button class="btn btn-red btn-sm" onclick="deleteHautanalyse(${idx})">Loeschen</button>
+    </div>
+  `;
+  openModal('addModal');
+}
+
+function renameHautanalyse(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const h=kd.hautanalysen[idx];
+  const newLabel=prompt('Neue Bezeichnung:',h.label||'');
+  if(newLabel===null)return;
+  h.label=newLabel;
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  renderKartei(selectedClient);
+}
+
+function deleteHautanalyse(idx){
+  if(!selectedClient||!confirm('Hautanalyse-Bericht wirklich loeschen?'))return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.hautanalysen.splice(idx,1);
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  renderKartei(selectedClient);
+  toast('Bericht geloescht');
+}
+
+// ── CONTACT LOG ──
+function logContact(){
+  if(!selectedClient)return;
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <h2>Kontakt dokumentieren</h2>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="fg"><label>Datum</label><input type="date" id="kcDate" value="${TODAY_STR}"></div>
+      <div class="fg"><label>Kanal</label>
+        <select id="kcChannel">
+          <option>WhatsApp</option><option>Telefon</option><option>E-Mail</option><option>SMS</option><option>Im Studio</option><option>Instagram</option>
+        </select>
+      </div>
+      <div class="fg form-full"><label>Grund</label>
+        <select id="kcReason">
+          <option>Terminvereinbarung</option><option>Terminerinnerung</option><option>Nachfrage Hautbild</option><option>Produktberatung</option><option>Rueckgewinnung</option><option>Geburtstagswuensche</option><option>Allgemeine Nachfrage</option><option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="fg form-full"><label>Notiz</label><textarea id="kcNote" rows="3" placeholder="Was wurde besprochen?"></textarea></div>
+    </div>
+    <button class="btn btn-gold" onclick="saveContact()">Kontakt speichern</button>
+  `;
+  openModal('addModal');
+}
+
+function saveContact(){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.contacts.unshift({
+    date:document.getElementById('kcDate').value,
+    channel:document.getElementById('kcChannel').value,
+    reason:document.getElementById('kcReason').value,
+    note:document.getElementById('kcNote').value
+  });
+  const s=getStatus(selectedClient.days,selectedClient.id);
+  if(s.key!=='g')kd.kontaktiert=document.getElementById('kcDate').value;
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  renderKartei(selectedClient);
+  renderSidebar();
+  toast('Kontakt gespeichert'+(s.key!=='g'?' &middot; Als kontaktiert markiert':''));
+}
+
+function markContacted(){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.kontaktiert=TODAY_STR;
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+  renderSidebar();
+  toast('Als kontaktiert markiert');
+}
+
+function unmarkContacted(){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  delete kd.kontaktiert;
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+  renderSidebar();
+  toast('Kontaktiert-Status entfernt');
+}
+
+function deleteContact(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.contacts.splice(idx,1);
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+}
+
+// ── NEW CLIENT ──
+function openNewClientModal(){openModal('newClientModal')}
+
+function createNewClient(){
+  const fn=document.getElementById('ncFn').value.trim();
+  const ln=document.getElementById('ncLn').value.trim();
+  if(!fn){toast('Bitte Vorname eingeben','warn');return}
+  const nc={
+    id:uid(),name:fn+' '+ln,fn,ln,
+    ph:document.getElementById('ncPh').value.trim(),
+    em:document.getElementById('ncEm').value.trim(),
+    bd:document.getElementById('ncBd').value.trim(),
+    gebDate:null,lv:'',days:9999,visits:0,notizen:'',missing:[],visitDates:[]
+  };
+  nc.missing=[];
+  if(!nc.ph)nc.missing.push('telefon');if(!nc.em)nc.missing.push('email');if(!nc.bd)nc.missing.push('geburtsdatum');
+
+  clients.unshift(nc);
+
+  // Persist new clients
+  const kartei=loadKartei();
+  if(!kartei.__newClients)kartei.__newClients=[];
+  kartei.__newClients.push(nc);
+  saveKartei(kartei);
+
+  closeModal('newClientModal');
+  renderSidebar();
+  selectClient(nc.id);
+  toast(esc(fn)+' '+esc(ln)+' angelegt!');
+}
+
+// ── TREATWELL IMPORT ──
+function handleTWImport(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){parseTWKassenbuch(e.target.result)};
+  reader.readAsText(file,'UTF-8');
+}
+
+function parseTWKassenbuch(html){
+  const dateM=html.match(/value="(\d{2})\.(\d{2})\.(\d{4})"/);
+  let reportDate=TODAY_STR;
+  if(dateM)reportDate=dateM[3]+'-'+dateM[2]+'-'+dateM[1];
+
+  const nameRegex=/data-hj-suppress="true">(.*?)<\/td>/g;
+  let match;const names=[];
+  while((match=nameRegex.exec(html))!==null){const n=match[1].trim();if(n&&n!=='Laufkundschaft'&&!names.includes(n))names.push(n)}
+
+  if(!names.length){
+    document.getElementById('twResult').innerHTML='<div style="color:var(--red)">Keine Namen gefunden. Ist es die richtige Datei?</div>';
+    return;
+  }
+
+  let matched=0;
+  names.forEach(name=>{
+    const parts=name.split(' ');const fn=parts[0];const ln=parts.slice(1).join(' ');
+    let c=clients.find(x=>x.fn.toLowerCase()===fn.toLowerCase()&&x.ln.toLowerCase()===ln.toLowerCase());
+    if(!c)c=clients.find(x=>(x.fn+' '+x.ln).toLowerCase()===name.toLowerCase());
+    if(c){
+      if(!c.lv||reportDate>c.lv){c.lv=reportDate;c.days=diffDays(reportDate)}
+      c.visits=(c.visits||0)+1;
+      if(!c.visitDates)c.visitDates=[];
+      if(!c.visitDates.includes(reportDate))c.visitDates.unshift(reportDate);
+      matched++;
+    }
+  });
+
+  document.getElementById('twResult').innerHTML=`
+    <div style="background:var(--green-bg);border:1px solid rgba(74,222,128,.2);border-radius:10px;padding:14px">
+      <span style="color:var(--green);font-weight:500">${matched} von ${names.length} Kunden vom ${fmtDate(reportDate)} zugeordnet!</span>
+    </div>
+  `;
+  renderSidebar();
+  if(selectedClient)renderKartei(selectedClient);
+  toast(matched+' Kunden aktualisiert!');
+}
+
+// ── MODALS ──
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open'))});
+
+// ── CSV EXPORT ──
+function exportCSV(){
+  const h=['Vorname','Nachname','Telefon','E-Mail','Geburtsdatum','Letzter Besuch','Tage her','Status','Segment','Besuche','Hauttyp','Notizen'];
+  const rows=clients.map(c=>{
+    const s=getStatus(c.days,c.id);const sg=getSegment(c);const kd=getClientKartei(c.id);
+    return[c.fn,c.ln,c.ph,c.em,c.bd,fmtDate(c.lv),c.days<9999?c.days:'',s.label,sg.label,c.visits||0,kd.hauttyp||'',kd.notes||c.notizen||''];
+  });
+  const csv=[h,...rows].map(r=>r.map(v=>`"${v}"`).join(';')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Skinconcept_Kartei_'+TODAY_STR+'.csv';a.click();
+  toast('CSV exportiert!');
+}
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='k'){e.preventDefault();document.getElementById('sbSearch').focus()}
+});
+
+// ── INIT ──
+initClients();
+renderSidebar();
+loadAnamnese();
+
+console.log('Kundenkartei geladen:',clients.length,'Kunden');
+</script>
+</body>
+</html>
