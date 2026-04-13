@@ -437,6 +437,10 @@ const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 const TODAY_STR = TODAY.toISOString().split('T')[0];
 const STORE_KEY = 'sc_kartei_v2';
 const ACTIONS_KEY = 'sc_kartei_actions_v2';
+const DELETED_KEY = 'sc_kartei_deleted';
+
+function getDeletedClients(){try{return JSON.parse(localStorage.getItem(DELETED_KEY)||'[]')}catch(e){return[]}}
+function addDeletedClient(name){const list=getDeletedClients();const key=normalize(name);if(!list.includes(key)){list.push(key);localStorage.setItem(DELETED_KEY,JSON.stringify(list))}}
 
 // ── TREATWELL KONTAKTE ──
 const TW_CONTACTS=[{"fn":"Tamara","ln":"Hagner","ph":"+49 176 70860252","em":"skinconcept.hagner@gmail.com","bd":"","b":3},{"fn":"Caroline","ln":"Eibes","ph":"","em":"","bd":"","b":0},{"fn":"Roswita","ln":"Jakobs","ph":"+49 176 61742511","em":"","bd":"","b":0},{"fn":"Birgitt","ln":"Becker","ph":"+49 1514 6514280","em":"birgittbecker66@aim.com","bd":"","b":0},{"fn":"Maike","ln":"Rieb","ph":"+49 1575 3677005","em":"Maikesauer@web.de","bd":"","b":1},{"fn":"Andrea","ln":"hensel","ph":"+49 176 23839837","em":"hensel-a@web.de","bd":"","b":3},{"fn":"Nina","ln":"Herresthal","ph":"+49 163 8464478","em":"Herrresthal1989@gmx.de","bd":"","b":0},{"fn":"Petra","ln":"Behnke","ph":"+49 1511 7308319","em":"Petra.behnke68@icloud.com","bd":"","b":4},{"fn":"Jasmine","ln":"Dreher","ph":"+49 177 7522414","em":"jasminedreher@gmx.de","bd":"","b":0},{"fn":"Corina","ln":"Heinze","ph":"+49 162 7853353","em":"Corina.heinze@arcor.de","bd":"","b":0},{"fn":"Irina","ln":"Todorova","ph":"+49 176 82019433","em":"irenetodorova@gmail.com","bd":"","b":0},{"fn":"Lorscheter","ln":"Nadja","ph":"","em":"nadjalorscheter@gmx.de","bd":"","b":0},{"fn":"Natalia","ln":"Schmidt","ph":"+49 160 90622000","em":"natalja@onlinehome.de","bd":"","b":1},{"fn":"Rebecca","ln":"Wolf","ph":"+49 173 6138539","em":"Rebecca.wolf21@yahoo.de","bd":"","b":0},{"fn":"Mechthild","ln":"Binz","ph":"+49 1511 0444493","em":"Mechthild-binz@web.de","bd":"","b":3},{"fn":"Lisa","ln":"Grabend\u00fcnkel","ph":"+49 178 2888129","em":"lisa.gr@t-online.de","bd":"","b":5},{"fn":"Hanna","ln":"Bortova","ph":"+49 171 2193945","em":"","bd":"","b":0},{"fn":"Gabi","ln":"Barzen","ph":"+49 172 1517996","em":"gabi.barzen@googlemail.com","bd":"","b":1},{"fn":"Tanja","ln":"Mueller","ph":"+49 176 22032637","em":"tanja0679@googlemail.com","bd":"","b":0},{"fn":"Vanessa","ln":"Thiele","ph":"+49 171 4174760","em":"v.thiele@ymail.com","bd":"","b":0},{"fn":"Lisa","ln":"Treinen","ph":"+49 1523 4077277","em":"lisa-treinen@web.de","bd":"","b":2},{"fn":"Frauke","ln":"Buenting","ph":"+49 176 31822296","em":"fsbuenting@gmx.de","bd":"","b":0},{"fn":"Denise","ln":"Hissung","ph":"","em":"","bd":"","b":0},{"fn":"Esther","ln":"Bamberg","ph":"+49 162 2480762","em":"esther.zubrod@web.de","bd":"","b":0},{"fn":"Christina","ln":"Backes","ph":"","em":"christina-backes@t-online.de","bd":"","b":0},{"fn":"Melanie","ln":"Romer","ph":"+49 170 1877754","em":"melanieromer81@gmail.com","bd":"","b":0},{"fn":"Maja","ln":"Trierweiler","ph":"","em":"maja.trierweiler@web.de","bd":"","b":0},{"fn":"Emeliy","ln":"Lorenz","ph":"+49 163 3759484","em":"e.lorenz-@web.de","bd":"","b":0},{"fn":"Allanah","ln":"Naragy","ph":"+49 176 70591316","em":"hannah.allein@t-online.de","bd":"","b":0},{"fn":"Stefanie","ln":"Heib","ph":"","em":"","bd":"","b":0},{"fn":"Gretchen","ln":"Gravelle","ph":"","em":"gravelle4@gmail.com","bd":"","b":0}];
@@ -630,6 +634,8 @@ function processAnamEntry(entry){
   const ln=(entry.name||'').trim();
   const key=normalize(fn+' '+ln);
   if(key.length<2)return null;
+  const deleted=getDeletedClients();
+  if(deleted.includes(key))return null;
   anamneseCache[key]=entry;
 
   // Check if client already exists
@@ -840,9 +846,12 @@ function goBackToList(){
 function deleteClient(id){
   const c=clients.find(x=>x.id===id);
   if(!c||!confirm('Kunde "'+c.name+'" wirklich loeschen? Alle Karteidaten gehen verloren.'))return;
+  addDeletedClient(c.fn+' '+c.ln);
+  if(c.name)addDeletedClient(c.name);
   clients=clients.filter(x=>x.id!==id);
   const d=loadKartei();if(d[id]){delete d[id];localStorage.setItem(STORE_KEY,JSON.stringify(d))}
   goBackToList();
+  renderSidebar();
   toast('Kunde geloescht');
 }
 
