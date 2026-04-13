@@ -408,9 +408,10 @@ body.client-open .back-btn{display:inline-flex}
 <!-- TOASTS -->
 <div class="toast-box" id="toastBox"></div>
 
-<!-- FIREBASE -->
+<!-- FIREBASE (Anamnese: Realtime DB + Nachsorge: Firestore) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <!-- TRELLO DATA -->
 <script>var alleKunden = [];</script>
@@ -433,6 +434,17 @@ firebase.initializeApp({
   appId:"1:101205413833:web:9734e0906dd71d1a9d2218"
 });
 const fbDb = firebase.database();
+
+// ── FIRESTORE (Nachsorge-Besuche aus skinconcept-tool) ──
+const nsApp = firebase.initializeApp({
+  apiKey:"AIzaSyAdGdgPnS3Cw3Rpiubx6_s61FyfiTQxfFc",
+  authDomain:"skinconcept-tool.firebaseapp.com",
+  projectId:"skinconcept-tool",
+  storageBucket:"skinconcept-tool.firebasestorage.app",
+  messagingSenderId:"188823880943",
+  appId:"1:188823880943:web:ae87750be002cbe491071a"
+},'nachsorge');
+const nsDb = nsApp.firestore();
 
 // ── CONSTANTS ──
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
@@ -1173,6 +1185,7 @@ function renderKartei(c){
 
       <!-- KONTAKTHISTORIE -->
       <div class="kpage${currentKTab==='kontakt'?' active':''}" id="kp-kontakt">
+        ${renderNachsorgeBox(c)}
         <div class="scard">
           <h3>Kontakthistorie <button class="add-btn" onclick="logContact()">+ Kontakt</button></h3>
           ${contactCount>0?kd.contacts.map((k,i)=>`
@@ -2179,6 +2192,98 @@ function deleteHautanalyse(idx){
   toast('Bericht geloescht');
 }
 
+// ── NACHSORGE-INTEGRATION (Firestore client_visits) ──
+let nachsorgeVisits=[];
+let nachsorgeLoaded=false;
+
+function loadNachsorge(){
+  const thirtyAgo=new Date();thirtyAgo.setDate(thirtyAgo.getDate()-30);
+  const thirtyAgoStr=thirtyAgo.toISOString().slice(0,10);
+  nsDb.collection('client_visits').where('date','>=',thirtyAgoStr).orderBy('date','desc').onSnapshot(snap=>{
+    nachsorgeVisits=[];
+    snap.forEach(doc=>{const d=doc.data();d._id=doc.id;nachsorgeVisits.push(d)});
+    nachsorgeLoaded=true;
+    checkNachsorgeFaellig();
+    if(selectedClient)renderKartei(selectedClient);
+  },err=>console.log('Nachsorge-Fehler:',err));
+}
+
+function getNachsorgeForClient(c){
+  const fn=normalize(c.fn+' '+c.ln);
+  const fn2=normalize(c.ln+' '+c.fn);
+  const fn3=normalize(c.name);
+  return nachsorgeVisits.filter(v=>{
+    const vn=normalize(v.name||'');
+    return vn===fn||vn===fn2||vn===fn3;
+  }).sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+function checkNachsorgeFaellig(){
+  const faellig=[];
+  clients.forEach(c=>{
+    const visits=getNachsorgeForClient(c);
+    visits.forEach(v=>{
+      const daysAgo=Math.floor((TODAY-new Date(v.date+'T00:00:00'))/(864e5));
+      if(daysAgo>=3&&daysAgo<=10&&!v.contacted){
+        faellig.push({client:c,visit:v,daysAgo:daysAgo});
+      }
+    });
+  });
+  if(faellig.length>0&&!document.getElementById('nsNotification')){
+    showNachsorgeNotification(faellig);
+  }
+  // Badge im Tab aktualisieren
+  const badge=document.getElementById('nsBadge');
+  if(badge)badge.textContent=faellig.length||'';
+  if(badge)badge.style.display=faellig.length?'inline':'none';
+}
+
+function showNachsorgeNotification(faellig){
+  const overlay=document.createElement('div');
+  overlay.id='nsNotification';
+  overlay.style.cssText='position:fixed;top:20px;right:20px;z-index:9999;max-width:400px;width:90%;animation:mIn .3s ease';
+  const items=faellig.slice(0,5).map(f=>{
+    const ph=f.client.ph||'';
+    const waNum=ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'');
+    const waMsg='Hallo '+(f.client.fn||'')+', hier ist Tamara von Skinconcept Hagner! Ich wollte mich kurz erkundigen, wie es dir nach deiner Behandlung ('+(f.visit.treatment||'Behandlung')+') geht. Liebe Grüße!';
+    const waUrl=waNum?'https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg):'';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.1)">'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(f.client.fn)+' '+esc(f.client.ln)+'</div>'
+      +'<div style="font-size:11px;opacity:.8">'+esc(f.visit.treatment||'Behandlung')+' · vor '+f.daysAgo+' Tagen</div></div>'
+      +(waUrl?'<a href="'+waUrl+'" target="_blank" style="background:#25D366;color:#fff;padding:6px 10px;border-radius:8px;text-decoration:none;font-size:11px;font-weight:600;white-space:nowrap">WhatsApp</a>':'')
+      +'<button onclick="markNachsorgeKontaktiert(\''+f.visit._id+'\',\''+f.client.id+'\')" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px">✓ Erledigt</button>'
+      +'</div>';
+  }).join('');
+  overlay.innerHTML='<div style="background:linear-gradient(135deg,#8B6F5C,#6B5344);color:#fff;border-radius:14px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.3)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+    +'<div style="font-size:15px;font-weight:700">📞 Nachsorge fällig ('+faellig.length+')</div>'
+    +'<button onclick="this.closest(\'#nsNotification\').remove()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;opacity:.7">&times;</button></div>'
+    +items
+    +(faellig.length>5?'<div style="font-size:11px;opacity:.7;margin-top:8px;text-align:center">+ '+(faellig.length-5)+' weitere</div>':'')
+    +'</div>';
+  document.body.appendChild(overlay);
+  // Sound
+  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.value=660;g.gain.value=0.08;o.start();g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);o.stop(ctx.currentTime+0.4)}catch(e){}
+}
+
+function markNachsorgeKontaktiert(visitId,clientId){
+  nsDb.collection('client_visits').doc(visitId).update({contacted:true}).then(()=>{
+    // In Kontakthistorie eintragen
+    const c=clients.find(x=>x.id===clientId);
+    if(c){
+      const kd=getClientKartei(clientId);
+      if(!kd.contacts)kd.contacts=[];
+      const v=nachsorgeVisits.find(x=>x._id===visitId);
+      kd.contacts.unshift({date:TODAY_STR,type:'nachsorge',note:'Nachsorge-Kontakt nach '+(v?v.treatment:'Behandlung')+' ('+((v?v.date:''))+')' });
+      saveClientKartei(clientId,kd);
+      flushKartei();
+    }
+    toast('Als kontaktiert markiert');
+    const notif=document.getElementById('nsNotification');
+    if(notif)notif.remove();
+  });
+}
+
 // ── HAUTANALYSEBERICHTE (Upload & Ablage) ──
 function handleHautberichtUpload(files){
   if(!files||!files.length||!selectedClient)return;
@@ -2436,10 +2541,50 @@ document.addEventListener('keydown',e=>{
   if(e.ctrlKey&&e.key==='k'){e.preventDefault();document.getElementById('sbSearch').focus()}
 });
 
+// ── NACHSORGE BOX IN KARTEIKARTE ──
+function renderNachsorgeBox(c){
+  if(!nachsorgeLoaded)return '';
+  const visits=getNachsorgeForClient(c);
+  if(!visits.length)return '';
+  const pending=visits.filter(v=>{
+    const d=Math.floor((TODAY-new Date(v.date+'T00:00:00'))/(864e5));
+    return d>=3&&d<=14&&!v.contacted;
+  });
+  const done=visits.filter(v=>v.contacted);
+  let html='<div class="scard" style="border-left:4px solid '+(pending.length>0?'var(--orange)':'var(--green)')+'"><h3>'+(pending.length>0?'&#128276; Nachsorge fällig':'&#10003; Nachsorge')+'</h3>';
+  if(pending.length>0){
+    pending.forEach(v=>{
+      const d=Math.floor((TODAY-new Date(v.date+'T00:00:00'))/(864e5));
+      const col=d<=4?'var(--green)':d<=6?'var(--yellow)':'var(--red)';
+      const ph=c.ph||'';
+      const waNum=ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'');
+      const waMsg='Hallo '+(c.fn||'')+', hier ist Tamara von Skinconcept Hagner! Ich wollte mich kurz erkundigen, wie es dir nach deiner Behandlung ('+(v.treatment||'Behandlung')+') geht. Liebe Grüße!';
+      const waUrl=waNum?'https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg):'';
+      html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
+        +'<div style="padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;background:'+col+'20;color:'+col+'">vor '+d+' Tagen</div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+esc(v.treatment||'Behandlung')+'</div><div style="font-size:11px;color:var(--muted)">'+fmtDate(v.date)+(v.therapist?' · '+esc(v.therapist):'')+'</div></div>'
+        +(waUrl?'<a href="'+waUrl+'" target="_blank" style="background:#25D366;color:#fff;padding:6px 12px;border-radius:8px;text-decoration:none;font-size:11px;font-weight:600">WhatsApp</a>':'')
+        +'<button class="btn btn-gold btn-sm" onclick="markNachsorgeKontaktiert(\''+v._id+'\',\''+c.id+'\')">✓ Erledigt</button>'
+        +'</div>';
+    });
+  }
+  if(done.length>0){
+    html+='<div style="margin-top:10px">';
+    done.slice(0,5).forEach(v=>{
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;color:var(--muted)">'
+        +'<span style="color:var(--green)">✓</span> '+esc(v.treatment||'Behandlung')+' ('+fmtDate(v.date)+') — kontaktiert</div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  return html;
+}
+
 // ── INIT ──
 initClients();
 renderSidebar();
 loadAnamnese();
+loadNachsorge();
 
 console.log('Kundenkartei geladen:',clients.length,'Kunden');
 </script>
