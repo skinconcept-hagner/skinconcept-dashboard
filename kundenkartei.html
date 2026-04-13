@@ -2554,7 +2554,7 @@ function renderTerminListe(c){
     html+='<div class="tl-item" style="padding-bottom:8px;margin-bottom:8px">'
       +'<div class="tl-dot" style="border-color:'+col+'"></div>'
       +'<div class="tl-date">'+fmtDate(a.date)+'</div>'
-      +(a.detail?'<div class="tl-title" style="font-size:12px">'+esc(a.detail)+(a.therapist?' · '+esc(a.therapist):'')+'</div>':'')
+      +(a.detail?'<div class="tl-title" style="font-size:12px">'+esc(a.detail)+'</div>':'')
       +'<div style="font-size:10px;color:var(--muted)">'+a.source+'</div>'
       +'</div>';
   });
@@ -2583,7 +2583,7 @@ function renderNachsorgeBox(c){
       const waUrl=waNum?'https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg):'';
       html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
         +'<div style="padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;background:'+col+'20;color:'+col+'">vor '+d+' Tagen</div>'
-        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+esc(v.treatment||'Behandlung')+'</div><div style="font-size:11px;color:var(--muted)">'+fmtDate(v.date)+(v.therapist?' · '+esc(v.therapist):'')+'</div></div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+esc(v.treatment||'Behandlung')+'</div><div style="font-size:11px;color:var(--muted)">'+fmtDate(v.date)+'</div></div>'
         +(waUrl?'<a href="'+waUrl+'" target="_blank" style="background:#25D366;color:#fff;padding:6px 12px;border-radius:8px;text-decoration:none;font-size:11px;font-weight:600">WhatsApp</a>':'')
         +'<button class="btn btn-gold btn-sm" onclick="markNachsorgeKontaktiert(\''+v._id+'\',\''+c.id+'\')">✓ Erledigt</button>'
         +'</div>';

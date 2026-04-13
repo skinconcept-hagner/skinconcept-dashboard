@@ -361,7 +361,7 @@
             <h3>Alle Besuche diese Woche</h3>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Datum</th><th>Kunde</th><th>Behandlung</th><th>Von</th><th>Nachsorge</th><th>Aktion</th></tr></thead>
+                    <thead><tr><th>Datum</th><th>Kunde</th><th>Behandlung</th><th>Nachsorge</th><th>Aktion</th></tr></thead>
                     <tbody id="weekTable"></tbody>
                 </table>
             </div>
@@ -510,7 +510,6 @@ function renderCard(v, isDone) {
                 </div>
                 <div class="ns-treatment">
                     <strong>Behandlung:</strong> ${escHtml(v.treatment || '–')}
-                    ${v.therapist ? ' &middot; <strong>Von:</strong> ' + escHtml(v.therapist) : ''}
                     ${v.notes ? '<br><em style="color:var(--text-light);">' + escHtml(v.notes) + '</em>' : ''}
                 </div>
                 <div class="ns-info">
@@ -555,7 +554,7 @@ function renderWeekTable() {
                 ? '<span class="badge" style="background: var(--warning-light); color: var(--warning);">Ausstehend</span>'
                 : '<span class="badge" style="background: var(--bg); color: var(--text-light);">Noch nicht fällig</span>';
 
-        return '<tr><td>' + formatDate(v.date) + '</td><td><strong>' + escHtml(v.name) + '</strong></td><td>' + escHtml(v.treatment || '–') + '</td><td>' + escHtml(v.therapist || '–') + '</td><td>' + status + '</td><td><button onclick="deleteVisit(\'' + v._id + '\')" style="background:none;border:1px solid var(--danger-light);color:var(--danger);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px" onmouseover="this.style.background=\'var(--danger-light)\'" onmouseout="this.style.background=\'none\'">&#10005; Löschen</button></td></tr>';
+        return '<tr><td>' + formatDate(v.date) + '</td><td><strong>' + escHtml(v.name) + '</strong></td><td>' + escHtml(v.treatment || '–') + '</td><td>' + status + '</td><td><button onclick="deleteVisit(\'' + v._id + '\')" style="background:none;border:1px solid var(--danger-light);color:var(--danger);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px" onmouseover="this.style.background=\'var(--danger-light)\'" onmouseout="this.style.background=\'none\'">&#10005; Löschen</button></td></tr>';
     }).join('');
 }
 
