@@ -207,7 +207,7 @@
             </div>
             <div class="ns-stat urgent">
                 <div class="ns-stat-val" id="stat-overdue">0</div>
-                <div class="ns-stat-label">Ueberfaellig (>6 Tage)</div>
+                <div class="ns-stat-label">Überfällig (>6 Tage)</div>
             </div>
             <div class="ns-stat">
                 <div class="ns-stat-val" id="stat-done-today">0</div>
@@ -334,7 +334,7 @@
 
         <!-- Pending Follow-ups -->
         <div class="card-header" style="margin-bottom: 12px;">
-            <h3 style="font-size: 16px; font-weight: 600; color: var(--primary-dark);">Nachsorge faellig</h3>
+            <h3 style="font-size: 16px; font-weight: 600; color: var(--primary-dark);">Nachsorge fällig</h3>
         </div>
         <div class="ns-list" id="pendingList">
             <div class="loading"><div class="spinner"></div> Lade Nachsorge-Liste...</div>
@@ -342,7 +342,7 @@
 
         <!-- Overdue -->
         <button class="section-toggle" onclick="toggleSection('overdueSection', this)" id="overdueToggle" style="display:none;">
-            <span>&#9654;</span> Ueberfaellige Nachsorge anzeigen (<span id="cnt-overdue">0</span>)
+            <span>&#9654;</span> Überfällige Nachsorge anzeigen (<span id="cnt-overdue">0</span>)
         </button>
         <div id="overdueSection" style="display:none;">
             <div class="ns-list" id="overdueList"></div>
@@ -361,7 +361,7 @@
             <h3>Alle Besuche diese Woche</h3>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Datum</th><th>Kunde</th><th>Behandlung</th><th>Von</th><th>Nachsorge</th></tr></thead>
+                    <thead><tr><th>Datum</th><th>Kunde</th><th>Behandlung</th><th>Von</th><th>Nachsorge</th><th>Aktion</th></tr></thead>
                     <tbody id="weekTable"></tbody>
                 </table>
             </div>
@@ -491,13 +491,13 @@ function renderCard(v, isDone) {
     else if (daysAgo === 4) { prioClass = 'day4'; daysClass = 'green'; }
     else if (daysAgo === 5) { prioClass = 'day5'; daysClass = 'yellow'; }
     else if (daysAgo === 6) { prioClass = 'day6'; daysClass = 'orange'; }
-    else if (daysAgo > 6) { prioClass = 'overdue'; daysClass = 'red'; daysLabel = daysAgo + ' Tage - ueberfaellig!'; }
+    else if (daysAgo > 6) { prioClass = 'overdue'; daysClass = 'red'; daysLabel = daysAgo + ' Tage - überfällig!'; }
 
     const phone = v.phone || '';
     const waNum = phone.replace(/[\s\-()\/]/g, '').replace(/^0/, '49').replace(/^\+/, '');
 
     // Build WhatsApp message
-    const waMsg = `Hallo ${(v.name || '').split(' ')[0]}, hier ist ${v.therapist || 'das Team'} von Skinconcept Hagner! Ich wollte mich kurz erkundigen, wie es dir nach deiner Behandlung (${v.treatment || 'Behandlung'}) geht. Hast du Fragen oder ist dir etwas aufgefallen? Liebe Gruesse!`;
+    const waMsg = `Hallo ${(v.name || '').split(' ')[0]}, hier ist ${v.therapist || 'das Team'} von Skinconcept Hagner! Ich wollte mich kurz erkundigen, wie es dir nach deiner Behandlung (${v.treatment || 'Behandlung'}) geht. Hast du Fragen oder ist dir etwas aufgefallen? Liebe Grüße!`;
     const waUrl = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(waMsg) : '';
 
     return `
@@ -519,13 +519,13 @@ function renderCard(v, isDone) {
                 </div>
                 <div class="ns-actions">
                     ${waUrl
-                        ? '<a href="' + waUrl + '" target="_blank" class="wa-btn">' + WA_ICON + ' WhatsApp oeffnen</a>'
+                        ? '<a href="' + waUrl + '" target="_blank" class="wa-btn">' + WA_ICON + ' WhatsApp öffnen</a>'
                         : '<span class="wa-btn disabled">' + WA_ICON + ' Keine Nummer</span>'}
                     <button class="done-btn ${isDone ? 'is-done' : ''}" onclick="markContacted('${v._id}', ${!isDone})">
                         ${isDone ? '&#10003; Kontaktiert' : '&#10003; Als kontaktiert markieren'}
                     </button>
                     <button class="done-btn" onclick="deleteVisit('${v._id}')" style="color: var(--danger); border-color: var(--danger-light);">
-                        &#10005; Loeschen
+                        &#10005; Löschen
                     </button>
                 </div>
             </div>
@@ -553,9 +553,9 @@ function renderWeekTable() {
             ? '<span class="badge" style="background: var(--success-light); color: var(--success);">&#10003; Kontaktiert</span>'
             : v._daysAgo >= 3
                 ? '<span class="badge" style="background: var(--warning-light); color: var(--warning);">Ausstehend</span>'
-                : '<span class="badge" style="background: var(--bg); color: var(--text-light);">Noch nicht faellig</span>';
+                : '<span class="badge" style="background: var(--bg); color: var(--text-light);">Noch nicht fällig</span>';
 
-        return '<tr><td>' + formatDate(v.date) + '</td><td><strong>' + escHtml(v.name) + '</strong></td><td>' + escHtml(v.treatment || '–') + '</td><td>' + escHtml(v.therapist || '–') + '</td><td>' + status + '</td></tr>';
+        return '<tr><td>' + formatDate(v.date) + '</td><td><strong>' + escHtml(v.name) + '</strong></td><td>' + escHtml(v.treatment || '–') + '</td><td>' + escHtml(v.therapist || '–') + '</td><td>' + status + '</td><td><button onclick="deleteVisit(\'' + v._id + '\')" style="background:none;border:1px solid var(--danger-light);color:var(--danger);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px" onmouseover="this.style.background=\'var(--danger-light)\'" onmouseout="this.style.background=\'none\'">&#10005; Löschen</button></td></tr>';
     }).join('');
 }
 
@@ -617,7 +617,7 @@ function markContacted(id, contacted) {
 }
 
 function deleteVisit(id) {
-    if (!confirm('Eintrag wirklich loeschen?')) return;
+    if (!confirm('Eintrag wirklich löschen?')) return;
     db.collection('client_visits').doc(id).delete().then(() => {
         showToast('Geloescht.', '');
     });
