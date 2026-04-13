@@ -634,6 +634,24 @@ function initClients(){
     if(c.gebDate){const bd=new Date(TODAY.getFullYear(),c.gebDate.getMonth(),c.gebDate.getDate());const diff=Math.floor((bd-TODAY)/(864e5));c.bdSoon=diff>=0&&diff<=14}
   });
 
+  // Add Treatwell contacts that are NOT in Trello as standalone clients
+  const clientKeys=new Set();
+  clients.forEach(c=>{clientKeys.add(normalize(c.fn+' '+c.ln));clientKeys.add(normalize(c.ln+' '+c.fn));clientKeys.add(normalize(c.name))});
+  TW_CONTACTS.forEach(tw=>{
+    if(!tw.fn||tw.fn.length>40)return;
+    const key=normalize(tw.fn+' '+tw.ln);
+    const keyRev=normalize(tw.ln+' '+tw.fn);
+    if(key.length<3||clientKeys.has(key)||clientKeys.has(keyRev))return;
+    const nc={id:'tw_'+key.replace(/\s/g,'_'),name:tw.fn+' '+tw.ln,fn:tw.fn,ln:tw.ln,ph:tw.ph||'',em:tw.em||'',bd:'',gebDate:null,lv:'',visits:tw.b||0,notizen:'',missing:[],visitDates:[]};
+    if(tw.bd){const parts=tw.bd.split('-');if(parts.length===3){nc.bd=parts[0]+'.'+parts[1]+'.'+parts[2];nc.gebDate=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]))}}
+    nc.days=diffDays(nc.lv);
+    if(!nc.ph)nc.missing.push('telefon');if(!nc.em)nc.missing.push('email');if(!nc.bd)nc.missing.push('geburtsdatum');
+    nc.bdSoon=false;
+    if(nc.gebDate){const bd=new Date(TODAY.getFullYear(),nc.gebDate.getMonth(),nc.gebDate.getDate());const diff=Math.floor((bd-TODAY)/(864e5));nc.bdSoon=diff>=0&&diff<=14}
+    clients.push(nc);
+    clientKeys.add(key);clientKeys.add(keyRev);
+  });
+
   // Add manually created clients from localStorage
   const kartei=loadKartei();
   if(kartei.__newClients){
