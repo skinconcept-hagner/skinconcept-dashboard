@@ -352,7 +352,7 @@ body.client-open .back-btn{display:inline-flex}
   <!-- SIDEBAR: Kundenliste -->
   <div class="sidebar">
     <div class="sb-search">
-      <input type="text" id="sbSearch" placeholder="Kunde suchen..." oninput="renderSidebar()">
+      <input type="text" id="sbSearch" placeholder="Kunde suchen..." oninput="debouncedRenderSidebar()">
     </div>
     <div class="sb-filters" id="sbFilters"></div>
     <div class="sb-stats" id="sbStats"></div>
@@ -532,10 +532,20 @@ function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charC
 function toast(msg,type){const box=document.getElementById('toastBox');const t=document.createElement('div');t.className='toast '+(type||'ok');t.innerHTML=msg;box.appendChild(t);setTimeout(()=>t.remove(),3000)}
 
 // ── LOCAL STORAGE (Kartei-spezifische Daten) ──
-function loadKartei(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}catch{return{}}}
-function saveKartei(data){localStorage.setItem(STORE_KEY,JSON.stringify(data))}
+// ── LOCALSTORAGE MIT CACHE (verhindert staendiges JSON.parse bei jedem Zugriff) ──
+let _karteiCache=null;
+let _karteiDirty=false;
+let _karteiSaveTimer=null;
+function loadKartei(){if(_karteiCache)return _karteiCache;try{_karteiCache=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return _karteiCache}catch{_karteiCache={};return _karteiCache}}
+function saveKartei(data){_karteiCache=data;_karteiDirty=true;if(_karteiSaveTimer)clearTimeout(_karteiSaveTimer);_karteiSaveTimer=setTimeout(function(){if(_karteiDirty){localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}},300)}
+function flushKartei(){if(_karteiDirty){localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}}
+window.addEventListener('beforeunload',flushKartei);
 function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
 function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all)}
+
+// ── DEBOUNCE ──
+let _sbTimer=null;
+function debouncedRenderSidebar(){if(_sbTimer)clearTimeout(_sbTimer);_sbTimer=setTimeout(renderSidebar,150)}
 
 // ── PARSE TRELLO ──
 function parseTrello(raw,i){
@@ -1463,16 +1473,16 @@ function copyAnamLink(){
 function updateClient(field,value){
   if(!selectedClient)return;
   selectedClient[field]=value;
+  if(field==='fn'||field==='ln')selectedClient.name=selectedClient.fn+' '+selectedClient.ln;
   if(field==='bd'){
     const m=value.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
     if(m){selectedClient.gebDate=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]))}
   }
-  // Update missing
   selectedClient.missing=[];
   if(!selectedClient.ph)selectedClient.missing.push('telefon');
   if(!selectedClient.em)selectedClient.missing.push('email');
   if(!selectedClient.bd)selectedClient.missing.push('geburtsdatum');
-  renderSidebar();
+  debouncedRenderSidebar();
   toast('Gespeichert');
 }
 
