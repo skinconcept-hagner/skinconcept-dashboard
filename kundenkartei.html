@@ -1580,8 +1580,16 @@ function saveTreatment(){
     notes:document.getElementById('atNotes').value
   });
   saveClientKartei(selectedClient.id,kd);
+  // Letzten Besuch aktualisieren → Status wird sofort auf Aktiv gesetzt
+  const treatDate=document.getElementById('atDate').value||TODAY_STR;
+  if(!selectedClient.lv||treatDate>selectedClient.lv){
+    selectedClient.lv=treatDate;
+    selectedClient.days=diffDays(treatDate);
+  }
+  selectedClient.visits=(selectedClient.visits||0)+1;
   closeModal('addModal');
   renderKartei(selectedClient);
+  renderSidebar();
   toast('Behandlung gespeichert');
 }
 
