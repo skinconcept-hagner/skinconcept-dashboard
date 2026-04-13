@@ -979,8 +979,7 @@ function renderKartei(c){
         <div class="ktab${currentKTab==='plan'?' active':''}" onclick="switchKTab('plan')">Behandlungsplan <span class="cnt">${planCount}</span></div>
         <div class="ktab${currentKTab==='produkte'?' active':''}" onclick="switchKTab('produkte')">Produkte <span class="cnt">${prodCount}</span></div>
         <div class="ktab${currentKTab==='fotos'?' active':''}" onclick="switchKTab('fotos')">Fotos <span class="cnt">${photoCount}</span></div>
-        <div class="ktab${currentKTab==='hautanalyse'?' active':''}" onclick="switchKTab('hautanalyse')">Hautanalyse <span class="cnt">${hautanalyseCount}</span></div>
-        <div class="ktab${currentKTab==='hautbericht'?' active':''}" onclick="switchKTab('hautbericht')">Hautanalysebericht ${berichtCount?'<span class="cnt">'+berichtCount+'</span>':''}</div>
+        <div class="ktab${currentKTab==='hautbericht'?' active':''}" onclick="switchKTab('hautbericht')">Hautanalysebericht ${berichtCount||hautanalyseCount?'<span class="cnt">'+(berichtCount+hautanalyseCount)+'</span>':''}</div>
         <div class="ktab${currentKTab==='termine'?' active':''}" onclick="switchKTab('termine')">Termine</div>
         <div class="ktab${currentKTab==='kontakt'?' active':''}" onclick="switchKTab('kontakt')">Kontakthistorie <span class="cnt">${contactCount}</span></div>
       </div>
@@ -1115,34 +1114,7 @@ function renderKartei(c){
         </div>
       </div>
 
-      <!-- HAUTANALYSE -->
-      <div class="kpage${currentKTab==='hautanalyse'?' active':''}" id="kp-hautanalyse">
-        <div class="scard">
-          <h3>Hautanalyseberichte (Observ) <button class="add-btn" onclick="document.getElementById('hautanalyseUpload').click()">+ Bericht hochladen</button></h3>
-          <input type="file" id="hautanalyseUpload" accept="image/*,.pdf" style="display:none" onchange="handleHautanalyseUpload(this.files)" multiple>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
-            ${(kd.hautanalysen||[]).map((h,i)=>`
-              <div class="scard" style="margin:0;cursor:pointer;position:relative" onclick="viewHautanalyse(${i})">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-                  <div style="width:44px;height:44px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${h.type==='pdf'?'&#128196;':'&#128248;'}</div>
-                  <div style="flex:1;min-width:0">
-                    <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.label||'Hautanalyse')}</div>
-                    <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtDate(h.date)}${h.type==='pdf'?' &#183; PDF':''}</div>
-                  </div>
-                </div>
-                ${h.type!=='pdf'&&h.data?'<img src="'+h.data+'" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover" alt="Hautanalyse">':'<div style="padding:20px;text-align:center;background:var(--bg4);border-radius:8px;color:var(--muted)">&#128196; PDF-Dokument</div>'}
-              </div>
-            `).join('')}
-            <div style="border:2px dashed var(--border);border-radius:var(--r);padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--muted);transition:all .2s" onclick="document.getElementById('hautanalyseUpload').click()" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-              <span style="font-size:28px">&#128269;</span>
-              <span style="font-size:12px;letter-spacing:.5px">Observ-Bericht hochladen</span>
-              <span style="font-size:10px">Bilder oder PDF</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PERSOENLICHER HAUTANALYSEBERICHT -->
+      <!-- HAUTANALYSEBERICHT -->
       <div class="kpage${currentKTab==='hautbericht'?' active':''}" id="kp-hautbericht">
         <div class="scard">
           <h3>Hautanalyseberichte <button class="add-btn" onclick="document.getElementById('hautberichtUpload').click()">+ Bericht hinterlegen</button></h3>
@@ -1161,21 +1133,13 @@ function renderKartei(c){
       <!-- TERMINE -->
       <div class="kpage${currentKTab==='termine'?' active':''}" id="kp-termine">
         <div class="scard">
-          <h3>Terminuebersicht</h3>
+          <h3>Terminübersicht</h3>
           <div class="kh-metrics" style="margin:0 0 16px">
             <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${fmtDate(c.lv)}</div><div class="kh-metric-label">Letzter Termin</div></div>
             <div class="kh-metric"><div class="kh-metric-val" style="color:var(--${s.color})">${formatDays(c.days)}</div><div class="kh-metric-label">Her</div></div>
             <div class="kh-metric"><div class="kh-metric-val">${c.visits||0}</div><div class="kh-metric-label">Gesamt Besuche</div></div>
           </div>
-          ${c.visitDates&&c.visitDates.length?`
-            <h4 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Alle bekannten Termine</h4>
-            <div class="timeline">${c.visitDates.slice(0,30).map(d=>`
-              <div class="tl-item" style="padding-bottom:8px;margin-bottom:8px">
-                <div class="tl-dot"></div>
-                <div class="tl-date">${fmtDate(d)}</div>
-              </div>
-            `).join('')}</div>
-          `:'<p style="color:var(--muted);text-align:center;padding:20px">Termine werden ueber Treatwell-Kassenbuch Import aktualisiert.</p>'}
+          ${renderTerminListe(c)}
         </div>
         <div class="tw-import">
           <h3>Treatwell aktualisieren</h3>
@@ -2566,6 +2530,37 @@ function exportCSV(){
 document.addEventListener('keydown',e=>{
   if(e.ctrlKey&&e.key==='k'){e.preventDefault();document.getElementById('sbSearch').focus()}
 });
+
+// ── TERMINLISTE (kombiniert Kassenbuch + Nachsorge + Behandlungen) ──
+function renderTerminListe(c){
+  const allDates=[];
+  // Kassenbuch-Termine
+  if(c.visitDates)c.visitDates.forEach(d=>allDates.push({date:d,source:'Kassenbuch',detail:''}));
+  // Nachsorge-Termine (Firestore)
+  const nsVisits=getNachsorgeForClient(c);
+  nsVisits.forEach(v=>{
+    if(!allDates.find(a=>a.date===v.date))allDates.push({date:v.date,source:'Behandlung',detail:v.treatment||'',therapist:v.therapist||''});
+  });
+  // Manuell eingetragene Behandlungen
+  const kd=getClientKartei(c.id);
+  if(kd.treatments)kd.treatments.forEach(t=>{
+    if(t.date&&!allDates.find(a=>a.date===t.date))allDates.push({date:t.date,source:'Kartei',detail:t.type||''});
+  });
+  allDates.sort((a,b)=>b.date.localeCompare(a.date));
+  if(!allDates.length)return '<p style="color:var(--muted);text-align:center;padding:20px">Noch keine Termine erfasst.</p>';
+  let html='<h4 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Alle Termine ('+allDates.length+')</h4><div class="timeline">';
+  allDates.slice(0,40).forEach(a=>{
+    const col=a.source==='Behandlung'?'var(--gold)':a.source==='Kartei'?'var(--blue)':'var(--green)';
+    html+='<div class="tl-item" style="padding-bottom:8px;margin-bottom:8px">'
+      +'<div class="tl-dot" style="border-color:'+col+'"></div>'
+      +'<div class="tl-date">'+fmtDate(a.date)+'</div>'
+      +(a.detail?'<div class="tl-title" style="font-size:12px">'+esc(a.detail)+(a.therapist?' · '+esc(a.therapist):'')+'</div>':'')
+      +'<div style="font-size:10px;color:var(--muted)">'+a.source+'</div>'
+      +'</div>';
+  });
+  html+='</div>';
+  return html;
+}
 
 // ── NACHSORGE BOX IN KARTEIKARTE ──
 function renderNachsorgeBox(c){
