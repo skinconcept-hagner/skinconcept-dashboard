@@ -535,8 +535,8 @@ let _karteiCache=null;
 let _karteiDirty=false;
 let _karteiSaveTimer=null;
 function loadKartei(){if(_karteiCache)return _karteiCache;try{_karteiCache=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return _karteiCache}catch{_karteiCache={};return _karteiCache}}
-function saveKartei(data){_karteiCache=data;_karteiDirty=true;if(_karteiSaveTimer)clearTimeout(_karteiSaveTimer);_karteiSaveTimer=setTimeout(function(){if(_karteiDirty){localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}},300)}
-function flushKartei(){if(_karteiDirty){localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}}
+function saveKartei(data){_karteiCache=data;_karteiDirty=true;if(_karteiSaveTimer)clearTimeout(_karteiSaveTimer);_karteiSaveTimer=setTimeout(function(){flushKartei()},300)}
+function flushKartei(){if(_karteiDirty){try{localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}catch(e){console.error('Speicherfehler:',e.message);toast('Speicher voll! Bericht zu gross.')}}}
 window.addEventListener('beforeunload',flushKartei);
 function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
 function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all)}
@@ -2177,21 +2177,42 @@ function handleHautberichtUpload(files){
   const kd=getClientKartei(selectedClient.id);
   if(!kd.hautberichte)kd.hautberichte=[];
   let loaded=0;
+  const total=files.length;
   Array.from(files).forEach(file=>{
     const isPdf=file.type==='application/pdf';
     const label=prompt('Bezeichnung fuer "'+file.name+'" (z.B. Erstanalyse April, Kontrolle):',file.name.replace(/\.[^.]+$/,''));
-    const reader=new FileReader();
-    reader.onload=function(e){
-      kd.hautberichte.unshift({data:e.target.result,date:TODAY_STR,label:label||file.name,type:isPdf?'pdf':'image',filename:file.name});
-      loaded++;
-      if(loaded===files.length){
-        saveClientKartei(selectedClient.id,kd);
-        renderKartei(selectedClient);
-        toast(loaded+' Hautanalysebericht'+(loaded>1?'e':'')+' hinterlegt');
-      }
-    };
-    reader.readAsDataURL(file);
+    if(isPdf){
+      const reader=new FileReader();
+      reader.onload=function(e){
+        kd.hautberichte.unshift({data:e.target.result,date:TODAY_STR,label:label||file.name,type:'pdf',filename:file.name});
+        loaded++;
+        if(loaded===total){saveAndRenderBericht(kd,loaded)}
+      };
+      reader.readAsDataURL(file);
+    }else{
+      // Bilder komprimieren um localStorage-Limit nicht zu sprengen
+      const img=new Image();
+      img.onload=function(){
+        const canvas=document.createElement('canvas');
+        const maxW=1200;
+        let w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*(maxW/w));w=maxW}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const compressed=canvas.toDataURL('image/jpeg',0.8);
+        kd.hautberichte.unshift({data:compressed,date:TODAY_STR,label:label||file.name,type:'image',filename:file.name});
+        loaded++;
+        if(loaded===total){saveAndRenderBericht(kd,loaded)}
+      };
+      img.src=URL.createObjectURL(file);
+    }
   });
+}
+function saveAndRenderBericht(kd,count){
+  saveClientKartei(selectedClient.id,kd);
+  flushKartei();
+  renderKartei(selectedClient);
+  toast(count+' Hautanalysebericht'+(count>1?'e':'')+' hinterlegt');
 }
 
 function viewHautbericht(idx){
