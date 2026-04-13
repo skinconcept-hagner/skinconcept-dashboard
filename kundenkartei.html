@@ -969,6 +969,7 @@ function renderKartei(c){
         <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${fmtDate(c.lv)}</div><div class="kh-metric-label">Letzter Besuch</div></div>
         <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${contactCount>0?fmtDate(kd.contacts[0].date):'–'}</div><div class="kh-metric-label">Letzter Kontakt</div></div>
         <div class="kh-metric"><div class="kh-metric-val">${treatCount}</div><div class="kh-metric-label">Behandlungen</div></div>
+        <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px;color:${kd.zuletztKontaktiert?'var(--green)':'var(--muted)'}">${kd.zuletztKontaktiert?fmtDate(kd.zuletztKontaktiert):'–'}</div><div class="kh-metric-label">Zuletzt kontaktiert</div></div>
         <div class="kh-metric"><div class="kh-metric-val">${prodCount}</div><div class="kh-metric-label">Produkte</div></div>
       </div>
       <div class="ktabs">
@@ -2203,6 +2204,7 @@ function loadNachsorge(){
     nachsorgeVisits=[];
     snap.forEach(doc=>{const d=doc.data();d._id=doc.id;nachsorgeVisits.push(d)});
     nachsorgeLoaded=true;
+    syncNachsorgeBesuche();
     checkNachsorgeFaellig();
     if(selectedClient)renderKartei(selectedClient);
   },err=>console.log('Nachsorge-Fehler:',err));
@@ -2268,20 +2270,44 @@ function showNachsorgeNotification(faellig){
 
 function markNachsorgeKontaktiert(visitId,clientId){
   nsDb.collection('client_visits').doc(visitId).update({contacted:true}).then(()=>{
-    // In Kontakthistorie eintragen
     const c=clients.find(x=>x.id===clientId);
     if(c){
       const kd=getClientKartei(clientId);
       if(!kd.contacts)kd.contacts=[];
       const v=nachsorgeVisits.find(x=>x._id===visitId);
-      kd.contacts.unshift({date:TODAY_STR,type:'nachsorge',note:'Nachsorge-Kontakt nach '+(v?v.treatment:'Behandlung')+' ('+((v?v.date:''))+')' });
+      // Kontakthistorie eintragen
+      kd.contacts.unshift({date:TODAY_STR,type:'nachsorge',channel:'WhatsApp',reason:'Nachsorge',note:'Nachsorge-Kontakt nach '+(v?v.treatment:'Behandlung')+' ('+(v?v.date:'')+')' });
+      // Zuletzt kontaktiert speichern
+      kd.zuletztKontaktiert=TODAY_STR;
       saveClientKartei(clientId,kd);
       flushKartei();
     }
     toast('Als kontaktiert markiert');
     const notif=document.getElementById('nsNotification');
     if(notif)notif.remove();
+    if(selectedClient)renderKartei(selectedClient);
+    renderSidebar();
   });
+}
+
+// Nachsorge-Besuche → letzter Besuch in Kundenkartei aktualisieren
+function syncNachsorgeBesuche(){
+  if(!nachsorgeLoaded)return;
+  let updated=0;
+  clients.forEach(c=>{
+    const visits=getNachsorgeForClient(c);
+    if(!visits.length)return;
+    const latestDate=visits[0].date;
+    if(latestDate&&(!c.lv||latestDate>c.lv)){
+      c.lv=latestDate;
+      c.days=diffDays(latestDate);
+      updated++;
+    }
+  });
+  if(updated>0){
+    clients.sort((a,b)=>a.days-b.days);
+    renderSidebar();
+  }
 }
 
 // ── HAUTANALYSEBERICHTE (Upload & Ablage) ──
