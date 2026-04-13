@@ -865,6 +865,23 @@ function deleteClient(id){
   toast('Kunde geloescht');
 }
 
+// ── RENDER HAUTBERICHT CARDS (helper to avoid nested template literals) ──
+function renderHautberichtCards(kd){
+  return (kd.hautberichte||[]).map(function(b,i){
+    return '<div class="scard" style="margin:0;cursor:pointer;border-left:4px solid var(--gold)" onclick="openHautbericht('+i+')">'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<div style="width:44px;height:44px;border-radius:10px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#128203;</div>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:14px;font-weight:600">'+esc(b.title||'Hautanalysebericht')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+fmtDate(b.date)+' &middot; '+(b.sections?b.sections.length+' Abschnitte':'')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();downloadHautberichtPDF('+i+')" title="PDF herunterladen">&#128196; PDF</button>'
+      +'<button class="btn btn-red btn-sm" onclick="event.stopPropagation();deleteHautbericht('+i+')" title="Loeschen">&#10005;</button>'
+      +'</div></div></div>';
+  }).join('');
+}
+
 // ── RENDER KARTEIKARTE ──
 let currentKTab='stamm';
 
@@ -1098,23 +1115,7 @@ function renderKartei(c){
           <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Observ-Screenshot hochladen → KI kombiniert mit Anamnese → individueller Bericht zum Bearbeiten & als PDF senden.</p>
 
           <!-- Bestehende Berichte -->
-          ${berichtCount>0?`<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-            ${kd.hautberichte.map((b,i)=>\`
-              <div class="scard" style="margin:0;cursor:pointer;border-left:4px solid var(--gold)" onclick="openHautbericht(${i})">
-                <div style="display:flex;align-items:center;gap:12px">
-                  <div style="width:44px;height:44px;border-radius:10px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#128203;</div>
-                  <div style="flex:1;min-width:0">
-                    <div style="font-size:14px;font-weight:600">\${esc(b.title||'Hautanalysebericht')}</div>
-                    <div style="font-size:11px;color:var(--muted);margin-top:2px">\${fmtDate(b.date)} · \${b.sections?b.sections.length+' Abschnitte':''}</div>
-                  </div>
-                  <div style="display:flex;gap:6px">
-                    <button class="btn btn-gold btn-sm" onclick="event.stopPropagation();downloadHautberichtPDF(${i})" title="PDF herunterladen">&#128196; PDF</button>
-                    <button class="btn btn-red btn-sm" onclick="event.stopPropagation();deleteHautbericht(${i})" title="Loeschen">&#10005;</button>
-                  </div>
-                </div>
-              </div>
-            \`).join('')}
-          </div>`:''}
+          ${berichtCount>0?'<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">'+renderHautberichtCards(kd)+'</div>':''}
 
           <!-- Neuen Bericht starten -->
           <div id="hautberichtCreator" style="display:none">
