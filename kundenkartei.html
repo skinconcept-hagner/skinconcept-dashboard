@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Skinconcept">
     <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>SKINCONCEPT Kundenkartei</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
@@ -868,17 +869,15 @@ function deleteClient(id){
 // ── RENDER HAUTBERICHT CARDS (helper to avoid nested template literals) ──
 function renderHautberichtCards(kd){
   return (kd.hautberichte||[]).map(function(b,i){
-    return '<div class="scard" style="margin:0;cursor:pointer;border-left:4px solid var(--gold)" onclick="openHautbericht('+i+')">'
-      +'<div style="display:flex;align-items:center;gap:12px">'
-      +'<div style="width:44px;height:44px;border-radius:10px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#128203;</div>'
+    var icon=b.type==='pdf'?'&#128196;':'&#128203;';
+    var preview=b.type!=='pdf'&&b.data?'<img src="'+b.data+'" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover">':'<div style="padding:20px;text-align:center;background:var(--bg4);border-radius:8px;color:var(--muted)">&#128196; PDF-Dokument</div>';
+    return '<div class="scard" style="margin:0;cursor:pointer;position:relative" onclick="viewHautbericht('+i+')">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
+      +'<div style="width:44px;height:44px;border-radius:10px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+icon+'</div>'
       +'<div style="flex:1;min-width:0">'
-      +'<div style="font-size:14px;font-weight:600">'+esc(b.title||'Hautanalysebericht')+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+fmtDate(b.date)+' &middot; '+(b.sections?b.sections.length+' Abschnitte':'')+'</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:6px">'
-      +'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();downloadHautberichtPDF('+i+')" title="PDF herunterladen">&#128196; PDF</button>'
-      +'<button class="btn btn-red btn-sm" onclick="event.stopPropagation();deleteHautbericht('+i+')" title="Loeschen">&#10005;</button>'
-      +'</div></div></div>';
+      +'<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(b.label||'Hautanalysebericht')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+fmtDate(b.date)+(b.type==='pdf'?' &middot; PDF':'')+'</div>'
+      +'</div></div>'+preview+'</div>';
   }).join('');
 }
 
@@ -1111,47 +1110,14 @@ function renderKartei(c){
       <!-- PERSOENLICHER HAUTANALYSEBERICHT -->
       <div class="kpage${currentKTab==='hautbericht'?' active':''}" id="kp-hautbericht">
         <div class="scard">
-          <h3>Persoenlicher Hautanalysebericht <button class="add-btn" onclick="startHautbericht()">+ Neuen Bericht erstellen</button></h3>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Observ-Screenshot hochladen → KI kombiniert mit Anamnese → individueller Bericht zum Bearbeiten & als PDF senden.</p>
-
-          <!-- Bestehende Berichte -->
-          ${berichtCount>0?'<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">'+renderHautberichtCards(kd)+'</div>':''}
-
-          <!-- Neuen Bericht starten -->
-          <div id="hautberichtCreator" style="display:none">
-            <div class="scard" style="border:2px solid var(--gold);background:linear-gradient(135deg,rgba(201,169,110,.05),rgba(201,169,110,.02))">
-              <h3 style="color:var(--gold)">&#10024; Neuen Bericht generieren</h3>
-
-              <div style="margin:16px 0">
-                <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">1. Observ-Screenshots hochladen</label>
-                <div id="hbObservPreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"></div>
-                <div style="border:2px dashed var(--border);border-radius:var(--r);padding:30px 20px;text-align:center;cursor:pointer;color:var(--muted);transition:all .2s" onclick="document.getElementById('hbObservUpload').click()" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-                  <span style="font-size:24px;display:block;margin-bottom:4px">&#128247;</span>
-                  <span style="font-size:12px">Observ-Screenshots auswaehlen</span>
-                </div>
-                <input type="file" id="hbObservUpload" accept="image/*" style="display:none" onchange="handleObservUpload(this.files)" multiple>
-              </div>
-
-              <div style="margin:16px 0">
-                <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">2. Anamnese-Daten</label>
-                <div id="hbAnamStatus" style="padding:12px;border-radius:8px;font-size:13px;background:var(--bg4)">
-                  ${anam?'<span style="color:var(--green)">&#10003; Anamnese vorhanden</span> — wird automatisch einbezogen':'<span style="color:var(--yellow)">&#9888; Keine Anamnese vorhanden</span> — Bericht basiert nur auf Observ-Daten'}
-                </div>
-              </div>
-
-              <div style="margin:16px 0">
-                <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">3. Zusaetzliche Hinweise (optional)</label>
-                <textarea id="hbExtraNotes" rows="3" placeholder="z.B. besondere Beobachtungen, Wuensche der Kundin..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:13px;resize:vertical"></textarea>
-              </div>
-
-              <div style="display:flex;gap:10px;margin-top:20px">
-                <button id="hbGenerateBtn" class="btn btn-gold" onclick="generateHautbericht()" disabled style="flex:1;padding:14px;font-size:15px">&#10024; Bericht generieren</button>
-                <button class="btn btn-dark btn-sm" onclick="cancelHautbericht()">Abbrechen</button>
-              </div>
-              <div id="hbProgress" style="display:none;text-align:center;padding:20px">
-                <div style="font-size:24px;margin-bottom:8px;animation:spin 1s linear infinite">&#9881;</div>
-                <p style="font-size:13px;color:var(--muted)">Claude analysiert Observ-Bilder & Anamnese...</p>
-              </div>
+          <h3>Hautanalyseberichte <button class="add-btn" onclick="document.getElementById('hautberichtUpload').click()">+ Bericht hinterlegen</button></h3>
+          <input type="file" id="hautberichtUpload" accept="image/*,.pdf" style="display:none" onchange="handleHautberichtUpload(this.files)" multiple>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+            ${renderHautberichtCards(kd)}
+            <div style="border:2px dashed var(--border);border-radius:var(--r);padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--muted);transition:all .2s" onclick="document.getElementById('hautberichtUpload').click()" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              <span style="font-size:28px">&#128203;</span>
+              <span style="font-size:12px;letter-spacing:.5px">Hautanalysebericht hinterlegen</span>
+              <span style="font-size:10px">PDF oder Bild</span>
             </div>
           </div>
         </div>
@@ -2183,240 +2149,58 @@ function deleteHautanalyse(idx){
   toast('Bericht geloescht');
 }
 
-// ── PERSOENLICHER HAUTANALYSEBERICHT ──
-let hbObservImages=[];
-const CLAUDE_API_KEY_STORE='sc_claude_api_key';
-
-function getClaudeKey(){return localStorage.getItem(CLAUDE_API_KEY_STORE)||''}
-function setClaudeKey(k){localStorage.setItem(CLAUDE_API_KEY_STORE,k)}
-
-function startHautbericht(){
-  hbObservImages=[];
-  const creator=document.getElementById('hautberichtCreator');
-  if(creator){creator.style.display='block';document.getElementById('hbObservPreview').innerHTML='';document.getElementById('hbExtraNotes').value='';document.getElementById('hbGenerateBtn').disabled=true;document.getElementById('hbProgress').style.display='none'}
-}
-function cancelHautbericht(){
-  hbObservImages=[];
-  const creator=document.getElementById('hautberichtCreator');
-  if(creator)creator.style.display='none';
-}
-
-function handleObservUpload(files){
-  if(!files||!files.length)return;
+// ── HAUTANALYSEBERICHTE (Upload & Ablage) ──
+function handleHautberichtUpload(files){
+  if(!files||!files.length||!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  if(!kd.hautberichte)kd.hautberichte=[];
+  let loaded=0;
   Array.from(files).forEach(file=>{
+    const isPdf=file.type==='application/pdf';
+    const label=prompt('Bezeichnung fuer "'+file.name+'" (z.B. Erstanalyse April, Kontrolle):',file.name.replace(/\.[^.]+$/,''));
     const reader=new FileReader();
     reader.onload=function(e){
-      hbObservImages.push({data:e.target.result,name:file.name});
-      renderObservPreviews();
+      kd.hautberichte.unshift({data:e.target.result,date:TODAY_STR,label:label||file.name,type:isPdf?'pdf':'image',filename:file.name});
+      loaded++;
+      if(loaded===files.length){
+        saveClientKartei(selectedClient.id,kd);
+        renderKartei(selectedClient);
+        toast(loaded+' Hautanalysebericht'+(loaded>1?'e':'')+' hinterlegt');
+      }
     };
     reader.readAsDataURL(file);
   });
 }
 
-function renderObservPreviews(){
-  const container=document.getElementById('hbObservPreview');
-  if(!container)return;
-  container.innerHTML=hbObservImages.map((img,i)=>`
-    <div style="position:relative;width:120px;height:90px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
-      <img src="${img.data}" style="width:100%;height:100%;object-fit:cover">
-      <button onclick="hbObservImages.splice(${i},1);renderObservPreviews()" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">&times;</button>
-    </div>
-  `).join('');
-  const btn=document.getElementById('hbGenerateBtn');
-  if(btn)btn.disabled=hbObservImages.length===0;
-}
-
-async function generateHautbericht(){
-  if(!selectedClient||hbObservImages.length===0)return;
-  let apiKey=getClaudeKey();
-  if(!apiKey){
-    apiKey=prompt('Bitte Claude API-Key eingeben (wird lokal gespeichert):');
-    if(!apiKey)return;
-    setClaudeKey(apiKey);
-  }
-
-  const btn=document.getElementById('hbGenerateBtn');
-  const prog=document.getElementById('hbProgress');
-  btn.style.display='none';prog.style.display='block';
-
-  const c=selectedClient;
-  const anam=getAnamnese(c);
-  const kd=getClientKartei(c.id);
-  const extraNotes=(document.getElementById('hbExtraNotes')||{}).value||'';
-
-  // Build anamnese summary
-  let anamText='Keine Anamnese vorhanden.';
-  if(anam){
-    const parts=[];
-    ANAM_SECTIONS.forEach(sec=>{
-      const secParts=[];
-      sec.fields.forEach(f=>{
-        const v=anam[f.id];
-        if(Array.isArray(v)&&v.length>0)secParts.push(f.label+': '+v.join(', '));
-        else if(v&&String(v).trim())secParts.push(f.label+': '+String(v).trim());
-      });
-      if(secParts.length)parts.push(sec.title+':\n'+secParts.join('\n'));
-    });
-    anamText=parts.join('\n\n');
-  }
-
-  // Build messages with images
-  const content=[];
-  hbObservImages.forEach((img,i)=>{
-    const base64=img.data.split(',')[1];
-    const mediaType=img.data.match(/data:([^;]+)/)?.[1]||'image/jpeg';
-    content.push({type:'image',source:{type:'base64',media_type:mediaType,data:base64}});
-  });
-
-  content.push({type:'text',text:`Du bist eine erfahrene Hautexpertin und Kosmetikerin bei Skinconcept Hagner (Premium Medical Beauty Studio).
-
-Erstelle einen PERSOENLICHEN HAUTANALYSEBERICHT fuer die Kundin ${c.fn} ${c.ln}.
-
-OBSERV-BILDER: Die oben gezeigten Bilder sind Screenshots der Observ-Hautanalyse (Sylton).
-
-ANAMNESE-DATEN DER KUNDIN:
-${anamText}
-
-${extraNotes?'ZUSAETZLICHE HINWEISE: '+extraNotes:''}
-
-Erstelle den Bericht im folgenden JSON-Format (NUR JSON, kein anderer Text):
-{
-  "title": "Persoenlicher Hautanalysebericht fuer ${c.fn} ${c.ln}",
-  "zusammenfassung": "2-3 Saetze Gesamteindruck der Haut",
-  "sections": [
-    {
-      "heading": "Abschnitts-Titel",
-      "content": "Detaillierter Inhalt mit professioneller Einschaetzung"
-    }
-  ]
-}
-
-Erstelle diese Abschnitte:
-1. Hautzustand & Observ-Analyse (was die Bilder zeigen)
-2. Hauttyp-Bestimmung
-3. Identifizierte Hautprobleme (basierend auf Observ + Anamnese)
-4. Ursachenanalyse (Zusammenhang Lebensstil, Hormone, Medikamente, Pflege mit Hautzustand)
-5. Empfohlener Behandlungsplan
-6. Heimische Pflege-Empfehlung
-7. Naechste Schritte
-
-Schreibe professionell aber verstaendlich. Nutze Fachbegriffe mit Erklaerung. Sei konkret und individuell — kein generischer Text.`});
-
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:4000,
-        messages:[{role:'user',content:content}]
-      })
-    });
-
-    if(!res.ok){
-      const err=await res.text();
-      if(res.status===401){setClaudeKey('');throw new Error('Ungueltiger API-Key. Bitte erneut eingeben.')}
-      throw new Error('API Fehler: '+res.status+' '+err);
-    }
-
-    const data=await res.json();
-    const text=data.content[0].text;
-
-    // Parse JSON from response
-    const jsonMatch=text.match(/\{[\s\S]*\}/);
-    if(!jsonMatch)throw new Error('Konnte Bericht nicht parsen');
-    const bericht=JSON.parse(jsonMatch[0]);
-
-    // Save
-    if(!kd.hautberichte)kd.hautberichte=[];
-    bericht.date=TODAY_STR;
-    bericht.observImages=hbObservImages.map(img=>img.data);
-    kd.hautberichte.unshift(bericht);
-    saveClientKartei(c.id,kd);
-
-    cancelHautbericht();
-    renderKartei(c);
-    toast('Hautanalysebericht erstellt!');
-
-    // Open the new report
-    setTimeout(()=>openHautbericht(0),300);
-
-  }catch(e){
-    console.error('Hautbericht-Fehler:',e);
-    alert('Fehler: '+e.message);
-    btn.style.display='block';prog.style.display='none';
-  }
-}
-
-function openHautbericht(idx){
+function viewHautbericht(idx){
   if(!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
   const b=kd.hautberichte[idx];
   if(!b)return;
-
+  const isPdf=b.type==='pdf';
   document.getElementById('addModalContent').innerHTML=`
     <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-    <div id="hautberichtView">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
-        <span style="font-size:28px">&#128203;</span>
-        <div>
-          <h2 style="margin:0" id="hbTitle">${esc(b.title||'Hautanalysebericht')}</h2>
-          <p style="color:var(--muted);font-size:12px;margin:2px 0 0">${fmtDate(b.date)} · ${selectedClient.fn} ${selectedClient.ln}</p>
-        </div>
-      </div>
-
-      ${b.observImages&&b.observImages.length?`
-        <div style="display:flex;gap:8px;overflow-x:auto;padding:12px 0;margin-bottom:8px">
-          ${b.observImages.map(img=>'<img src="'+img+'" style="height:100px;border-radius:8px;border:1px solid var(--border);flex-shrink:0">').join('')}
-        </div>`:''}
-
-      ${b.zusammenfassung?`<div style="padding:14px 16px;background:linear-gradient(135deg,rgba(201,169,110,.08),rgba(201,169,110,.03));border-radius:10px;border-left:4px solid var(--gold);margin-bottom:16px;font-size:14px;line-height:1.7;color:var(--text)" id="hbZusammenfassung" contenteditable="true">${esc(b.zusammenfassung)}</div>`:''}
-
-      <div id="hbSections">
-        ${(b.sections||[]).map((s,i)=>`
-          <div class="scard" style="margin-bottom:10px">
-            <h3 contenteditable="true" onblur="updateHautberichtSection(${idx},${i},'heading',this.textContent)" style="cursor:text">${esc(s.heading)}</h3>
-            <div contenteditable="true" onblur="updateHautberichtSection(${idx},${i},'content',this.textContent)" style="font-size:13px;line-height:1.8;color:var(--text2);cursor:text;white-space:pre-wrap">${esc(s.content)}</div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div style="display:flex;gap:10px;margin-top:20px;justify-content:space-between;flex-wrap:wrap">
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-gold" onclick="downloadHautberichtPDF(${idx})">&#128196; Als PDF herunterladen</button>
-          <button class="btn btn-dark btn-sm" onclick="addHautberichtSection(${idx})">+ Abschnitt</button>
-        </div>
-        <button class="btn btn-red btn-sm" onclick="deleteHautbericht(${idx})">Loeschen</button>
-      </div>
-      <p style="font-size:10px;color:var(--muted);margin-top:12px;text-align:center">Alle Texte sind direkt bearbeitbar — klicke einfach hinein und aendere den Text.</p>
+    <h2 style="margin-bottom:4px">${esc(b.label||'Hautanalysebericht')}</h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px">${fmtDate(b.date)}${b.filename?' &middot; '+esc(b.filename):''}</p>
+    ${isPdf?'<iframe src="'+b.data+'" style="width:100%;height:500px;border:none;border-radius:10px;background:#fff"></iframe>':'<img src="'+b.data+'" style="width:100%;border-radius:10px;margin-bottom:12px" alt="Hautanalysebericht">'}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+      <button class="btn btn-dark btn-sm" onclick="renameHautbericht(${idx})">Umbenennen</button>
+      <button class="btn btn-red btn-sm" onclick="deleteHautbericht(${idx})">Loeschen</button>
     </div>
   `;
   openModal('addModal');
 }
 
-function updateHautberichtSection(berichtIdx,secIdx,field,value){
+function renameHautbericht(idx){
   if(!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
-  const b=kd.hautberichte[berichtIdx];
-  if(!b||!b.sections[secIdx])return;
-  b.sections[secIdx][field]=value;
-  saveClientKartei(selectedClient.id,kd);
-}
-
-function addHautberichtSection(berichtIdx){
-  if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  const b=kd.hautberichte[berichtIdx];
-  if(!b)return;
-  b.sections.push({heading:'Neuer Abschnitt',content:'Hier Text eingeben...'});
+  const b=kd.hautberichte[idx];
+  const newLabel=prompt('Neue Bezeichnung:',b.label||'');
+  if(newLabel===null)return;
+  b.label=newLabel;
   saveClientKartei(selectedClient.id,kd);
   closeModal('addModal');
-  openHautbericht(berichtIdx);
+  renderKartei(selectedClient);
 }
 
 function deleteHautbericht(idx){
@@ -2427,52 +2211,6 @@ function deleteHautbericht(idx){
   closeModal('addModal');
   renderKartei(selectedClient);
   toast('Bericht geloescht');
-}
-
-function downloadHautberichtPDF(idx){
-  if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  const b=kd.hautberichte[idx];
-  if(!b)return;
-  const c=selectedClient;
-
-  // Generate printable HTML and trigger print-to-PDF
-  const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(b.title||'Hautanalysebericht')}</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@400;500;600&display=swap');
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'DM Sans',sans-serif;color:#3A2E28;line-height:1.7;padding:40px 50px;max-width:800px;margin:0 auto}
-    .header{text-align:center;padding-bottom:30px;border-bottom:2px solid #C9A87C;margin-bottom:30px}
-    .logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;letter-spacing:3px;color:#8B6F5C}
-    .subtitle{font-size:11px;letter-spacing:2px;color:#C9A87C;text-transform:uppercase;margin-top:4px}
-    h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:#3A2E28;margin:20px 0 6px}
-    .client-info{font-size:13px;color:#7A6E68;margin-bottom:4px}
-    .summary{padding:16px 20px;background:#FAF7F4;border-left:4px solid #C9A87C;border-radius:0 8px 8px 0;margin:20px 0;font-size:14px}
-    .section{margin:24px 0}
-    .section h2{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:#8B6F5C;padding-bottom:6px;border-bottom:1px solid #E8E0DA;margin-bottom:10px}
-    .section p{font-size:13px;white-space:pre-wrap}
-    .footer{margin-top:40px;padding-top:20px;border-top:1px solid #E8E0DA;text-align:center;font-size:10px;color:#7A6E68}
-    .observ-imgs{display:flex;gap:10px;justify-content:center;margin:16px 0}
-    .observ-imgs img{height:120px;border-radius:8px;border:1px solid #E8E0DA}
-    @media print{body{padding:20px 30px}@page{margin:15mm}}
-  </style></head><body>
-    <div class="header">
-      <div class="logo">SKINCONCEPT HAGNER</div>
-      <div class="subtitle">Medical Beauty · Morbach</div>
-      <h1>${esc(b.title||'Persoenlicher Hautanalysebericht')}</h1>
-      <div class="client-info">${esc(c.fn)} ${esc(c.ln)} · ${fmtDate(b.date)}</div>
-    </div>
-    ${b.observImages&&b.observImages.length?'<div class="observ-imgs">'+b.observImages.map(img=>'<img src="'+img+'">').join('')+'</div>':''}
-    ${b.zusammenfassung?'<div class="summary">'+esc(b.zusammenfassung)+'</div>':''}
-    ${(b.sections||[]).map(s=>'<div class="section"><h2>'+esc(s.heading)+'</h2><p>'+esc(s.content)+'</p></div>').join('')}
-    <div class="footer">
-      <p>Skinconcept Hagner · Tamara Hagner · Medical Beauty Studio</p>
-      <p>Dieser Bericht wurde individuell erstellt und dient der persoenlichen Hautpflege-Beratung.</p>
-    </div>
-  </body></html>`);
-  win.document.close();
-  setTimeout(()=>{win.print()},500);
 }
 
 // ── CONTACT LOG ──
