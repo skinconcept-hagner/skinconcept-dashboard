@@ -445,6 +445,453 @@ function getDeletedClients(){try{return JSON.parse(localStorage.getItem(DELETED_
 function addDeletedClient(name){const list=getDeletedClients();const key=normalize(name);if(!list.includes(key)){list.push(key);localStorage.setItem(DELETED_KEY,JSON.stringify(list))}}
 
 // ── TREATWELL KONTAKTE ──
+const TW_CONTACTS=[{"fn":"Tamara","ln":"Hagner","ph":"+49 176 70860252","em":"skinconcept.hagner@gmail.com","bd":"","b":3},{"fn":"Jane","ln":"Doe","ph":"+49 000 0000 001","em":"jane@doe.de","bd":"","b":0},{"fn":"Caroline","ln":"Eibes","ph":"","em":"","bd":"","b":0},{"fn":"Roswita","ln":"Jakobs","ph":"+49 176 61742511","em":"","bd":"","b":0},{"fn":"Birgitt","ln":"Becker","ph":"+49 1514 6514280","em":"birgittbecker66@aim.com","bd":"","b":0},{"fn":"Maike","ln":"Rieb","ph":"+49 1575 3677005","em":"Maikesauer@web.de","bd":"","b":1},{"fn":"Andrea","ln":"hensel","ph":"+49 176 23839837","em":"hensel-a@web.de","bd":"","b":3},{"fn":"Nina","ln":"Herresthal","ph":"+49 163 8464478","em":"Herrresthal1989@gmx.de","bd":"","b":0},{"fn":"Petra","ln":"Behnke","ph":"+49 1511 7308319","em":"Petra.behnke68@icloud.com","bd":"","b":3},{"fn":"Jasmine","ln":"Dreher","ph":"+49 177 7522414","em":"jasminedreher@gmx.de","bd":"","b":0},{"fn":"Corina","ln":"Heinze","ph":"+49 162 7853353","em":"Corina.heinze@arcor.de","bd":"","b":0},{"fn":"Irina","ln":"Todorova","ph":"+49 176 82019433","em":"irenetodorova@gmail.com","bd":"","b":0},{"fn":"Lorscheter","ln":"Nadja","ph":"","em":"nadjalorscheter@gmx.de","bd":"","b":0},{"fn":"Natalia","ln":"Schmidt","ph":"+49 160 90622000","em":"natalja@onlinehome.de","bd":"","b":1},{"fn":"Rebecca","ln":"Wolf","ph":"+49 173 6138539","em":"Rebecca.wolf21@yahoo.de","bd":"","b":0},{"fn":"Mechthild","ln":"Binz","ph":"+49 1511 0444493","em":"Mechthild-binz@web.de","bd":"","b":2},{"fn":"Lisa","ln":"Grabendünkel","ph":"+49 178 2888129","em":"lisa.gr@t-online.de","bd":"","b":5},{"fn":"Hanna","ln":"Bortova","ph":"+49 171 2193945","em":"annuta2386@gmail.com","bd":"","b":2},{"fn":"Christa","ln":"Treitz","ph":"+49 162 2191029","em":"Ch-treitz@t-online.de","bd":"","b":4},{"fn":"Mechthild","ln":"Emmelsberger","ph":"+49 170 1856673","em":"","bd":"","b":4},{"fn":"Steffi","ln":"Druve","ph":"+49 162 6383087","em":"Sdruve@web.de","bd":"","b":0},{"fn":"Laura","ln":"Rieb","ph":"+49 1516 7730516","em":"Laura.rieb@gmx.de","bd":"","b":3},{"fn":"Nicole","ln":"Bender-Unglesic","ph":"+49 1525 1682345","em":"Nicolebenderuglesic@gmail.com","bd":"","b":1},{"fn":"Lisa","ln":"Joy Pisharek","ph":"+49 1515 6872736","em":"l.joypisharek@gmail.com","bd":"","b":4},{"fn":"Kira","ln":"Fischer","ph":"+49 174 7943254","em":"","bd":"","b":1},{"fn":"Birgitt","ln":"Blesius","ph":"+49 1575 8853007","em":"bebles63@web.de","bd":"","b":4},{"fn":"Heidrun","ln":"Görgen","ph":"+49 170 3369129","em":"","bd":"","b":0},{"fn":"Tanja","ln":"Bröhling","ph":"+49 1512 3732708","em":"tanjabroehling@gmail.com","bd":"","b":0},{"fn":"Gaby","ln":"Neuls","ph":"+49 171 7487143","em":"","bd":"","b":3},{"fn":"Petra","ln":"Roder-Feilen","ph":"+49 1517 0151268","em":"","bd":"","b":3},{"fn":"Sabine","ln":"Ritter","ph":"+49 1516 8576279","em":"","bd":"","b":6},{"fn":"Karin","ln":"Wünsche","ph":"+49 1523 7743532","em":"Wuensche.thalfang@icloud.de","bd":"","b":0},{"fn":"Hildegard","ln":"Karl","ph":"+49 176 41230609","em":"","bd":"","b":0},{"fn":"Olga","ln":"Gutweiler","ph":"+49 177 4694529","em":"olga.klaus@yahoo.de","bd":"","b":0},{"fn":"Swetlana","ln":"Schulz","ph":"+49 171 7177622","em":"schulzswetlana840@yahoo.com","bd":"","b":0},{"fn":"Roman","ln":"Uglesic","ph":"+49 1525 1682059","em":"","bd":"","b":1},{"fn":"Michael","ln":"Bauer","ph":"+49 1517 3058462","em":"","bd":"","b":4},{"fn":"Judith","ln":"Huber","ph":"","em":"Judith.huber.65@gmail.com","bd":"","b":0},{"fn":"Corinna","ln":"Schweizer","ph":"+49 1514 1965554","em":"Cocorinnana@web.de","bd":"","b":0},{"fn":"Mitschke","ln":"Julia","ph":"+49 170 3855918","em":"Jiliamitschke@googlemail.com","bd":"","b":3},{"fn":"Vera","ln":"Höfner","ph":"+49 1511 6725567","em":"Vera.hoefner@gmx.de","bd":"","b":0},{"fn":"Julia","ln":"Höfner","ph":"+49 1514 1656816","em":"hoefrierjulia@web.de","bd":"","b":0},{"fn":"Alexandra","ln":"Schwarz","ph":"+49 160 96465573","em":"alexandra.schwarz85@gmx.de","bd":"","b":0},{"fn":"Sabrina","ln":"Kirst","ph":"+49 1511 8314672","em":"Skirst86@web.de","bd":"","b":0},{"fn":"Gretchen","ln":"Gravelle","ph":"+49 1511 1709102","em":"Gretchenann74@gmail.com","bd":"","b":1},{"fn":"Gina","ln":"Winkler","ph":"+49 1514 0359671","em":"ginawinkler18@gmail.com","bd":"","b":3},{"fn":"Nina","ln":"Voigt","ph":"+49 178 6147115","em":"ninavoigt@gmx.de","bd":"","b":0},{"fn":"Isabell","ln":"Eckardt","ph":"+49 176 39427632","em":"Isabells84@web.de","bd":"","b":4},{"fn":"Antonella","ln":"Nepi","ph":"","em":"","bd":"","b":4},{"fn":"Jenni","ln":"Braun","ph":"","em":"Jenni.kolz@web.de","bd":"","b":3},{"fn":"Rita","ln":"Kleinbauer","ph":"+49 1522 9062081","em":"ritakleinbauer@web.de","bd":"","b":0},{"fn":"Daniela","ln":"Engel","ph":"+49 176 64193679","em":"daniela-engel80@gmx.de","bd":"","b":4},{"fn":"Florian","ln":"Gizewski","ph":"","em":"F.gizewski@gmx.de","bd":"","b":0},{"fn":"Nele","ln":"Bäcker","ph":"+49 1512 1592141","em":"nele.1998@web.de","bd":"","b":3},{"fn":"Isabel","ln":"Resch","ph":"+49 1520 2921013","em":"Isabel-resch@web.de","bd":"","b":0},{"fn":"Jutta","ln":"Klesius","ph":"+49 6533 4259","em":"","bd":"","b":0},{"fn":"Petra","ln":"Falkenburg","ph":"+49 170 8467207","em":"petrafalkenburg72@gmail.com","bd":"","b":0},{"fn":"Jule","ln":"Lorscheter","ph":"+49 1511 6925550","em":"Julelorscheter@gmx.de","bd":"","b":5},{"fn":"Annete","ln":"Knop","ph":"+49 172 6863082","em":"Hellenbergerhof@t-online.de","bd":"","b":5},{"fn":"Ewa","ln":"Flis","ph":"+49 1514 5912364","em":"","bd":"","b":0},{"fn":"Mara","ln":"Müller","ph":"+49 170 7098101","em":"maramueller1900@gmx.de","bd":"","b":2},{"fn":"Jana","ln":"Schemer","ph":"","em":"Janaschemer@gmail.com","bd":"","b":0},{"fn":"Ilona","ln":"Schuh","ph":"+49 163 7576920","em":"Ilonaschuh7@gmail.com","bd":"","b":4},{"fn":"Maren","ln":"Schumann","ph":"+49 170 8914799","em":"marenschumann2004@gmail.com","bd":"","b":4},{"fn":"Manuela","ln":"Horne","ph":"+49 1573 9316473","em":"Mohrmanuela@t-online.de","bd":"","b":4},{"fn":"Irini","ln":"Strogilaki","ph":"+49 178 6667132","em":"irinistrogilaki@icloud.com","bd":"","b":1},{"fn":"Carina","ln":"Sonne","ph":"+49 175 9136654","em":"Caroknuffi27@gmail.com","bd":"","b":4},{"fn":"Elena","ln":"Machold-Glaß","ph":"+49 171 2789302","em":"Lenawon@gmx.de","bd":"","b":0},{"fn":"Sophia","ln":"Arend","ph":"+49 1513 0731987","em":"Sophia.arend@web.de","bd":"","b":0},{"fn":"Sigrid","ln":"Niewswodek","ph":"+49 6533 5592","em":"","bd":"","b":2},{"fn":"Jennifer","ln":"Thösen","ph":"+49 160 1482011","em":"","bd":"03-02-1980","b":3},{"fn":"Petra","ln":"Zens-Trossen","ph":"+49 173 6686503","em":"P.zensi@icloud.com","bd":"","b":14},{"fn":"Natalia","ln":"Weizel","ph":"+49 174 6981852","em":"","bd":"","b":0},{"fn":"Anja","ln":"Peng","ph":"","em":"","bd":"","b":0},{"fn":"Meier","ln":"Katrin","ph":"+49 1522 9953363","em":"Schehrer.kathrin@web.de","bd":"","b":0},{"fn":"Denise","ln":"Roth","ph":"+49 170 4067784","em":"","bd":"","b":4},{"fn":"Sigrid","ln":"Wagner","ph":"","em":"Les@je.de","bd":"","b":4},{"fn":"Ellen","ln":"Wittmann","ph":"+49 1511 0423801","em":"","bd":"","b":0},{"fn":"Andrea","ln":"Fischer","ph":"+49 162 9881364","em":"andrea.pferd@web.de","bd":"","b":4},{"fn":"Heike","ln":"Ludgen","ph":"+49 6589 618","em":"Ludgenheike@gmail.com","bd":"","b":0},{"fn":"Natascha","ln":"Zurgheisel","ph":"+49 171 7363606","em":"na.zurgeihsel@aol.com","bd":"","b":4},{"fn":"Nathalie","ln":"Offermann","ph":"+49 172 6568015","em":"Nathalie.offermann@gmx.de","bd":"","b":0},{"fn":"Ingrid","ln":"Zender","ph":"+49 176 50987648","em":"Ingrudzender@gmx.de","bd":"","b":0},{"fn":"Martina","ln":"Hoffmann","ph":"+49 171 6291624","em":"Martina_hoffmann84@gmx.de","bd":"","b":4},{"fn":"Anja","ln":"Paul","ph":"+49 176 34957830","em":"Anjapaul05@gmail.com","bd":"","b":0},{"fn":"Natalie","ln":"Ewen","ph":"+49 0175 81608079","em":"Lieni79@yahoo.de","bd":"","b":0},{"fn":"Houaida","ln":"Jamal","ph":"+49 160 8278074","em":"hllal@t-online.de","bd":"","b":4},{"fn":"Emeliy","ln":"Lorenz","ph":"+49 1590 3776838","em":"Emeliymaschalorenz@gmx.de","bd":"","b":1},{"fn":"Ronja","ln":"Ditze","ph":"+49 175 8268805","em":"","bd":"","b":0},{"fn":"Katja","ln":"Alt-Bonneku","ph":"+49 1523 6271621","em":"kati.b@live.de","bd":"","b":4},{"fn":"Silke","ln":"Gutweiler","ph":"+49 170 3561955","em":"","bd":"","b":0},{"fn":"Sosnjak","ln":"Mandy","ph":"+49 1511 4753953","em":"Sossi77@outlokk.com","bd":"","b":0},{"fn":"Helma","ln":"Blatt","ph":"+49 163 7139004","em":"","bd":"","b":1},{"fn":"Rebecca","ln":"Scherer","ph":"+49 1515 3069618","em":"schererrebecca@web.de","bd":"","b":4},{"fn":"Christina","ln":"Klippel","ph":"+49 175 7176375","em":"Christina-klippel@wed.de","bd":"","b":2},{"fn":"Marie","ln":"Laube","ph":"+49 162 3218055","em":"Marielaube96@gmail.com","bd":"","b":3},{"fn":"Aljona","ln":"Fuchs","ph":"+49 176 34551259","em":"Fuchsalena7@gmail.com","bd":"","b":4},{"fn":"Sonja","ln":"Kurz","ph":"+49 171 3737738","em":"Sonja.kurz1@gmx.de","bd":"","b":0},{"fn":"Petra","ln":"Barrere","ph":"+49 179 9744250","em":"Kahren5@t-online.de","bd":"","b":4},{"fn":"Anna-Sophie","ln":"Lehnen","ph":"+49 160 6317889","em":"","bd":"","b":0},{"fn":"Isabella","ln":"Diederich","ph":"+49 175 3703590","em":"Isabella.gorkiewicz@web.de","bd":"","b":2},{"fn":"Sarah","ln":"Conen","ph":"+49 162 2762567","em":"Sconen@conen1.de","bd":"","b":4},{"fn":"Tanja","ln":"Müller","ph":"+49 1512 0223234","em":"","bd":"","b":1},{"fn":"Sandra","ln":"Nösges","ph":"+49 179 4624487","em":"S.noesges@web.de","bd":"","b":0},{"fn":"Steffi","ln":"Mettler-tezlaff","ph":"+49 173 9884584","em":"Stephanie.mettler-tezlaff@gmx.de","bd":"","b":2},{"fn":"Emely","ln":"Root","ph":"+49 179 4636662","em":"Emilyroot19.12.06@gmail.com","bd":"","b":0},{"fn":"Sophie","ln":"Laudes","ph":"+49 170 4140928","em":"Sophielaudes@icloud.com","bd":"","b":0},{"fn":"Allanah","ln":"Naragy","ph":"+49 162 4211856","em":"Allanah.naragy@gmail.com","bd":"","b":7},{"fn":"Andrea","ln":"Steffen","ph":"+49 170 3819400","em":"Andrea1606@web.de","bd":"","b":0},{"fn":"Carina","ln":"Becker","ph":"+49 1512 6639679","em":"Becker-carina@t-online.de","bd":"","b":6},{"fn":"Luisa","ln":"Knop","ph":"+49 1515 6111362","em":"Luisa.knop@icloud.com","bd":"","b":2},{"fn":"Kerstin","ln":"Wagner","ph":"+49 175 2800420","em":"","bd":"","b":3},{"fn":"Tanja","ln":"Laudes","ph":"+49 1514 0757070","em":"Tanja-joahem-laudes@t-online.de","bd":"","b":3},{"fn":"Sophie","ln":"Schwinn","ph":"+49 176 40587334","em":"","bd":"","b":0},{"fn":"Christina","ln":"Becker","ph":"+49 179 7544206","em":"Becker-christina@aol.com","bd":"","b":3},{"fn":"Silke","ln":"Bock","ph":"+49 1514 3266133","em":"Silke.marx@googlemail.com","bd":"","b":11},{"fn":"Patrizia","ln":"Raffrath","ph":"+49 175 5749112","em":"patricia-paffrath76@hotmail.de","bd":"","b":3},{"fn":"Petra","ln":"Merten","ph":"+49 171 6817954","em":"Merten-petra69@gmx.de","bd":"","b":4},{"fn":"Brigitte","ln":"Thomas","ph":"+49 1515 0623680","em":"Brigitte.thomas19@gmail.com","bd":"","b":0},{"fn":"Melanie","ln":"Mailender","ph":"+49 1516 8192129","em":"","bd":"","b":0},{"fn":"Anastasia","ln":"Juhl","ph":"+49 1511 9654000","em":"Reim.nastia@gmail.com","bd":"","b":0},{"fn":"Marina","ln":"Röder","ph":"+49 173 8151191","em":"","bd":"","b":0},{"fn":"Anke","ln":"Schreiner","ph":"+49 160 6405206","em":"Ank.ker.sch@gmail.com","bd":"","b":0},{"fn":"Lorena","ln":"Nepi","ph":"+49 173 6408772","em":"","bd":"","b":8},{"fn":"Sascha","ln":"Weiland","ph":"+49 172 4791216","em":"","bd":"","b":1},{"fn":"Frauke","ln":"Buenting","ph":"+49 170 4434399","em":"Buentingf@gmx.de","bd":"","b":4},{"fn":"Ulrike","ln":"Pälzer","ph":"+49 1522 9337527","em":"","bd":"","b":2},{"fn":"Sara","ln":"Tilmann-Lorenz","ph":"+49 160 1550944","em":"Sarafillmann@gmx.de","bd":"","b":1},{"fn":"Lea","ln":"Daum","ph":"+49 1573 1329194","em":"Leadaume@freneet.de","bd":"","b":4},{"fn":"Denise","ln":"Hissung","ph":"+49 1575 1671002","em":"dhissung@gmail.com","bd":"","b":4},{"fn":"Mira","ln":"Locher","ph":"+49 176 22611456","em":"mira.locher@gmx.de","bd":"","b":1},{"fn":"Anna","ln":"Lea Ritz","ph":"+49 1577 8237484","em":"Anna.lea.ritz@web.de","bd":"","b":0},{"fn":"Philipp","ln":"Hempel","ph":"+49 162 9914100","em":"Philipphempel1@web.de","bd":"","b":0},{"fn":"Sarah","ln":"Paulus-Leyendecker","ph":"+49 176 96825554","em":"Sarahleyendecker@web.de","bd":"","b":0},{"fn":"Tina","ln":"Freudenberger","ph":"","em":"Tinafreudenberger@gmail.de","bd":"","b":0},{"fn":"Bianka","ln":"Christener","ph":"+49 176 39002004","em":"","bd":"","b":0},{"fn":"Jasmin","ln":"Weber-Hauth","ph":"+49 171 2612565","em":"","bd":"","b":0},{"fn":"Carolin","ln":"Arens","ph":"+49 1516 1525024","em":"carolin.arens@freenet.de","bd":"","b":0},{"fn":"Veronica","ln":"Ciulin","ph":"+49 176 64278096","em":"","bd":"","b":0},{"fn":"Christina","ln":"Backes","ph":"+49 1512 3596689","em":"","bd":"","b":2},{"fn":"Irina","ln":"Seltenreich","ph":"+49 1523 2154072","em":"irina.seltenreich@web.de","bd":"","b":3},{"fn":"Katja","ln":"Härtling","ph":"+49 1514 1937837","em":"","bd":"","b":0},{"fn":"Laura","ln":"Schlarb","ph":"+49 1578 5066988","em":"laura.schlarb@web.de","bd":"","b":5},{"fn":"Monika","ln":"Kreutz","ph":"+49 1525 9616456","em":"monikakreutz@gmail.com","bd":"","b":0},{"fn":"Margot","ln":"Kaucher","ph":"+49 1520 8515735","em":"","bd":"","b":0},{"fn":"Claudia","ln":"Leis","ph":"+49 1511 9337803","em":"cleis64@gmail.com","bd":"","b":4},{"fn":"Lena","ln":"Blau","ph":"+49 170 9935601","em":"lenablau2000@gmail.com","bd":"","b":1},{"fn":"Carmen","ln":"Hany","ph":"+49 176 72886854","em":"","bd":"","b":0},{"fn":"Denise","ln":"Porr","ph":"+49 172 1557739","em":"Nisje@web.de","bd":"","b":1},{"fn":"Carla","ln":"Rey","ph":"+49 173 6006731","em":"Rey.carla@yahoo.com","bd":"","b":2},{"fn":"Jennifer","ln":"Sohni","ph":"+49 1522 3307379","em":"","bd":"","b":0},{"fn":"Salome","ln":"pauly","ph":"","em":"Salome-pauly@web.de","bd":"","b":0},{"fn":"Nenja","ln":"Frank","ph":"+49 178 2735757","em":"","bd":"","b":0},{"fn":"Stefanie","ln":"Morlock","ph":"+49 174 9501132","em":"st_1998@web.de","bd":"","b":0},{"fn":"Anna","ln":"Bischoff","ph":"+49 160 2166215","em":"","bd":"","b":0},{"fn":"Michelle","ln":"Müller","ph":"+49 160 94608460","em":"Michellem87@gmx.de","bd":"","b":3},{"fn":"Carmen","ln":"Dietz","ph":"+49 1573 5523190","em":"","bd":"","b":3},{"fn":"Angelina","ln":"Decker","ph":"+49 1573 1661515","em":"","bd":"","b":3},{"fn":"Karl-Peter","ln":"Zimmer","ph":"+49 171 7161720","em":"K.zimmer@holz-zimmer.de","bd":"","b":0},{"fn":"Nicole","ln":"Weich","ph":"+49 172 7594956","em":"nicole.weich@gmx.de","bd":"","b":1},{"fn":"Grazina","ln":"Greweling","ph":"","em":"Grazinag5@gmail.com","bd":"","b":3},{"fn":"Hanna","ln":"Wolter","ph":"+49 173 9137144","em":"","bd":"","b":0},{"fn":"Daniela","ln":"Conradt","ph":"+49 160 99122308","em":"","bd":"","b":3},{"fn":"Nicole","ln":"Schubert","ph":"+49 177 99380899","em":"info@logopaedie-schubert.de","bd":"","b":0},{"fn":"Nicole","ln":"Koster-Rietz","ph":"+49 160 97854436","em":"Koster-rietz@t-online.de","bd":"","b":0},{"fn":"Malin","ln":"Thömmes","ph":"+49 176 43351131","em":"","bd":"","b":0},{"fn":"Hanna","ln":"Nickels","ph":"+49 160 98766343","em":"","bd":"","b":0},{"fn":"Ibthi","ln":"Hauth","ph":"+49 160 7500238","em":"","bd":"","b":0},{"fn":"Theresa","ln":"Strack","ph":"+49 163 5541937","em":"Theresa.strack@yahoo.de","bd":"","b":0},{"fn":"Ann-Katrin","ln":"Motz","ph":"+49 160 6611963","em":"","bd":"","b":0},{"fn":"Alina","ln":"Marti","ph":"+49 160 5768413","em":"","bd":"","b":0},{"fn":"Annika","ln":"Merscher","ph":"+49 1512 3330403","em":"","bd":"","b":3},{"fn":"Lydia","ln":"Mayer","ph":"+49 176 81142823","em":"","bd":"","b":0},{"fn":"Anna","ln":"Altenweg","ph":"+49 175 5006410","em":"Anna.altenweg@gmail.com","bd":"","b":0},{"fn":"Nadiene","ln":"Krämer","ph":"+49 170 2802027","em":"Nadinekraemer83@gmx.de","bd":"","b":5},{"fn":"Laura","ln":"Frank","ph":"+49 1514 0059751","em":"","bd":"","b":1},{"fn":"Bettina","ln":"Lorenz","ph":"+49 1590 1838334","em":"","bd":"","b":1},{"fn":"Sandra","ln":"Elsen","ph":"+49 1512 0111148","em":"walburga7@web.de","bd":"","b":0},{"fn":"Jule","ln":"Morgenthale","ph":"+49 162 9386560","em":"","bd":"","b":3},{"fn":"Maria","ln":"Kurz","ph":"+49 176 97414581","em":"mariakorneyewets@gmail.com","bd":"","b":1},{"fn":"Hannah","ln":"Pohl","ph":"+49 1512 9160552","em":"","bd":"","b":0},{"fn":"Jennifer","ln":"Grünewald","ph":"+49 15560 042407","em":"","bd":"","b":0},{"fn":"Jenny","ln":"KL","ph":"+49 170 2713192","em":"","bd":"","b":0},{"fn":"Verena","ln":"Dumke","ph":"+49 170 3307787","em":"","bd":"","b":0},{"fn":"Katrin","ln":"Schneider","ph":"+49 175 1532969","em":"","bd":"","b":5},{"fn":"Maike","ln":"Dietz","ph":"+49 1514 6315450","em":"Maike@hans-dietz.de","bd":"","b":1},{"fn":"Any","ln":"Klester","ph":"+49 176 56613901","em":"Klesterany@gmail.com","bd":"","b":0},{"fn":"Katja","ln":"Gordner","ph":"+49 1522 1608705","em":"","bd":"","b":0},{"fn":"Bianca","ln":"Kistner","ph":"+49 170 8943201","em":"bianca.kistner@gmx.de","bd":"","b":2},{"fn":"Brigitte","ln":"Barcoue","ph":"+49 6541 2518","em":"","bd":"","b":1},{"fn":"Anja","ln":"Leinen","ph":"+49 162 9164647","em":"a.leinen@gmx.de","bd":"","b":8},{"fn":"Irina","ln":"Resch","ph":"+49 176 47167386","em":"","bd":"","b":3},{"fn":"Bianca","ln":"Boujong","ph":"+49 160 5655852","em":"","bd":"","b":2},{"fn":"Esther","ln":"Jacob","ph":"+49 163 6991586","em":"","bd":"","b":5},{"fn":"Susanne","ln":"Schmittges","ph":"+49 171 2334906","em":"","bd":"","b":3},{"fn":"Andrea","ln":"Rüßmann","ph":"+49 176 62647967","em":"Andrea.garth@gmail.com","bd":"","b":3},{"fn":"Sabrina","ln":"Gabriel","ph":"+49 172 8192631","em":"sabrina.m.gabriel@gmail.com","bd":"","b":4},{"fn":"Jana","ln":"Rau","ph":"+49 163 2884140","em":"","bd":"","b":0},{"fn":"Kristina","ln":"Dite","ph":"+49 1515 0637596","em":"","bd":"","b":0},{"fn":"Angelika","ln":"Gutweiler","ph":"+49 1522 1949400","em":"angelika.gutweiler@web.de","bd":"","b":4},{"fn":"Sandra","ln":"Schneberger-Schwinn","ph":"+49 1520 7340892","em":"sandra.schneberger@freenet.de","bd":"","b":4},{"fn":"Anna-Lena","ln":"Kessler","ph":"+49 1514 0024382","em":"","bd":"","b":0},{"fn":"Lea","ln":"Klippel","ph":"+49 160 98932873","em":"Leakersten@web.de","bd":"","b":3},{"fn":"Christina","ln":"Knop","ph":"+49 176 55128297","em":"","bd":"","b":0},{"fn":"Steffi","ln":"Schneider","ph":"+49 160 7718825","em":"","bd":"","b":0},{"fn":"Eva","ln":"Flis","ph":"+49 1514 5912364","em":"","bd":"","b":0},{"fn":"Sybille","ln":"Penner","ph":"+49 160 94824391","em":"","bd":"","b":1},{"fn":"Linda","ln":"Michels","ph":"+49 174 7792896","em":"","bd":"","b":4},{"fn":"Angelika","ln":"Bujung","ph":"+49 162 5762939","em":"","bd":"","b":0},{"fn":"Stefanie","ln":"Heib","ph":"+49 176 66888049","em":"Stefanie.heib@web.de","bd":"","b":3},{"fn":"Erika","ln":"Schuh","ph":"+49 160 99790751","em":"","bd":"","b":1},{"fn":"Andrea","ln":"Lamberti","ph":"+49 6502 6705","em":"Lamberti.andrea64@gmail.com","bd":"","b":4},{"fn":"Tatjana","ln":"Schulz","ph":"+49 1515 2514628","em":"t.schulz81@web.de","bd":"","b":0},{"fn":"Lisa","ln":"Treinen","ph":"+49 1511 5558222","em":"Lisa-treinen@t-online.de","bd":"","b":3},{"fn":"Katrin","ln":"Klein","ph":"","em":"katrinklein83@gmail.com","bd":"","b":0},{"fn":"Stefanie","ln":"Kirsch","ph":"+49 1511 0696738","em":"stefaniekirsch89@yahoo.com","bd":"","b":4},{"fn":"Lena","ln":"Ludwig","ph":"+49 1515 3793974","em":"Ludwig-lena@web.de","bd":"","b":3},{"fn":"Jan","ln":"Diederichs","ph":"+49 1515 0621209","em":"","bd":"","b":3},{"fn":"Sandra","ln":"Fischer","ph":"+49 1514 2027149","em":"","bd":"","b":1},{"fn":"Christina","ln":"Klein","ph":"+49 162 4134028","em":"klein-c2@t-online.de","bd":"","b":6},{"fn":"Susanne","ln":"Eckstein","ph":"+49 6531 2724","em":"","bd":"","b":2},{"fn":"Jasmin","ln":"Michels","ph":"+49 176 87896171","em":"","bd":"","b":1},{"fn":"Marie","ln":"List","ph":"+49 162 2453648","em":"","bd":"","b":2},{"fn":"Dagmar","ln":"Pyrzewicz","ph":"+49 176 76738620","em":"","bd":"","b":0},{"fn":"Kristina","ln":"Beljakov","ph":"+49 175 5278533","em":"","bd":"","b":0},{"fn":"Genrie","ln":"Löwen","ph":"+49 178 81947790","em":"","bd":"","b":0},{"fn":"Silvia","ln":"Thömmes","ph":"+49 1522 6352553","em":"","bd":"","b":0},{"fn":"Anne","ln":"Stuhlsatz","ph":"+49 176 41592131","em":"","bd":"","b":0},{"fn":"Viktoria","ln":"Heinrichs","ph":"+49 1517 2317690","em":"","bd":"","b":1},{"fn":"Daniel","ln":"Schmidt","ph":"+49 1575 0185278","em":"danielschmidt9812@gmail.com","bd":"","b":2},{"fn":"Ann","ln":"Katrin Finck","ph":"+49 1517 2418825","em":"","bd":"","b":4},{"fn":"Jennifer","ln":"Kraus","ph":"+49 170 8960602","em":"Jenniferkraus.1@web.de","bd":"","b":0},{"fn":"Tanja","ln":"Herges","ph":"+49 1514 0748181","em":"","bd":"","b":3},{"fn":"Tina","ln":"Lentes","ph":"+49 1512 0258115","em":"","bd":"","b":1},{"fn":"Regina","ln":"Schmidt","ph":"+49 1515 2425268","em":"","bd":"","b":0},{"fn":"Leni","ln":"Wolff","ph":"+49 176 70914394","em":"Yvyschmidt@gmx.de","bd":"","b":1},{"fn":"Lena","ln":"Kliem","ph":"+49 173 6724243","em":"","bd":"","b":1},{"fn":"Lara","ln":"Schug","ph":"+49 162 3488759","em":"","bd":"","b":0},{"fn":"Michaela","ln":"Pickard","ph":"+49 172 7844569","em":"M.pickard@web.de","bd":"","b":2},{"fn":"Petra","ln":"Trein","ph":"+49 1514 1858731","em":"","bd":"","b":3},{"fn":"Lisa","ln":"Bastian","ph":"+49 1517 4485891","em":"","bd":"","b":0},{"fn":"Claudia","ln":"Ballat","ph":"+49 6784 900935","em":"Claudiaballat@gmx.de","bd":"","b":3},{"fn":"Jacqueline","ln":"Kusterer","ph":"+49 1523 6307824","em":"Jkustere17@gmail.com","bd":"","b":3},{"fn":"Alexsandra","ln":"Kiejda","ph":"+49 1575 6469311","em":"","bd":"","b":0},{"fn":"Kathie","ln":"Ambruster","ph":"+49 1511 0078932","em":"","bd":"","b":0},{"fn":"Denise","ln":"hartmann","ph":"+49 1516 1249989","em":"","bd":"","b":0},{"fn":"Natascha","ln":"Mensch","ph":"+49 163 1580197","em":"Natascha.Mensch@gmx.com","bd":"","b":4},{"fn":"Deborah","ln":"Blum","ph":"+49 171 4192153","em":"jessina88@t-online.de","bd":"","b":2},{"fn":"Christine","ln":"Weinz","ph":"+49 171 6521876","em":"christine.weinz@t-online.de","bd":"","b":5},{"fn":"Esther","ln":"Bamberg","ph":"+49 1511 9111250","em":"Esther.Bamberg@gmx.de","bd":"","b":5},{"fn":"Linda","ln":"Ferber","ph":"+49 1514 1980095","em":"l.ferber92@googlemail.com","bd":"","b":1},{"fn":"Vanessa","ln":"Thiele","ph":"+49 1511 4347637","em":"Vanessa-Baujahr89@web.de","bd":"","b":4},{"fn":"Junk","ln":"Anne","ph":"+49 1511 7628281","em":"Anne-junk@web.de","bd":"","b":0},{"fn":"Herges-Martini","ln":"Marion","ph":"+49 179 2394876","em":"","bd":"","b":1},{"fn":"Jessica","ln":"schabbach","ph":"+49 176 80803616","em":"jessy-Schabbach@web.de","bd":"","b":4},{"fn":"TREATWELL","ln":"SUPPORT","ph":"+1 212-499-5311","em":"moransamuel@gmail.com","bd":"","b":0},{"fn":"Gianna","ln":"Schieber","ph":"+49 176 34686476","em":"Gianna.schieber@gmx.de","bd":"","b":3},{"fn":"Schweig","ln":"Gabriele","ph":"+49 1520 8604015","em":"","bd":"","b":4},{"fn":"Tanja","ln":"Anocona","ph":"+49 1520 9172491","em":"melonenfee@gmx.de","bd":"","b":5},{"fn":"Annette","ln":"Wenz","ph":"+49 172 9555111","em":"annette-wenz@web.de","bd":"","b":4},{"fn":"Beate","ln":"Mettler","ph":"+49 1517 0877746","em":"","bd":"","b":1},{"fn":"Magrit","ln":"Anton","ph":"+49 175 1133211","em":"Magrit.anton@aol.com","bd":"11-08-1966","b":1},{"fn":"Anne-Kathrin","ln":"Seyfart","ph":"+49 1522 8520450","em":"A.seyfart@web.de","bd":"","b":3},{"fn":"Melanie","ln":"Romer","ph":"+49 160 95487138","em":"Melanieromer@gmx.de","bd":"","b":1},{"fn":"Darja","ln":"Becker","ph":"+49 1516 1443861","em":"darja.becker@gmx.de","bd":"","b":2},{"fn":"Patricia","ln":"Wahl","ph":"+49 1575 2777328","em":"patriciaroenn@yahoo.de","bd":"","b":1},{"fn":"Silven","ln":"Zyulkryanova","ph":"+49 1578 3123408","em":"","bd":"","b":2},{"fn":"Stephanie","ln":"Plymale","ph":"+49 162 3719336","em":"","bd":"","b":2},{"fn":"Martini","ln":"Karina","ph":"+49 1515 6390550","em":"","bd":"","b":1},{"fn":"Jennifer","ln":"Wellems","ph":"+49 1512 9062130","em":"jennifer.wellems@arcor.de","bd":"","b":0},{"fn":"Sabine","ln":"Fortenbacher","ph":"+49 163 5003012","em":"sabinschaefer@web.de","bd":"","b":1},{"fn":"Jessica","ln":"Wenz","ph":"+49 171 3470996","em":"jessica-sauer@web.de","bd":"","b":3},{"fn":"Tatjana","ln":"Beister","ph":"+49 171 9988620","em":"tatjanabeister@web.de","bd":"","b":1},{"fn":"Luisa","ln":"Maas","ph":"+49 160 91330130","em":"L.Maas1@web.de","bd":"","b":1},{"fn":"Corinna","ln":"Rittmann","ph":"+49 1573 0908159","em":"corinna.rittmann@gmail.com","bd":"","b":3},{"fn":"Noel","ln":"Mettler","ph":"+49 1512 0071510","em":"n.mettler@gmx.de","bd":"","b":3},{"fn":"Sandra","ln":"Newen","ph":"+49 170 5866067","em":"sandra.newen@gmx.de","bd":"","b":4},{"fn":"Natalie","ln":"Sommer","ph":"+49 171 6831013","em":"natalia.sommer@web.de","bd":"","b":3},{"fn":"Hildegard","ln":"Schuh","ph":"+49 6531 8617","em":"hildegard-schuh@t-online.de","bd":"","b":1},{"fn":"Alegra","ln":"Blesius","ph":"+49 177 1984472","em":"","bd":"","b":1},{"fn":"Natalie","ln":"Offermann","ph":"+49 172 6568015","em":"","bd":"","b":2},{"fn":"Bettina","ln":"List","ph":"+49 1590 6629981","em":"","bd":"","b":1},{"fn":"Brigitte","ln":"Faller","ph":"+49 6536 9338691","em":"b.faller@t-online.de","bd":"","b":1},{"fn":"Steffes","ln":"Verena","ph":"+49 1511 4361176","em":"Verena230@gmx.de","bd":"","b":3},{"fn":"Jasmin","ln":"Fetzer","ph":"+49 1515 1945072","em":"jasminfetzer@icloud.com","bd":"","b":4},{"fn":"Astrid","ln":"Dahmen","ph":"+49 173 7280543","em":"","bd":"","b":2},{"fn":"Katja","ln":"Felzen","ph":"+49 175 3472839","em":"kplenge@web.de","bd":"","b":3},{"fn":"Carmen","ln":"Fetzer","ph":"+49 160 96858444","em":"Carmen.fetzer@outlook.de","bd":"14-07-1965","b":3},{"fn":"Sophie","ln":"Marx","ph":"+49 1512 0790453","em":"sophiefetzer@hotmail.com","bd":"","b":1},{"fn":"Ellen","ln":"Esseln","ph":"+49 1514 6327042","em":"","bd":"","b":4},{"fn":"Rita","ln":"Marx","ph":"+49 1523 2094262","em":"","bd":"","b":1},{"fn":"Lisa","ln":"Kappel","ph":"+49 176 45699346","em":"lisakappel@t-online.de","bd":"","b":3},{"fn":"Anna","ln":"Hess","ph":"+49 176 60407964","em":"","bd":"","b":4},{"fn":"Kessler","ln":"Madeleine","ph":"+49 1511 7618812","em":"madeleine_kessler@web.de","bd":"","b":2},{"fn":"Anika","ln":"Naik","ph":"+49 178 1531349","em":"naikanika@yahoo.com","bd":"","b":1},{"fn":"Danica","ln":"Faber","ph":"+49 171 7511252","em":"faber-danica@t-online.de","bd":"","b":4},{"fn":"Silas","ln":"Burger","ph":"+49 6533 1383","em":"","bd":"","b":1},{"fn":"Patrizia","ln":"Gruber","ph":"+49 1512 3578600","em":"patrizia.gruber@t-online.de","bd":"","b":2},{"fn":"Edi","ln":"","ph":"+49 170 9330950","em":"","bd":"","b":0},{"fn":"Sabine","ln":"Löh-Schneider","ph":"+49 162 9888651","em":"bine.ingo@web.de","bd":"","b":3},{"fn":"Petra","ln":"Priestersbach","ph":"+49 1515 3866166","em":"priestersbach@outlook.de","bd":"26-07-1967","b":1},{"fn":"Katharina","ln":"Knop","ph":"+49 162 3272178","em":"knop.katharina@gmx.de","bd":"","b":1},{"fn":"Hanna","ln":"Eltges","ph":"+49 160 98766343","em":"","bd":"","b":1},{"fn":"Lena","ln":"Heß","ph":"+49 171 1220283","em":"lena.9701@yahoo.de","bd":"","b":1},{"fn":"Lilith","ln":"Eck","ph":"+49 176 62221521","em":"ecklilith@icloud.com","bd":"","b":1},{"fn":"Sabrina","ln":"Steinmetz","ph":"+49 173 6000490","em":"sabrinabaumgart@gmx.de","bd":"","b":5},{"fn":"Anna","ln":"Thielen","ph":"+49 1515 8807324","em":"annathielen235@outlook.de","bd":"","b":4},{"fn":"Anja","ln":"Gräber","ph":"+49 6533 958697","em":"","bd":"","b":1},{"fn":"Katrin","ln":"Klein","ph":"+49 1517 0859760","em":"","bd":"","b":1},{"fn":"David","ln":"Maria Nikoletta","ph":"+49 1512 4918548","em":"","bd":"","b":0},{"fn":"Anne","ln":"Mettler","ph":"+49 175 1031734","em":"","bd":"","b":1},{"fn":"Maja","ln":"Trierweiler","ph":"+49 1522 9814020","em":"trierweiler-weiperath@t-online.de","bd":"","b":2},{"fn":"Anett","ln":"Rausch","ph":"+49 176 23397822","em":"anettschnell020283@gmail.com","bd":"","b":1},{"fn":"Tanja","ln":"Eiden","ph":"+49 176 72638293","em":"maechtig.telexe-2z@icloud.com","bd":"","b":1},{"fn":"Marion","ln":"Dietz","ph":"+49 1511 2426185","em":"marion@hans-dietz.de","bd":"","b":1},{"fn":"Sabine","ln":"Fortenbacher","ph":"+49 6531 9722869","em":"praxis.fortenbacher@web.de","bd":"","b":1},{"fn":"Christine","ln":"Kaspari","ph":"+49 1511 1132527","em":"christinekaspari@web.de","bd":"","b":1},{"fn":"Lina","ln":"Schabbach","ph":"+49 176 30335547","em":"lina904k@yahoo.de","bd":"","b":0},{"fn":"Elisabeth","ln":"Reuter","ph":"+49 176 41374177","em":"Elisabeth.reuter@web.de","bd":"","b":2},{"fn":"Weber","ln":"Doris","ph":"+49 1525 6380066","em":"","bd":"","b":1},{"fn":"Verena","ln":"Ludwig","ph":"+49 162 9312830","em":"","bd":"","b":2},{"fn":"Nadja","ln":"Belokoz","ph":"+49 171 1826339","em":"","bd":"","b":5},{"fn":"Ludovic","ln":"schaab","ph":"+49 1523 1745258","em":"lukiff003@aol.com","bd":"","b":1},{"fn":"Sara","ln":"Hasanova","ph":"+49 176 68748950","em":"sarahasanova69@gmail.com","bd":"","b":0},{"fn":"Katja","ln":"Thömmes","ph":"+49 160 3389125","em":"","bd":"","b":1},{"fn":"Petra","ln":"Münster","ph":"+49 173 4171439","em":"petrathomasm@t-online.de","bd":"","b":1},{"fn":"Daniela","ln":"Bonert","ph":"+49 160 4373650","em":"danielabonert80@gmail.com","bd":"","b":2},{"fn":"Heidi","ln":"Jochem","ph":"+49 170 9335381","em":"Jochem.Detlef@t-online.de","bd":"","b":1},{"fn":"Elena","ln":"Stoll","ph":"+49 175 1111988","em":"","bd":"","b":2},{"fn":"Julia","ln":"Kaiser","ph":"+49 160 3407110","em":"kaiser.julia1112@gmail.com","bd":"","b":2},{"fn":"Annalena","ln":"Sommer","ph":"+49 160 95371743","em":"annalena.sommer.1@web.de","bd":"","b":1},{"fn":"Iris","ln":"Zimmer","ph":"+49 170 5112055","em":"iris_zimmer@yahoo.de","bd":"","b":1},{"fn":"Roman","ln":"Uglesic","ph":"+49 1525 1682345","em":"romanuglesic@gmail.com","bd":"","b":1},{"fn":"Natalie","ln":"Wall","ph":"+49 170 1140912","em":"nataliehirsch@hotmail.de","bd":"","b":1},{"fn":"Sabrina","ln":"Gemmel","ph":"+49 171 7051448","em":"sgraemmel@gmail.com","bd":"","b":1},{"fn":"Melanie","ln":"Nellen","ph":"+49 1512 2912139","em":"melanienellen@me.com","bd":"","b":1},{"fn":"Jovan","ln":"Runge","ph":"+49 1511 2337397","em":"rungejovan@icloud.com","bd":"","b":1},{"fn":"Viktoria","ln":"Nau","ph":"+49 176 64700012","em":"nau.viktoria7@gmail.com","bd":"","b":2},{"fn":"Angelika","ln":"Henn","ph":"+49 1511 6801638","em":"schmel723@gmx.de","bd":"","b":1},{"fn":"Simon","ln":"Münster","ph":"+49 160 99421101","em":"","bd":"","b":1},{"fn":"Hanna","ln":"Polatynska","ph":"+49 175 3634809","em":"hannapolatynska@web.de","bd":"","b":2},{"fn":"Nicole","ln":"Lorenz","ph":"+49 162 9856316","em":"nicci.l87@gmx.de","bd":"","b":1},{"fn":"Olga","ln":"Resch","ph":"+49 160 95483398","em":"olga.resch@gmx.de","bd":"","b":1}];!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b08d57">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Skinconcept">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+<title>SKINCONCEPT Kundenkartei</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<style>
+:root{--bg:#f5f3ef;--bg2:#ffffff;--bg3:#faf8f5;--bg4:#f0ede8;--hover:#ece8e2;--text:#1a1a1a;--text2:#4a4540;--muted:#8a8580;--gold:#b08d57;--gold2:#9a7a48;--gold-dim:rgba(176,141,87,.08);--green:#16a34a;--green-bg:rgba(22,163,74,.06);--yellow:#ca8a04;--yellow-bg:rgba(202,138,4,.06);--orange:#ea580c;--orange-bg:rgba(234,88,12,.06);--red:#dc2626;--red-bg:rgba(220,38,38,.06);--purple:#7c3aed;--purple-bg:rgba(124,58,237,.06);--blue:#2563eb;--blue-bg:rgba(37,99,235,.06);--border:rgba(0,0,0,.08);--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100vw}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-weight:300}
+
+/* HEADER */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.brand{display:flex;align-items:baseline;gap:14px}
+.brand h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:5px;text-transform:uppercase}
+.brand .sub{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-weight:600}
+.hdr-right{display:flex;gap:8px;align-items:center}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;letter-spacing:.3px;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-dark{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+.btn-dark:hover{background:var(--bg4)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#b91c1c}
+
+/* LAYOUT */
+.app{display:flex;height:calc(100vh - 57px - 40px)}
+.sidebar{width:340px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:all .3s ease;box-shadow:1px 0 3px rgba(0,0,0,.03)}
+.main-content{flex:1;overflow-y:auto;padding:0}
+.back-btn{display:none;padding:10px 18px;font-size:13px;font-weight:500;color:var(--gold);cursor:pointer;border:none;background:none;font-family:'Outfit',sans-serif;letter-spacing:.3px;gap:6px;align-items:center}
+.back-btn:hover{color:var(--gold2)}
+body.client-open .sidebar{display:none}
+body.client-open .main-content{width:100%}
+body.client-open .back-btn{display:inline-flex}
+
+/* SIDEBAR */
+.sb-search{padding:14px;border-bottom:1px solid var(--border)}
+.sb-search input{width:100%;padding:10px 14px 10px 38px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:300;outline:none;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8580' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+.sb-search input::placeholder{color:var(--muted)}
+.sb-search input:focus{border-color:var(--gold)}
+.sb-filters{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.sf{padding:5px 10px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Outfit',sans-serif;font-size:11px;cursor:pointer;transition:all .2s}
+.sf:hover{border-color:var(--muted)}
+.sf.on{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.sb-stats{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.sb-stat{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.sb-stat .dot{width:6px;height:6px;border-radius:50%}
+.sb-list{flex:1;overflow-y:auto}
+.sb-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.sb-item:hover{background:var(--hover)}
+.sb-item.active{background:var(--gold-dim);border-left:3px solid var(--gold)}
+.sb-avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.sb-info{flex:1;min-width:0}
+.sb-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-detail{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-right{text-align:right;flex-shrink:0}
+.sb-days{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600}
+.sb-status{font-size:9px;text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+
+/* KARTEI EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);text-align:center;padding:40px}
+.empty-state .icon{font-size:64px;margin-bottom:20px;opacity:.3}
+.empty-state h2{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--text2);margin-bottom:8px}
+.empty-state p{font-size:13px;max-width:300px;line-height:1.6}
+
+/* KARTEI CARD */
+.kartei{padding:0;height:100%;display:flex;flex-direction:column}
+.kartei-header{padding:24px 28px 0;background:var(--bg2);border-bottom:1px solid var(--border)}
+.kh-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.kh-name{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;letter-spacing:1px}
+.kh-badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.kh-contact{display:flex;gap:20px;font-size:13px;color:var(--text2);margin-top:4px;flex-wrap:wrap}
+.kh-contact a{color:var(--gold);text-decoration:none}
+.kh-contact span{display:flex;align-items:center;gap:5px}
+.kh-actions{display:flex;gap:6px}
+.kh-metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:16px 0}
+.kh-metric{text-align:center;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px}
+.kh-metric-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--gold);line-height:1}
+.kh-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-top:4px}
+
+/* KARTEI TABS */
+.ktabs{display:flex;gap:0;padding:0 28px;border-bottom:none}
+.ktab{padding:12px 18px;font-size:12px;font-weight:400;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.5px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.ktab:hover{color:var(--text2)}
+.ktab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.ktab .cnt{background:var(--bg4);padding:1px 6px;border-radius:8px;font-size:10px}
+.ktab.active .cnt{background:var(--gold-dim);color:var(--gold)}
+
+/* KARTEI BODY */
+.kbody{flex:1;overflow-y:auto;padding:20px 28px 40px}
+.kpage{display:none}
+.kpage.active{display:block}
+
+/* SECTION CARDS */
+.scard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.scard h3{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;letter-spacing:1px;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.scard h3 .add-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--gold);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s}
+.scard h3 .add-btn:hover{background:var(--gold-dim);border-color:var(--gold)}
+
+/* FORM FIELDS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.form-full{grid-column:1/-1}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.fg input,.fg textarea,.fg select{padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:300;outline:none;transition:border-color .2s}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--gold)}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--muted)}
+.fg textarea{resize:vertical;min-height:60px;line-height:1.5}
+.fg select{appearance:none;cursor:pointer}
+
+/* CHIPS */
+.chip-list{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:500}
+.chip-gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(201,169,110,.3)}
+.chip-blue{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
+.chip-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.chip-red{background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.chip-purple{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.tl-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.tl-dot{position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;border:2px solid var(--gold);background:var(--bg2)}
+.tl-date{font-size:11px;color:var(--muted);margin-bottom:4px}
+.tl-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.tl-text{font-size:12px;color:var(--text2);line-height:1.5}
+.tl-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:11px;font-weight:500}
+.badge-g{background:var(--green-bg);color:var(--green)}.badge-y{background:var(--yellow-bg);color:var(--yellow)}.badge-o{background:var(--orange-bg);color:var(--orange)}.badge-r{background:var(--red-bg);color:var(--red)}
+.bdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.seg-badge{display:inline-flex;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.seg-vip{background:var(--purple-bg);color:var(--purple)}.seg-stamm{background:var(--blue-bg);color:var(--blue)}.seg-aktiv{background:var(--green-bg);color:var(--green)}.seg-schlafend{background:var(--yellow-bg);color:var(--yellow)}.seg-verloren{background:var(--red-bg);color:var(--red)}.seg-neu{background:rgba(255,255,255,.05);color:var(--muted)}
+
+/* ANAMNESE DISPLAY */
+.anam-section{margin-bottom:16px}
+.anam-section h4{font-size:12px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.anam-field{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.anam-field:last-child{border-bottom:none}
+.anam-label{color:var(--muted);font-weight:400}
+.anam-value{color:var(--text);font-weight:400;text-align:right;max-width:60%}
+
+/* PHOTO GRID */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.photo-card{aspect-ratio:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;cursor:pointer;transition:all .2s}
+.photo-card:hover{border-color:var(--gold);transform:scale(1.02)}
+.photo-card img{width:100%;height:100%;object-fit:cover}
+.photo-card .ph-date{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:10px;color:#fff}
+.photo-upload{aspect-ratio:1;border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:12px;gap:6px}
+.photo-upload:hover{border-color:var(--gold);color:var(--gold)}
+
+/* PRODUCT TABLE */
+.ptable{width:100%;border-collapse:collapse}
+.ptable th{padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border)}
+.ptable td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:var(--hover)}
+
+/* BEHANDLUNGSPLAN */
+.plan-step{display:flex;gap:14px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;align-items:flex-start}
+.plan-num{width:28px;height:28px;border-radius:8px;background:var(--gold-dim);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.plan-done .plan-num{background:var(--green-bg);color:var(--green)}
+.plan-body{flex:1}
+.plan-title{font-size:14px;font-weight:500;margin-bottom:2px}
+.plan-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.plan-done .plan-title{text-decoration:line-through;color:var(--muted)}
+.plan-check{cursor:pointer;padding:4px;color:var(--muted);transition:color .2s}
+.plan-check:hover{color:var(--green)}
+
+/* KONTAKT HISTORY */
+.kh-entry{display:flex;gap:12px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.kh-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.kh-icon.wa{background:rgba(37,211,102,.12);color:#25d366}
+.kh-icon.phone{background:var(--blue-bg);color:var(--blue)}
+.kh-icon.email{background:var(--purple-bg);color:var(--purple)}
+.kh-icon.studio{background:var(--gold-dim);color:var(--gold)}
+.kh-icon.sms{background:var(--green-bg);color:var(--green)}
+.kh-body{flex:1}
+.kh-body .date{font-size:11px;color:var(--muted)}
+.kh-body .channel{font-size:12px;font-weight:500}
+.kh-body .note{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* MODAL */
+.modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.3);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.12);animation:mIn .25s ease}
+@keyframes mIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:2px;margin-bottom:20px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+
+/* TOAST */
+.toast-box{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.1);display:flex;align-items:center;gap:8px;animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards}
+.toast.ok{border-left:3px solid var(--green)}.toast.warn{border-left:3px solid var(--orange)}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(20px)}}
+
+/* TREATWELL IMPORT AREA */
+.tw-import{background:linear-gradient(135deg,rgba(201,169,110,.06),rgba(201,169,110,.02));border:1px solid rgba(201,169,110,.2);border-radius:14px;padding:24px;margin-bottom:20px}
+.tw-import h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;margin-bottom:6px}
+.tw-import p{color:var(--text2);font-size:12px;margin-bottom:14px}
+.tw-drop{border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.tw-drop:hover,.tw-drop.over{border-color:var(--gold);background:var(--gold-dim)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+
+/* RESPONSIVE — iPad & Tablet */
+@media(max-width:1100px){
+  .sidebar{width:320px}
+  .ktabs{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 16px;scrollbar-width:none}
+  .ktabs::-webkit-scrollbar{display:none}
+  .ktab{padding:12px 14px;font-size:11px;flex-shrink:0}
+  .kbody{padding:16px 20px 40px}
+  .kartei-header{padding:20px 20px 0}
+  .kh-metrics{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .sidebar{width:100%}
+  .app{flex-direction:column;height:auto;min-height:calc(100vh - 57px - 40px)}
+  body:not(.client-open) .main-content{display:none}
+  body.client-open .sidebar{display:none}
+  body.client-open .main-content{display:block;min-height:calc(100vh - 57px)}
+  body.client-open .back-btn{display:inline-flex}
+  .kh-metrics{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .hdr{padding:10px 12px;flex-wrap:wrap;gap:8px}
+  .brand{gap:8px}
+  .brand h1{font-size:16px;letter-spacing:2px}
+  .brand .sub{font-size:8px;letter-spacing:2px}
+  .hdr-right{width:100%;justify-content:flex-start;gap:6px;flex-wrap:wrap}
+  .hdr-right .btn{font-size:11px;padding:7px 10px}
+  .kartei{height:auto;min-height:100%}
+  .kh-top{flex-direction:column;gap:10px}
+  .kh-actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
+  .kh-contact{flex-direction:column;gap:6px}
+  .dash-nav{scrollbar-width:none}
+  .dash-nav::-webkit-scrollbar{display:none}
+  .modal{width:95vw;max-width:95vw;padding:16px}
+  .tw-drop{padding:16px!important}
+}
+@media(max-width:600px){
+  .kh-name{font-size:22px}
+  .kh-metrics{grid-template-columns:1fr 1fr}
+  .ktabs{padding:0 10px;gap:0}
+  .ktab{padding:10px 10px;font-size:10px;flex-shrink:0}
+  .kbody{padding:12px 14px 40px}
+  .kartei-header{padding:14px 14px 0}
+  .photo-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .anam-field{flex-direction:column;gap:2px}
+  .anam-value{text-align:left;max-width:100%}
+  .sec-card{padding:14px}
+  .sec-card h3{font-size:14px}
+  .modal-content{width:95vw;max-width:95vw;padding:16px;max-height:90vh}
+  .nc-card{padding:20px;width:95vw}
+  .sb-item{padding:10px 12px}
+}
+
+/* NEW CLIENT NOTIFICATION */
+.new-client-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(12px);z-index:500;display:flex;align-items:center;justify-content:center;animation:ncFadeIn .4s ease}
+@keyframes ncFadeIn{from{opacity:0}to{opacity:1}}
+.nc-card{background:var(--bg2);border:2px solid var(--gold);border-radius:20px;padding:36px;max-width:500px;width:90vw;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.12);animation:ncSlideIn .5s ease}
+@keyframes ncSlideIn{from{transform:translateY(40px) scale(.95);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.nc-badge{display:inline-block;background:var(--gold);color:#fff;font-size:11px;font-weight:700;letter-spacing:3px;padding:4px 16px;border-radius:20px;margin-bottom:16px;animation:ncPulse 1.5s ease infinite}
+@keyframes ncPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,169,110,.4)}50%{box-shadow:0 0 0 12px rgba(201,169,110,0)}}
+.nc-icon{font-size:48px;margin-bottom:12px}
+.nc-card h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:1px;color:var(--text);margin-bottom:16px}
+.nc-name{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--gold);margin-bottom:10px;letter-spacing:1px}
+.nc-details{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin-bottom:14px}
+.nc-chips{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.nc-chip{padding:4px 12px;border-radius:14px;font-size:11px;font-weight:500;background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.nc-goal{padding:12px 16px;background:rgba(201,169,110,.06);border:1px solid rgba(201,169,110,.15);border-radius:10px;font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px;text-align:left}
+.nc-actions{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
+.nc-time{font-size:11px;color:var(--muted)}
+
+/* BARCODE SCANNER */
+.scanner-box{background:var(--bg4);border:2px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;position:relative}
+.scanner-box video,.scanner-box canvas{width:100%;display:block;border-radius:10px}
+.scanner-box .scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scanner-box .scan-line{width:70%;height:2px;background:var(--gold);box-shadow:0 0 12px var(--gold);animation:scanPulse 2s ease-in-out infinite}
+@keyframes scanPulse{0%,100%{opacity:.4;transform:scaleX(.9)}50%{opacity:1;transform:scaleX(1)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.scanner-tabs{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.scanner-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg4);color:var(--muted);transition:all .2s;border:none;font-family:'Outfit',sans-serif}
+.scanner-tab.active{background:var(--gold-dim);color:var(--gold)}
+.scanner-tab:hover:not(.active){background:var(--bg4);color:var(--text2)}
+.barcode-input-wrap{display:flex;gap:8px;margin-bottom:14px}
+.barcode-input-wrap input{flex:1;padding:12px 16px;background:var(--bg2);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;font-weight:400;letter-spacing:2px;outline:none;transition:border-color .2s}
+.barcode-input-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.15)}
+.barcode-input-wrap input::placeholder{color:var(--muted);letter-spacing:0}
+.product-preview{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;display:none}
+.product-preview.found{display:block;border-color:var(--green);background:rgba(74,222,128,.04)}
+.product-preview.notfound{display:block;border-color:var(--orange);background:rgba(251,146,60,.04)}
+.product-preview .pp-name{font-size:15px;font-weight:500;margin-bottom:4px}
+.product-preview .pp-brand{font-size:12px;color:var(--gold)}
+.product-preview .pp-details{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6}
+.product-preview .pp-ean{font-size:11px;color:var(--muted);font-family:monospace;margin-top:4px}
+.scan-history{margin-top:12px}
+.scan-history h4{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.scan-history-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px;cursor:pointer;transition:all .2s}
+.scan-history-item:hover{border-color:var(--gold);background:var(--gold-dim)}
+
+/* PRINT */
+@media print{.sidebar,.hdr,.back-btn{display:none}.main-content{padding:20px}*{color:#000!important;background:#fff!important;border-color:#ddd!important}}
+</style>
+</head>
+<body>
+
+<!-- DASHBOARD NAV BAR -->
+<div class="dash-nav" style="background: linear-gradient(135deg, #6B5344, #8B6F5C); padding: 8px 14px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 150; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+  <a href="index.html" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 4px; flex-shrink:0;">&#8592; Hub</a>
+  <span style="color: rgba(255,255,255,0.3); font-size: 12px; flex-shrink:0;">|</span>
+  <a href="aufgaben.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Aufgaben</a>
+  <a href="nachsorge.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Nachsorge</a>
+  <a href="bestellungen.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Bestellungen</a>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="brand">
+    <button class="back-btn" onclick="goBackToList()">&#8592; Kundenliste</button>
+    <h1>Skin<b>Concept</b></h1>
+    <span class="sub">Kundenkartei</span>
+  </div>
+  <div class="hdr-right">
+<button class="btn btn-dark btn-sm" onclick="openImportModal()">Treatwell Import</button>
+    <button class="btn btn-dark btn-sm" onclick="exportCSV()">CSV Export</button>
+    <button class="btn btn-gold btn-sm" onclick="openNewClientModal()">+ Neuer Kunde</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+  <!-- SIDEBAR: Kundenliste -->
+  <div class="sidebar">
+    <div class="sb-search">
+      <input type="text" id="sbSearch" placeholder="Kunde suchen..." oninput="debouncedRenderSidebar()">
+    </div>
+    <div class="sb-filters" id="sbFilters"></div>
+    <div class="sb-stats" id="sbStats"></div>
+    <div class="sb-list" id="sbList"></div>
+  </div>
+
+  <!-- MAIN: Karteikarte -->
+  <div class="main-content" id="mainContent">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">&#128203;</div>
+      <h2>Kundenkartei</h2>
+      <p>Waehle einen Kunden aus der Liste, um die vollstaendige Karteikarte zu oeffnen.</p>
+    </div>
+    <div class="kartei" id="kartei" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="importModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('importModal')">&times;</button>
+    <h2>Treatwell-Kassenbuch Import</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Speichere das Treatwell-Kassenbuch als HTML (Strg+S) und lade es hier hoch. Die Termine werden automatisch den Kunden zugeordnet.</p>
+    <div class="tw-drop" id="twDrop" onclick="document.getElementById('twFile').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleTWImport(event.dataTransfer.files[0])">
+      <p style="color:var(--gold);font-size:14px;font-weight:500">Treatwell-Kassenbuch hier ablegen oder klicken</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">HTML-Datei aus dem Treatwell-Kassenbuch</p>
+    </div>
+    <input type="file" id="twFile" accept=".html,.htm" style="display:none" onchange="handleTWImport(this.files[0])">
+    <div id="twResult" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="newClientModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('newClientModal')">&times;</button>
+    <h2>Neuen Kunden anlegen</h2>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="fg"><label>Vorname</label><input id="ncFn" placeholder="Vorname"></div>
+      <div class="fg"><label>Nachname</label><input id="ncLn" placeholder="Nachname"></div>
+      <div class="fg"><label>Telefon</label><input id="ncPh" placeholder="+49 176 ..."></div>
+      <div class="fg"><label>E-Mail</label><input id="ncEm" placeholder="email@beispiel.de"></div>
+      <div class="fg"><label>Geburtsdatum</label><input id="ncBd" placeholder="TT.MM.JJJJ"></div>
+      <div class="fg"><label>Adresse</label><input id="ncAddr" placeholder="Strasse, PLZ Ort"></div>
+    </div>
+    <button class="btn btn-gold" onclick="createNewClient()">Kunde anlegen</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="addModal">
+  <div class="modal" style="position:relative" id="addModalContent"></div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-box" id="toastBox"></div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<!-- TRELLO DATA -->
+<script>var alleKunden = [];</script>
+<script src="./trello_all_kunden.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   SKINCONCEPT KUNDENKARTEI
+   Professionelles Karteikartenystem mit Treatwell + Firebase
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── FIREBASE INIT ──
+firebase.initializeApp({
+  apiKey:"AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+  authDomain:"skinconcept-hagner.firebaseapp.com",
+  databaseURL:"https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"skinconcept-hagner",
+  storageBucket:"skinconcept-hagner.firebasestorage.app",
+  messagingSenderId:"101205413833",
+  appId:"1:101205413833:web:9734e0906dd71d1a9d2218"
+});
+const fbDb = firebase.database();
+
+// ── CONSTANTS ──
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const TODAY_STR = TODAY.toISOString().split('T')[0];
+const STORE_KEY = 'sc_kartei_v2';
+const ACTIONS_KEY = 'sc_kartei_actions_v2';
+const DELETED_KEY = 'sc_kartei_deleted';
+
+function getDeletedClients(){try{return JSON.parse(localStorage.getItem(DELETED_KEY)||'[]')}catch(e){return[]}}
+function addDeletedClient(name){const list=getDeletedClients();const key=normalize(name);if(!list.includes(key)){list.push(key);localStorage.setItem(DELETED_KEY,JSON.stringify(list))}}
+
+// ── TREATWELL KONTAKTE ──
 const TW_CONTACTS=[{"fn":"Tamara","ln":"Hagner","ph":"+49 176 70860252","em":"skinconcept.hagner@gmail.com","bd":"","b":3},{"fn":"Caroline","ln":"Eibes","ph":"","em":"","bd":"","b":0},{"fn":"Roswita","ln":"Jakobs","ph":"+49 176 61742511","em":"","bd":"","b":0},{"fn":"Birgitt","ln":"Becker","ph":"+49 1514 6514280","em":"birgittbecker66@aim.com","bd":"","b":0},{"fn":"Maike","ln":"Rieb","ph":"+49 1575 3677005","em":"Maikesauer@web.de","bd":"","b":1},{"fn":"Andrea","ln":"hensel","ph":"+49 176 23839837","em":"hensel-a@web.de","bd":"","b":3},{"fn":"Nina","ln":"Herresthal","ph":"+49 163 8464478","em":"Herrresthal1989@gmx.de","bd":"","b":0},{"fn":"Petra","ln":"Behnke","ph":"+49 1511 7308319","em":"Petra.behnke68@icloud.com","bd":"","b":4},{"fn":"Jasmine","ln":"Dreher","ph":"+49 177 7522414","em":"jasminedreher@gmx.de","bd":"","b":0},{"fn":"Corina","ln":"Heinze","ph":"+49 162 7853353","em":"Corina.heinze@arcor.de","bd":"","b":0},{"fn":"Irina","ln":"Todorova","ph":"+49 176 82019433","em":"irenetodorova@gmail.com","bd":"","b":0},{"fn":"Lorscheter","ln":"Nadja","ph":"","em":"nadjalorscheter@gmx.de","bd":"","b":0},{"fn":"Natalia","ln":"Schmidt","ph":"+49 160 90622000","em":"natalja@onlinehome.de","bd":"","b":1},{"fn":"Rebecca","ln":"Wolf","ph":"+49 173 6138539","em":"Rebecca.wolf21@yahoo.de","bd":"","b":0},{"fn":"Mechthild","ln":"Binz","ph":"+49 1511 0444493","em":"Mechthild-binz@web.de","bd":"","b":3},{"fn":"Lisa","ln":"Grabend\u00fcnkel","ph":"+49 178 2888129","em":"lisa.gr@t-online.de","bd":"","b":5},{"fn":"Hanna","ln":"Bortova","ph":"+49 171 2193945","em":"","bd":"","b":0},{"fn":"Gabi","ln":"Barzen","ph":"+49 172 1517996","em":"gabi.barzen@googlemail.com","bd":"","b":1},{"fn":"Tanja","ln":"Mueller","ph":"+49 176 22032637","em":"tanja0679@googlemail.com","bd":"","b":0},{"fn":"Vanessa","ln":"Thiele","ph":"+49 171 4174760","em":"v.thiele@ymail.com","bd":"","b":0},{"fn":"Lisa","ln":"Treinen","ph":"+49 1523 4077277","em":"lisa-treinen@web.de","bd":"","b":2},{"fn":"Frauke","ln":"Buenting","ph":"+49 176 31822296","em":"fsbuenting@gmx.de","bd":"","b":0},{"fn":"Denise","ln":"Hissung","ph":"","em":"","bd":"","b":0},{"fn":"Esther","ln":"Bamberg","ph":"+49 162 2480762","em":"esther.zubrod@web.de","bd":"","b":0},{"fn":"Christina","ln":"Backes","ph":"","em":"christina-backes@t-online.de","bd":"","b":0},{"fn":"Melanie","ln":"Romer","ph":"+49 170 1877754","em":"melanieromer81@gmail.com","bd":"","b":0},{"fn":"Maja","ln":"Trierweiler","ph":"","em":"maja.trierweiler@web.de","bd":"","b":0},{"fn":"Emeliy","ln":"Lorenz","ph":"+49 163 3759484","em":"e.lorenz-@web.de","bd":"","b":0},{"fn":"Allanah","ln":"Naragy","ph":"+49 176 70591316","em":"hannah.allein@t-online.de","bd":"","b":0},{"fn":"Stefanie","ln":"Heib","ph":"","em":"","bd":"","b":0},{"fn":"Gretchen","ln":"Gravelle","ph":"","em":"gravelle4@gmail.com","bd":"","b":0}];
 
 // ── KASSENBUCH VISITS ──
