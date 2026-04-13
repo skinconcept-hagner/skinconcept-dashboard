@@ -560,7 +560,16 @@ let sidebarFilter='all';
 let anamneseCache={};
 
 function initClients(){
-  clients=alleKunden.map((raw,i)=>parseTrello(raw,i));
+  const allParsed=alleKunden.map((raw,i)=>parseTrello(raw,i));
+  // Deduplizierung: nur den ersten Eintrag pro Name behalten
+  const seenNames=new Set();
+  clients=allParsed.filter(c=>{
+    const key=normalize(c.fn+' '+c.ln);
+    const key2=normalize(c.ln+' '+c.fn);
+    if(seenNames.has(key)||seenNames.has(key2))return false;
+    seenNames.add(key);seenNames.add(key2);
+    return true;
+  });
 
   // KB visit dates per client
   const kbMap={};
