@@ -206,6 +206,49 @@ body.client-open .back-btn{display:inline-flex}
 .modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:2px;margin-bottom:20px}
 .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
 
+/* NOTIZEN */
+.note-entry{display:flex;gap:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:border-color .2s}
+.note-entry:hover{border-color:var(--gold)}
+.note-icon{width:32px;height:32px;border-radius:8px;background:var(--gold-dim);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.note-body{flex:1;min-width:0}
+.note-date{font-size:11px;color:var(--muted);margin-bottom:2px}
+.note-cat{font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.note-text{font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap}
+.note-text.editing{display:none}
+.note-edit-area{display:none;width:100%}
+.note-entry.editing .note-text{display:none}
+.note-entry.editing .note-edit-area{display:block}
+
+/* CRM VIEW */
+.crm-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:150;overflow-y:auto}
+.crm-overlay.open{display:block}
+.crm-header{padding:20px 28px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.crm-header h2{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;letter-spacing:2px}
+.crm-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.crm-controls select,.crm-controls input{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;background:var(--bg2);color:var(--text);outline:none}
+.crm-controls select:focus,.crm-controls input:focus{border-color:var(--gold)}
+.crm-body{padding:20px 28px}
+.crm-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.crm-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center}
+.crm-stat-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1}
+.crm-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:4px}
+.crm-table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.crm-table th{padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);background:var(--bg3);cursor:pointer;user-select:none;white-space:nowrap}
+.crm-table th:hover{color:var(--gold)}
+.crm-table th.sorted{color:var(--gold)}
+.crm-table td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+.crm-table tr:last-child td{border-bottom:none}
+.crm-table tr:hover td{background:var(--hover)}
+.crm-table tr.crm-urgent td{background:var(--red-bg)}
+.crm-table tr.crm-warning td{background:var(--yellow-bg)}
+.crm-prio{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.3px}
+.crm-prio.high{background:var(--red-bg);color:var(--red)}
+.crm-prio.medium{background:var(--orange-bg);color:var(--orange)}
+.crm-prio.low{background:var(--yellow-bg);color:var(--yellow)}
+.crm-prio.none{background:var(--green-bg);color:var(--green)}
+.crm-done-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--gold);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s}
+.crm-done-btn:hover{background:var(--gold);color:#fff}
+
 /* TOAST */
 .toast-box{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
 .toast{padding:12px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.1);display:flex;align-items:center;gap:8px;animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards}
@@ -341,9 +384,41 @@ body.client-open .back-btn{display:inline-flex}
     <span class="sub">Kundenkartei</span>
   </div>
   <div class="hdr-right">
-<button class="btn btn-dark btn-sm" onclick="openImportModal()">Treatwell Import</button>
+<button class="btn btn-gold btn-sm" onclick="openCRM()" style="background:var(--blue);color:#fff">&#128203; CRM Uebersicht</button>
+    <button class="btn btn-dark btn-sm" onclick="openImportModal()">Treatwell Import</button>
     <button class="btn btn-dark btn-sm" onclick="exportCSV()">CSV Export</button>
     <button class="btn btn-gold btn-sm" onclick="openNewClientModal()">+ Neuer Kunde</button>
+  </div>
+</div>
+
+<!-- CRM OVERLAY -->
+<div class="crm-overlay" id="crmOverlay">
+  <div class="crm-header">
+    <h2>&#128203; CRM Uebersicht</h2>
+    <div class="crm-controls">
+      <select id="crmFilter" onchange="renderCRM()">
+        <option value="all">Alle Kunden</option>
+        <option value="anrufen" selected>Muss angerufen werden</option>
+        <option value="ueberfaellig">Ueberfaellige</option>
+        <option value="verloren">Verloren</option>
+        <option value="kontaktiert">Bereits kontaktiert</option>
+        <option value="geburtstag">Geburtstag bald</option>
+      </select>
+      <select id="crmSort" onchange="renderCRM()">
+        <option value="tage-desc">Tage seit Besuch (laengste zuerst)</option>
+        <option value="tage-asc">Tage seit Besuch (kuerzeste zuerst)</option>
+        <option value="name-asc">Name A-Z</option>
+        <option value="name-desc">Name Z-A</option>
+        <option value="kontakt-asc">Letzter Kontakt (aelteste zuerst)</option>
+        <option value="besuche-desc">Meiste Besuche zuerst</option>
+      </select>
+      <input type="text" id="crmSearch" placeholder="Suche..." oninput="renderCRM()">
+      <button class="btn btn-dark btn-sm" onclick="closeCRM()">&#10005; Schliessen</button>
+    </div>
+  </div>
+  <div class="crm-body">
+    <div class="crm-stats" id="crmStats"></div>
+    <div id="crmTable"></div>
   </div>
 </div>
 
@@ -550,7 +625,7 @@ function loadKartei(){if(_karteiCache)return _karteiCache;try{_karteiCache=JSON.
 function saveKartei(data){_karteiCache=data;_karteiDirty=true;if(_karteiSaveTimer)clearTimeout(_karteiSaveTimer);_karteiSaveTimer=setTimeout(function(){flushKartei()},300)}
 function flushKartei(){if(_karteiDirty){try{localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}catch(e){console.error('Speicherfehler:',e.message);toast('Speicher voll! Bericht zu gross.')}}}
 window.addEventListener('beforeunload',flushKartei);
-function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
+function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notesList:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
 function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all)}
 
 // ── DEBOUNCE ──
@@ -850,7 +925,7 @@ function renderSidebar(){
   else if(sidebarFilter!=='all')list=list.filter(c=>getStatus(c.days,c.id).key===sidebarFilter);
   if(q)list=list.filter(c=>(c.fn+' '+c.ln+' '+c.name+' '+c.ph+' '+c.em).toLowerCase().includes(q));
 
-  const show=list.slice(0,100);
+  const show=list;
   document.getElementById('sbList').innerHTML=show.length?show.map(c=>{
     const s=getStatus(c.days,c.id);
     const sg=getSegment(c);
@@ -981,6 +1056,7 @@ function renderKartei(c){
         <div class="ktab${currentKTab==='fotos'?' active':''}" onclick="switchKTab('fotos')">Fotos <span class="cnt">${photoCount}</span></div>
         <div class="ktab${currentKTab==='hautbericht'?' active':''}" onclick="switchKTab('hautbericht')">Hautanalysebericht ${berichtCount||hautanalyseCount?'<span class="cnt">'+(berichtCount+hautanalyseCount)+'</span>':''}</div>
         <div class="ktab${currentKTab==='termine'?' active':''}" onclick="switchKTab('termine')">Termine</div>
+        <div class="ktab${currentKTab==='notizen'?' active':''}" onclick="switchKTab('notizen')">Notizen <span class="cnt">${(kd.notesList||[]).length}</span></div>
         <div class="ktab${currentKTab==='kontakt'?' active':''}" onclick="switchKTab('kontakt')">Kontakthistorie <span class="cnt">${contactCount}</span></div>
       </div>
     </div>
@@ -1145,6 +1221,33 @@ function renderKartei(c){
           <h3>Treatwell aktualisieren</h3>
           <p>Lade ein neues Treatwell-Kassenbuch hoch, um die Termine dieses Kunden zu aktualisieren.</p>
           <button class="btn btn-gold btn-sm" onclick="openImportModal()">Kassenbuch importieren</button>
+        </div>
+      </div>
+
+      <!-- NOTIZEN -->
+      <div class="kpage${currentKTab==='notizen'?' active':''}" id="kp-notizen">
+        <div class="scard">
+          <h3>Notizen <button class="add-btn" onclick="openAddNote()">+ Notiz</button></h3>
+          ${(kd.notesList||[]).length>0?(kd.notesList||[]).map((n,i)=>`
+            <div class="note-entry" id="note-${i}">
+              <div class="note-icon">&#128221;</div>
+              <div class="note-body">
+                <div class="note-date">${fmtDate(n.date)}${n.category?' &#183; <span class="note-cat">'+esc(n.category)+'</span>':''}</div>
+                <div class="note-text">${esc(n.text)}</div>
+                <div class="note-edit-area">
+                  <textarea rows="4" style="width:100%;margin-bottom:8px" id="noteEdit-${i}">${esc(n.text)}</textarea>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-gold btn-sm" onclick="saveEditNote(${i})">Speichern</button>
+                    <button class="btn btn-dark btn-sm" onclick="cancelEditNote(${i})">Abbrechen</button>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+                <button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:var(--gold-dim);color:var(--gold);border:none" onclick="startEditNote(${i})" title="Bearbeiten">&#9998;</button>
+                <button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:var(--red-bg);color:var(--red);border:none" onclick="deleteNote(${i})" title="Loeschen">&#10005;</button>
+              </div>
+            </div>
+          `).join(''):'<p style="color:var(--muted);text-align:center;padding:20px">Noch keine Notizen vorhanden. Klicke auf "+ Notiz" um eine hinzuzufuegen.</p>'}
         </div>
       </div>
 
@@ -2599,6 +2702,188 @@ function renderNachsorgeBox(c){
   }
   html+='</div>';
   return html;
+}
+
+// ── NOTIZEN FUNKTIONEN ──
+function openAddNote(){
+  if(!selectedClient)return;
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <h2>Notiz hinzufuegen</h2>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="fg"><label>Datum</label><input type="date" id="noteDate" value="${TODAY_STR}"></div>
+      <div class="fg"><label>Kategorie (optional)</label>
+        <select id="noteCat">
+          <option value="">Keine Kategorie</option>
+          <option value="Allgemein">Allgemein</option>
+          <option value="Hautpflege">Hautpflege</option>
+          <option value="Beratung">Beratung</option>
+          <option value="Wuensche">Wuensche</option>
+          <option value="Wichtig">Wichtig</option>
+          <option value="Nachsorge">Nachsorge</option>
+          <option value="Intern">Intern</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg form-full" style="margin-bottom:16px">
+      <label>Notiz</label>
+      <textarea id="noteText" rows="6" placeholder="Notiz eingeben..."></textarea>
+    </div>
+    <button class="btn btn-gold" onclick="saveNote()">Notiz speichern</button>
+  `;
+  openModal('addModal');
+  setTimeout(()=>document.getElementById('noteText').focus(),200);
+}
+function saveNote(){
+  if(!selectedClient)return;
+  const text=document.getElementById('noteText').value.trim();
+  if(!text){toast('Bitte Notiz eingeben','warn');return}
+  const kd=getClientKartei(selectedClient.id);
+  if(!kd.notesList)kd.notesList=[];
+  kd.notesList.unshift({
+    date:document.getElementById('noteDate').value||TODAY_STR,
+    category:document.getElementById('noteCat').value,
+    text:text
+  });
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  currentKTab='notizen';
+  renderKartei(selectedClient);
+  toast('Notiz gespeichert');
+}
+function startEditNote(i){
+  const el=document.getElementById('note-'+i);
+  if(el)el.classList.add('editing');
+}
+function cancelEditNote(i){
+  const el=document.getElementById('note-'+i);
+  if(el)el.classList.remove('editing');
+}
+function saveEditNote(i){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const text=document.getElementById('noteEdit-'+i).value.trim();
+  if(!text){toast('Notiz darf nicht leer sein','warn');return}
+  kd.notesList[i].text=text;
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+  toast('Notiz aktualisiert');
+}
+function deleteNote(i){
+  if(!selectedClient)return;
+  if(!confirm('Notiz wirklich loeschen?'))return;
+  const kd=getClientKartei(selectedClient.id);
+  kd.notesList.splice(i,1);
+  saveClientKartei(selectedClient.id,kd);
+  renderKartei(selectedClient);
+  toast('Notiz geloescht');
+}
+
+// ── CRM FUNKTIONEN ──
+function openCRM(){
+  document.getElementById('crmOverlay').classList.add('open');
+  renderCRM();
+}
+function closeCRM(){
+  document.getElementById('crmOverlay').classList.remove('open');
+}
+function getCRMPriority(c){
+  const s=getStatus(c.days,c.id);
+  const kd=getClientKartei(c.id);
+  if(s.contacted)return{level:'none',label:'Erledigt',sort:4};
+  if(s.key==='r')return{level:'high',label:'Dringend',sort:1};
+  if(s.key==='o')return{level:'medium',label:'Bald anrufen',sort:2};
+  if(s.key==='y')return{level:'low',label:'Beobachten',sort:3};
+  return{level:'none',label:'OK',sort:4};
+}
+function renderCRM(){
+  const filter=document.getElementById('crmFilter').value;
+  const sort=document.getElementById('crmSort').value;
+  const q=(document.getElementById('crmSearch').value||'').toLowerCase().trim();
+
+  let list=clients.slice();
+
+  // Search
+  if(q)list=list.filter(c=>(c.fn+' '+c.ln+' '+c.name+' '+c.ph+' '+c.em).toLowerCase().includes(q));
+
+  // Filter
+  if(filter==='anrufen')list=list.filter(c=>{const s=getStatus(c.days,c.id);return !s.contacted&&(s.key==='y'||s.key==='o'||s.key==='r')});
+  else if(filter==='ueberfaellig')list=list.filter(c=>getStatus(c.days,c.id).key==='o');
+  else if(filter==='verloren')list=list.filter(c=>getStatus(c.days,c.id).key==='r');
+  else if(filter==='kontaktiert')list=list.filter(c=>getStatus(c.days,c.id).contacted);
+  else if(filter==='geburtstag')list=list.filter(c=>c.bdSoon);
+
+  // Sort
+  if(sort==='tage-desc')list.sort((a,b)=>(b.days<9999?b.days:0)-(a.days<9999?a.days:0));
+  else if(sort==='tage-asc')list.sort((a,b)=>(a.days<9999?a.days:99999)-(b.days<9999?b.days:99999));
+  else if(sort==='name-asc')list.sort((a,b)=>(a.ln||a.name||'').localeCompare(b.ln||b.name||''));
+  else if(sort==='name-desc')list.sort((a,b)=>(b.ln||b.name||'').localeCompare(a.ln||a.name||''));
+  else if(sort==='kontakt-asc')list.sort((a,b)=>{const ka=getClientKartei(a.id),kb=getClientKartei(b.id);const da=ka.zuletztKontaktiert||'0',db=kb.zuletztKontaktiert||'0';return da.localeCompare(db)});
+  else if(sort==='besuche-desc')list.sort((a,b)=>(b.visits||0)-(a.visits||0));
+
+  // Stats
+  const anrufen=clients.filter(c=>{const s=getStatus(c.days,c.id);return !s.contacted&&(s.key==='y'||s.key==='o'||s.key==='r')}).length;
+  const dringend=clients.filter(c=>{const s=getStatus(c.days,c.id);return !s.contacted&&s.key==='r'}).length;
+  const kontaktiert=clients.filter(c=>getStatus(c.days,c.id).contacted).length;
+  const bdSoon=clients.filter(c=>c.bdSoon).length;
+
+  document.getElementById('crmStats').innerHTML=`
+    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--red)">${dringend}</div><div class="crm-stat-label">Dringend anrufen</div></div>
+    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--orange)">${anrufen}</div><div class="crm-stat-label">Muss kontaktiert werden</div></div>
+    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--blue)">${kontaktiert}</div><div class="crm-stat-label">Bereits kontaktiert</div></div>
+    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--gold)">${bdSoon}</div><div class="crm-stat-label">Geburtstag bald</div></div>
+    <div class="crm-stat"><div class="crm-stat-val">${list.length}</div><div class="crm-stat-label">Gefilterte Kunden</div></div>
+  `;
+
+  // Table
+  let html='<table class="crm-table"><thead><tr>';
+  html+='<th>Kunde</th><th>Telefon</th><th>Tage seit Besuch</th><th>Status</th><th>Prioritaet</th><th>Letzter Kontakt</th><th>Besuche</th><th>Aktion</th>';
+  html+='</tr></thead><tbody>';
+
+  list.forEach(c=>{
+    const s=getStatus(c.days,c.id);
+    const kd=getClientKartei(c.id);
+    const prio=getCRMPriority(c);
+    const rowClass=prio.level==='high'?'crm-urgent':(prio.level==='medium'?'crm-warning':'');
+    const letzterKontakt=kd.zuletztKontaktiert?fmtDate(kd.zuletztKontaktiert):(kd.contacts&&kd.contacts.length?fmtDate(kd.contacts[0].date):'–');
+    const waUrl=c.ph?getWaUrl(c.ph,'Hallo '+(c.fn||'')+', hier ist Tamara von Skinconcept Hagner! Ich wollte mich kurz erkundigen, wie es dir geht und ob du einen neuen Termin moechtest. Liebe Gruesse!'):'';
+
+    html+=`<tr class="${rowClass}">
+      <td style="font-weight:500;cursor:pointer" onclick="closeCRM();selectClient('${c.id}')">${esc(c.fn||c.name)} ${esc(c.ln||'')}</td>
+      <td>${c.ph?'<a href="tel:'+esc(c.ph)+'" style="color:var(--gold);text-decoration:none">'+esc(c.ph)+'</a>':'–'}</td>
+      <td style="color:var(--${s.color});font-weight:500">${c.days<9999?c.days+' Tage':'–'}</td>
+      <td><span class="badge badge-${s.key}">${s.label}</span></td>
+      <td><span class="crm-prio ${prio.level}">${prio.label}</span></td>
+      <td>${letzterKontakt}</td>
+      <td>${c.visits||0}</td>
+      <td style="white-space:nowrap;display:flex;gap:4px">
+        ${c.ph?'<a href="tel:'+esc(c.ph)+'" class="crm-done-btn" title="Anrufen">&#128222;</a>':''}
+        ${waUrl?'<a href="'+waUrl+'" target="_blank" class="crm-done-btn" title="WhatsApp" style="color:#25d366;border-color:#25d366">&#9742;</a>':''}
+        ${!s.contacted?'<button class="crm-done-btn" onclick="crmMarkContacted(\''+c.id+'\')" title="Als kontaktiert markieren">&#10003;</button>':'<span style="color:var(--green)">&#10003;</span>'}
+      </td>
+    </tr>`;
+  });
+
+  html+='</tbody></table>';
+  if(!list.length)html='<div style="text-align:center;padding:40px;color:var(--muted)">Keine Kunden in dieser Ansicht.</div>';
+  document.getElementById('crmTable').innerHTML=html;
+}
+
+function crmMarkContacted(clientId){
+  const c=clients.find(x=>x.id===clientId);
+  if(!c)return;
+  const kd=getClientKartei(clientId);
+  if(!kd.contacts)kd.contacts=[];
+  kd.contacts.unshift({date:TODAY_STR,type:'crm',channel:'Telefon',reason:'CRM Kontakt',note:'Ueber CRM-Uebersicht kontaktiert'});
+  kd.zuletztKontaktiert=TODAY_STR;
+  const s=getStatus(c.days,clientId);
+  const all=loadKartei();
+  if(!all._contacted)all._contacted={};
+  all._contacted[clientId]={date:TODAY_STR};
+  saveClientKartei(clientId,kd);
+  renderCRM();
+  renderSidebar();
+  toast(esc(c.fn||c.name)+' als kontaktiert markiert');
 }
 
 // ── INIT ──
