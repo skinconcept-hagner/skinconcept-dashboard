@@ -206,6 +206,35 @@ body.client-open .back-btn{display:inline-flex}
 .modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:2px;margin-bottom:20px}
 .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
 
+/* EINWILLIGUNGEN */
+.consent-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px;transition:border-color .2s}
+.consent-card:hover{border-color:var(--gold)}
+.consent-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.consent-treat{display:flex;align-items:center;gap:10px}
+.consent-treat-icon{font-size:20px}
+.consent-treat-name{font-size:15px;font-weight:500}
+.consent-status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.consent-ok{background:var(--green-bg);color:var(--green)}
+.consent-expired{background:var(--red-bg);color:var(--red)}
+.consent-missing{background:var(--yellow-bg);color:var(--yellow)}
+.consent-info{font-size:12px;color:var(--muted);margin-bottom:6px}
+.consent-history{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.consent-hist-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--text2)}
+.consent-warn{background:var(--red-bg);border:2px solid var(--red);border-radius:var(--r);padding:16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px}
+.consent-warn-icon{font-size:24px;flex-shrink:0}
+.consent-warn-text{flex:1}
+.consent-warn-title{font-size:14px;font-weight:600;color:var(--red);margin-bottom:4px}
+.consent-warn-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.sig-canvas-wrap{background:#fff;border:2px solid var(--border);border-radius:10px;position:relative;touch-action:none;margin:12px 0}
+.sig-canvas{display:block;width:100%;cursor:crosshair;border-radius:8px}
+.sig-line{position:absolute;bottom:40px;left:20px;right:20px;border-bottom:1px dashed var(--muted);pointer-events:none}
+.sig-label{position:absolute;bottom:12px;left:20px;font-size:10px;color:var(--muted);pointer-events:none;font-family:'Outfit',sans-serif}
+.consent-form-text{font-size:12px;color:var(--text2);line-height:1.7;max-height:300px;overflow-y:auto;padding:16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:16px}
+.consent-form-text h4{font-size:13px;font-weight:600;color:var(--text);margin:12px 0 6px}
+.consent-form-text h4:first-child{margin-top:0}
+.consent-form-text ul{margin:4px 0 8px 16px}
+.consent-form-text li{margin-bottom:3px}
+
 /* NOTIZEN */
 .note-entry{display:flex;gap:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:border-color .2s}
 .note-entry:hover{border-color:var(--gold)}
@@ -625,7 +654,7 @@ function loadKartei(){if(_karteiCache)return _karteiCache;try{_karteiCache=JSON.
 function saveKartei(data){_karteiCache=data;_karteiDirty=true;if(_karteiSaveTimer)clearTimeout(_karteiSaveTimer);_karteiSaveTimer=setTimeout(function(){flushKartei()},300)}
 function flushKartei(){if(_karteiDirty){try{localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}catch(e){console.error('Speicherfehler:',e.message);toast('Speicher voll! Bericht zu gross.')}}}
 window.addEventListener('beforeunload',flushKartei);
-function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notesList:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
+function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notesList:[],consents:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
 function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all)}
 
 // ── DEBOUNCE ──
@@ -1056,6 +1085,7 @@ function renderKartei(c){
         <div class="ktab${currentKTab==='fotos'?' active':''}" onclick="switchKTab('fotos')">Fotos <span class="cnt">${photoCount}</span></div>
         <div class="ktab${currentKTab==='hautbericht'?' active':''}" onclick="switchKTab('hautbericht')">Hautanalysebericht ${berichtCount||hautanalyseCount?'<span class="cnt">'+(berichtCount+hautanalyseCount)+'</span>':''}</div>
         <div class="ktab${currentKTab==='termine'?' active':''}" onclick="switchKTab('termine')">Termine</div>
+        <div class="ktab${currentKTab==='einwilligung'?' active':''}" onclick="switchKTab('einwilligung')">Einwilligungen ${getConsentWarningCount(kd)?'<span class="cnt" style="background:var(--red-bg);color:var(--red)">'+getConsentWarningCount(kd)+'</span>':renderConsentBadge(kd)}</div>
         <div class="ktab${currentKTab==='notizen'?' active':''}" onclick="switchKTab('notizen')">Notizen <span class="cnt">${(kd.notesList||[]).length}</span></div>
         <div class="ktab${currentKTab==='kontakt'?' active':''}" onclick="switchKTab('kontakt')">Kontakthistorie <span class="cnt">${contactCount}</span></div>
       </div>
@@ -1222,6 +1252,12 @@ function renderKartei(c){
           <p>Lade ein neues Treatwell-Kassenbuch hoch, um die Termine dieses Kunden zu aktualisieren.</p>
           <button class="btn btn-gold btn-sm" onclick="openImportModal()">Kassenbuch importieren</button>
         </div>
+      </div>
+
+      <!-- EINWILLIGUNGEN -->
+      <div class="kpage${currentKTab==='einwilligung'?' active':''}" id="kp-einwilligung">
+        ${renderConsentWarnings(kd)}
+        ${renderConsentCards(kd)}
       </div>
 
       <!-- NOTIZEN -->
@@ -2703,6 +2739,491 @@ function renderNachsorgeBox(c){
   html+='</div>';
   return html;
 }
+
+// ── EINWILLIGUNGEN (CONSENT) ──
+const CONSENT_TREATMENTS=[
+  {id:'chemical-peel',name:'Chemical Peel',icon:'&#9883;',renewEvery:10},
+  {id:'hydrocare-gross',name:'HydroCare Gross',icon:'&#128167;',renewEvery:10},
+  {id:'hydrocare-klein',name:'HydroCare Klein',icon:'&#128166;',renewEvery:10},
+  {id:'microneedling',name:'Microneedling',icon:'&#9881;',renewEvery:10},
+  {id:'nanoglow',name:'NanoGlow',icon:'&#10024;',renewEvery:10},
+  {id:'exocean',name:'Exocean',icon:'&#127754;',renewEvery:10}
+];
+
+const CONSENT_TEXTS={
+  'chemical-peel':{
+    title:'Einverstaendniserklaerung Chemical Peel',
+    html:`<h4>1. Behandlungsbeschreibung</h4>
+<p>Beim Chemical Peel werden saeure- oder enzymhaltige Wirkstoffloesungen auf die Haut aufgetragen, um die obersten Hautschichten kontrolliert abzuloesen. Ziel ist die Hauterneuerung, Verfeinerung des Hautbildes und die Reduktion von Unreinheiten, Pigmentflecken oder feinen Faeltchen.</p>
+<h4>2. Moegliche Risiken und Nebenwirkungen</h4>
+<ul>
+<li>Roetungen, Brennen oder Waermegefuehl waehrend und nach der Behandlung</li>
+<li>Leichte bis mittlere Schaelungen der Haut fuer 2–7 Tage</li>
+<li>Voruebergehende Trockenheit oder Spannungsgefuehl</li>
+<li>In seltenen Faellen: Pigmentverschiebungen, Narbenbildung oder allergische Reaktionen</li>
+<li>Erhoehte Lichtempfindlichkeit der Haut (konsequenter UV-Schutz mit LSF 50+ ist zwingend erforderlich)</li>
+</ul>
+<h4>3. Kontraindikationen</h4>
+<ul>
+<li>Schwangerschaft und Stillzeit</li>
+<li>Aktive Hautinfektionen (z.B. Herpes simplex) im Behandlungsbereich</li>
+<li>Einnahme von Isotretinoin (Roaccutan) innerhalb der letzten 6 Monate</li>
+<li>Frische Wunden oder Sonnenbrand im Behandlungsbereich</li>
+<li>Bekannte Allergien gegen Inhaltsstoffe des Peelings</li>
+</ul>
+<h4>4. Verhalten nach der Behandlung</h4>
+<ul>
+<li>Konsequenter Sonnenschutz (LSF 50+) fuer mindestens 4 Wochen</li>
+<li>Kein Solarium, keine Sauna fuer 1 Woche</li>
+<li>Keine mechanischen Peelings oder Retinol-Produkte fuer 5–7 Tage</li>
+<li>Intensive Feuchtigkeitspflege verwenden</li>
+</ul>
+<h4>5. Einwilligung</h4>
+<p>Ich wurde ausfuehrlich ueber die Behandlung, den Ablauf, moegliche Risiken und Nebenwirkungen sowie das Verhalten nach der Behandlung aufgeklaert. Ich hatte Gelegenheit, Fragen zu stellen, und diese wurden zu meiner Zufriedenheit beantwortet. Ich willige hiermit freiwillig in die Durchfuehrung der Behandlung ein.</p>`
+  },
+  'hydrocare-gross':{
+    title:'Einverstaendniserklaerung HydroCare Intensiv',
+    html:`<h4>1. Behandlungsbeschreibung</h4>
+<p>Die HydroCare Intensivbehandlung ist eine tiefenwirksame Feuchtigkeitsbehandlung, bei der mittels spezieller Verfahren (z.B. Ultraschall, Iontophorese oder Mesoporation) hochkonzentrierte Wirkstoffe in die Haut eingeschleust werden. Die Behandlung umfasst Reinigung, Peeling, Wirkstoffinfusion und eine abschliessende Pflegemaske.</p>
+<h4>2. Moegliche Risiken und Nebenwirkungen</h4>
+<ul>
+<li>Leichte Roetungen unmittelbar nach der Behandlung (klingen innerhalb weniger Stunden ab)</li>
+<li>Voruebergehendes Waermegefuehl oder leichtes Kribbeln</li>
+<li>In seltenen Faellen: allergische Reaktion auf Wirkstoffe</li>
+<li>Voruebergehende Empfindlichkeit der Haut</li>
+</ul>
+<h4>3. Kontraindikationen</h4>
+<ul>
+<li>Akute Hautentzuendungen oder Infektionen im Behandlungsbereich</li>
+<li>Bekannte Allergien gegen eingesetzte Wirkstoffe</li>
+<li>Herzschrittmacher oder Metallimplantate (bei Geraeteeinsatz)</li>
+<li>Schwangerschaft (bei bestimmten Wirkstoffen)</li>
+</ul>
+<h4>4. Verhalten nach der Behandlung</h4>
+<ul>
+<li>Kein Make-up fuer mindestens 4 Stunden</li>
+<li>Sonnenschutz (LSF 30+) verwenden</li>
+<li>Ausreichend Wasser trinken</li>
+</ul>
+<h4>5. Einwilligung</h4>
+<p>Ich wurde ueber die Behandlung, moegliche Risiken und das Nachsorgeverhalten ausfuehrlich informiert. Meine Fragen wurden beantwortet. Ich willige in die Durchfuehrung der Behandlung ein.</p>`
+  },
+  'hydrocare-klein':{
+    title:'Einverstaendniserklaerung HydroCare Express',
+    html:`<h4>1. Behandlungsbeschreibung</h4>
+<p>Die HydroCare Express-Behandlung ist eine kompakte Feuchtigkeitsbehandlung mit Tiefenreinigung und Wirkstoffinfusion. Sie eignet sich ideal als Auffrischung zwischen den Intensivbehandlungen.</p>
+<h4>2. Moegliche Risiken und Nebenwirkungen</h4>
+<ul>
+<li>Leichte Roetungen (klingen schnell ab)</li>
+<li>Voruebergehendes Kribbeln waehrend der Wirkstoffeinschleusung</li>
+<li>Selten: allergische Reaktion auf Wirkstoffe</li>
+</ul>
+<h4>3. Kontraindikationen</h4>
+<ul>
+<li>Akute Hautentzuendungen im Behandlungsbereich</li>
+<li>Bekannte Allergien gegen eingesetzte Wirkstoffe</li>
+<li>Herzschrittmacher (bei Geraeteeinsatz)</li>
+</ul>
+<h4>4. Verhalten nach der Behandlung</h4>
+<ul>
+<li>Sonnenschutz (LSF 30+) verwenden</li>
+<li>Keine aggressiven Produkte fuer 24 Stunden</li>
+</ul>
+<h4>5. Einwilligung</h4>
+<p>Ich wurde ueber die Behandlung und moegliche Risiken informiert und willige in die Durchfuehrung ein.</p>`
+  },
+  'microneedling':{
+    title:'Einverstaendniserklaerung Microneedling',
+    html:`<h4>1. Behandlungsbeschreibung</h4>
+<p>Beim Microneedling werden mit sterilen Mikronadeln kontrollierte Mikroverletzungen in der Haut erzeugt. Dies stimuliert die koerpereigene Kollagen- und Elastinproduktion und verbessert die Aufnahme von Wirkstoffen. Die Behandlung dient der Hauterneuerung, Narbenreduktion, Porenverfeinerung und Anti-Aging.</p>
+<h4>2. Moegliche Risiken und Nebenwirkungen</h4>
+<ul>
+<li>Roetungen (aehnlich einem leichten Sonnenbrand) fuer 24–72 Stunden</li>
+<li>Leichte Schwellungen, insbesondere im Augenbereich</li>
+<li>Leichte Blutungen und Krustenbildung moeglich</li>
+<li>Spannungsgefuehl und Trockenheit fuer einige Tage</li>
+<li>In seltenen Faellen: Infektionen, Pigmentverschiebungen, Narbenbildung</li>
+<li>Erhoehte Lichtempfindlichkeit</li>
+</ul>
+<h4>3. Kontraindikationen</h4>
+<ul>
+<li>Aktive Akne, Ekzeme, Psoriasis oder Rosacea im Behandlungsbereich</li>
+<li>Aktive Hautinfektionen (Herpes, Warzen, Pilz)</li>
+<li>Einnahme von Blutverdünnern oder Isotretinoin</li>
+<li>Schwangerschaft und Stillzeit</li>
+<li>Neigung zu Keloidnarben</li>
+<li>Diabetes (schlecht eingestellt)</li>
+<li>Immunsuppression</li>
+</ul>
+<h4>4. Verhalten nach der Behandlung</h4>
+<ul>
+<li>Kein Make-up fuer mindestens 12 Stunden</li>
+<li>Kein Sport, keine Sauna, kein Schwimmbad fuer 48 Stunden</li>
+<li>Konsequenter Sonnenschutz (LSF 50+) fuer mindestens 2 Wochen</li>
+<li>Kein Retinol, keine Saeuren fuer 5–7 Tage</li>
+<li>Nur die empfohlenen Pflegeprodukte verwenden</li>
+<li>Behandelten Bereich nicht beruehren oder kratzen</li>
+</ul>
+<h4>5. Einwilligung</h4>
+<p>Ich wurde ausfuehrlich ueber die Microneedling-Behandlung, deren Ablauf, moegliche Risiken, Nebenwirkungen, Kontraindikationen und das erforderliche Nachsorgeverhalten aufgeklaert. Ich hatte ausreichend Gelegenheit, Fragen zu stellen. Ich willige hiermit freiwillig in die Durchfuehrung der Behandlung ein.</p>`
+  },
+  'nanoglow':{
+    title:'Einverstaendniserklaerung NanoGlow',
+    html:`<h4>1. Behandlungsbeschreibung</h4>
+<p>Bei der NanoGlow-Behandlung werden mittels Nano-Infusionstechnologie hochkonzentrierte Wirkstoffe (Hyaluron, Vitamine, Peptide) ueber feinste Nano-Kanaele in die Haut eingeschleust. Die Behandlung ist minimalinvasiv und foerdert einen strahlenden, frischen Teint.</p>
+<h4>2. Moegliche Risiken und Nebenwirkungen</h4>
+<ul>
+<li>Leichte Roetungen fuer einige Stunden</li>
+<li>Minimales Kribbeln waehrend der Behandlung</li>
+<li>Selten: allergische Reaktionen auf Wirkstoffe</li>
+<li>Voruebergehende Empfindlichkeit</li>
+</ul>
+<h4>3. Kontraindikationen</h4>
+<ul>
+<li>Aktive Hautinfektionen im Behandlungsbereich</li>
+<li>Bekannte Allergien gegen eingesetzte Wirkstoffe</li>
+<li>Schwangerschaft (bei bestimmten Wirkstoffen)</li>
+<li>Frische Wunden im Behandlungsbereich</li>
+</ul>
+<h4>4. Verhalten nach der Behandlung</h4>
+<ul>
+<li>Kein Make-up fuer 4–6 Stunden</li>
+<li>Sonnenschutz verwenden</li>
+<li>Feuchtigkeitspflege intensivieren</li>
+</ul>
+<h4>5. Einwilligung</h4>
+<p>Ich wurde ueber die Behandlung, moegliche Risiken und das Nachsorgeverhalten informiert und willige in die Durchfuehrung ein.</p>`
+  },
+  'exocean':{
+    title:'Einverstaendniserklaerung Exocean',
+    html:`<h4>1. Behandlungsbeschreibung</h4>
+<p>Die Exocean-Behandlung nutzt marine Wirkstoffe (Algen, Meereskollagen, Mineralien) fuer eine tiefe Regeneration und Revitalisierung der Haut. Die Behandlung foerdert die Zellerneuerung, staerkt die Hautbarriere und spendet intensive Feuchtigkeit.</p>
+<h4>2. Moegliche Risiken und Nebenwirkungen</h4>
+<ul>
+<li>Leichte Roetungen moeglich</li>
+<li>Selten: allergische Reaktion auf marine Inhaltsstoffe (Jodallergie beachten)</li>
+<li>Voruebergehende Waerme oder Kribbeln</li>
+</ul>
+<h4>3. Kontraindikationen</h4>
+<ul>
+<li>Bekannte Jod- oder Meeresfruechteallergie</li>
+<li>Akute Hautentzuendungen im Behandlungsbereich</li>
+<li>Schilddruesenueberfunktion (bei jodhaltigen Produkten)</li>
+</ul>
+<h4>4. Verhalten nach der Behandlung</h4>
+<ul>
+<li>Sonnenschutz verwenden</li>
+<li>Aureichend Wasser trinken zur Unterstuetzung der Entgiftung</li>
+</ul>
+<h4>5. Einwilligung</h4>
+<p>Ich wurde ueber die Behandlung und moegliche Risiken informiert und willige in die Durchfuehrung ein.</p>`
+  }
+};
+
+function getConsentStatus(kd,treatId){
+  const consents=(kd.consents||[]).filter(c=>c.treatmentId===treatId);
+  const lastConsent=consents.length?consents[0]:null;
+  const treatments=(kd.treatments||[]).filter(t=>{
+    const ti=SC_TREATMENTS.find(x=>x.name===t.type||x.id===t.typeId);
+    return ti&&ti.id===treatId;
+  });
+  const ct=CONSENT_TREATMENTS.find(c=>c.id===treatId);
+  const treatsSinceLast=lastConsent?treatments.filter(t=>t.date>lastConsent.date).length:treatments.length;
+  const totalTreats=treatments.length;
+  const needsRenewal=lastConsent&&treatsSinceLast>=ct.renewEvery;
+  const neverSigned=!lastConsent&&totalTreats>0;
+  return{lastConsent,treatsSinceLast,totalTreats,needsRenewal,neverSigned};
+}
+
+function getConsentWarningCount(kd){
+  let count=0;
+  CONSENT_TREATMENTS.forEach(ct=>{
+    const s=getConsentStatus(kd,ct.id);
+    if(s.needsRenewal||s.neverSigned)count++;
+  });
+  return count;
+}
+
+function renderConsentBadge(kd){
+  const signed=(kd.consents||[]).length;
+  return signed?'<span class="cnt">'+signed+'</span>':'';
+}
+
+function renderConsentWarnings(kd){
+  let html='';
+  CONSENT_TREATMENTS.forEach(ct=>{
+    const s=getConsentStatus(kd,ct.id);
+    if(s.needsRenewal){
+      html+=`<div class="consent-warn">
+        <div class="consent-warn-icon">&#9888;</div>
+        <div class="consent-warn-text">
+          <div class="consent-warn-title">Erneute Einwilligung erforderlich: ${ct.name}</div>
+          <div class="consent-warn-desc">Seit der letzten Unterschrift wurden ${s.treatsSinceLast} Behandlungen durchgefuehrt (Erneuerung alle ${ct.renewEvery} Behandlungen gesetzlich vorgeschrieben).
+            <button class="btn btn-red btn-sm" style="margin-left:8px;vertical-align:middle" onclick="openConsentForm('${ct.id}')">Jetzt unterschreiben</button>
+          </div>
+        </div>
+      </div>`;
+    }else if(s.neverSigned){
+      html+=`<div class="consent-warn">
+        <div class="consent-warn-icon">&#9888;</div>
+        <div class="consent-warn-text">
+          <div class="consent-warn-title">Einwilligung fehlt: ${ct.name}</div>
+          <div class="consent-warn-desc">${s.totalTreats} Behandlung(en) dokumentiert, aber keine Einverstaendniserklaerung unterschrieben.
+            <button class="btn btn-red btn-sm" style="margin-left:8px;vertical-align:middle" onclick="openConsentForm('${ct.id}')">Jetzt unterschreiben</button>
+          </div>
+        </div>
+      </div>`;
+    }
+  });
+  return html;
+}
+
+function renderConsentCards(kd){
+  let html='<div class="scard"><h3>Einverstaendniserklaerungen</h3>';
+  CONSENT_TREATMENTS.forEach(ct=>{
+    const s=getConsentStatus(kd,ct.id);
+    let statusHtml,statusClass;
+    if(s.needsRenewal){statusClass='consent-expired';statusHtml='&#9888; Erneuerung noetig';}
+    else if(s.neverSigned){statusClass='consent-missing';statusHtml='&#9888; Fehlt';}
+    else if(s.lastConsent){statusClass='consent-ok';statusHtml='&#10003; Unterschrieben';}
+    else{statusClass='consent-missing';statusHtml='Noch nicht noetig';}
+
+    const history=(kd.consents||[]).filter(c=>c.treatmentId===ct.id);
+
+    html+=`<div class="consent-card">
+      <div class="consent-top">
+        <div class="consent-treat">
+          <span class="consent-treat-icon">${ct.icon}</span>
+          <span class="consent-treat-name">${ct.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="consent-status ${statusClass}">${statusHtml}</span>
+          <button class="btn btn-gold btn-sm" onclick="openConsentForm('${ct.id}')">${s.lastConsent?'Erneuern':'Unterschreiben'}</button>
+        </div>
+      </div>
+      <div class="consent-info">
+        ${s.lastConsent?'Letzte Unterschrift: '+fmtDate(s.lastConsent.date)+' &middot; ':''}
+        ${s.totalTreats} Behandlung(en) gesamt${s.lastConsent?' &middot; '+s.treatsSinceLast+' seit letzter Unterschrift':''}
+        &middot; Erneuerung alle ${ct.renewEvery} Behandlungen
+      </div>
+      ${history.length>0?`<div class="consent-history">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Unterschriften-Verlauf</div>
+        ${history.map(h=>`<div class="consent-hist-item">
+          <span style="color:var(--green)">&#10003;</span>
+          <span>${fmtDate(h.date)}</span>
+          <span style="color:var(--muted)">&middot; ${esc(h.signedBy||'Kunde')}</span>
+          ${h.signature?'<button class="btn btn-sm" style="padding:1px 6px;font-size:10px;border:1px solid var(--border);background:transparent;color:var(--muted)" onclick="viewSignature(\''+ct.id+'\',\''+h.date+'\')">Ansehen</button>':''}
+        </div>`).join('')}
+      </div>`:''}
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+// Signature Pad
+let sigCtx=null,sigDrawing=false,sigCanvas=null;
+function initSigPad(){
+  sigCanvas=document.getElementById('sigPad');
+  if(!sigCanvas)return;
+  sigCtx=sigCanvas.getContext('2d');
+  const rect=sigCanvas.parentElement.getBoundingClientRect();
+  sigCanvas.width=rect.width-4;
+  sigCanvas.height=180;
+  sigCtx.fillStyle='#fff';
+  sigCtx.fillRect(0,0,sigCanvas.width,sigCanvas.height);
+  sigCtx.strokeStyle='#1a1a1a';
+  sigCtx.lineWidth=2;
+  sigCtx.lineCap='round';
+  sigCtx.lineJoin='round';
+  sigDrawing=false;
+
+  const getPos=e=>{
+    const r=sigCanvas.getBoundingClientRect();
+    const t=e.touches?e.touches[0]:e;
+    return{x:t.clientX-r.left,y:t.clientY-r.top};
+  };
+  const start=e=>{e.preventDefault();sigDrawing=true;const p=getPos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y)};
+  const draw=e=>{if(!sigDrawing)return;e.preventDefault();const p=getPos(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke()};
+  const stop=()=>{sigDrawing=false};
+
+  sigCanvas.addEventListener('mousedown',start);
+  sigCanvas.addEventListener('mousemove',draw);
+  sigCanvas.addEventListener('mouseup',stop);
+  sigCanvas.addEventListener('mouseleave',stop);
+  sigCanvas.addEventListener('touchstart',start,{passive:false});
+  sigCanvas.addEventListener('touchmove',draw,{passive:false});
+  sigCanvas.addEventListener('touchend',stop);
+}
+
+function clearSigPad(){
+  if(!sigCanvas||!sigCtx)return;
+  sigCtx.fillStyle='#fff';
+  sigCtx.fillRect(0,0,sigCanvas.width,sigCanvas.height);
+  sigCtx.strokeStyle='#1a1a1a';
+}
+
+function isSigEmpty(){
+  if(!sigCanvas)return true;
+  const d=sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height).data;
+  for(let i=0;i<d.length;i+=4){if(d[i]<250||d[i+1]<250||d[i+2]<250)return false}
+  return true;
+}
+
+function openConsentForm(treatId){
+  if(!selectedClient)return;
+  const ct=CONSENT_TREATMENTS.find(c=>c.id===treatId);
+  const txt=CONSENT_TEXTS[treatId];
+  if(!ct||!txt)return;
+
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <h2>${ct.icon} ${txt.title}</h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Kunde: <strong>${esc(selectedClient.fn||'')} ${esc(selectedClient.ln||'')}</strong> &middot; Datum: ${fmtDate(TODAY_STR)}</p>
+
+    <div class="consent-form-text">${txt.html}</div>
+
+    <div style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="consentCheck" style="width:18px;height:18px;accent-color:var(--gold)">
+        <span>Ich habe die Aufklaerung gelesen und verstanden und stimme der Behandlung zu.</span>
+      </label>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Unterschrift des Kunden</label>
+      <div class="sig-canvas-wrap">
+        <canvas class="sig-canvas" id="sigPad"></canvas>
+        <div class="sig-line"></div>
+        <div class="sig-label">Hier unterschreiben</div>
+      </div>
+      <button class="btn btn-dark btn-sm" onclick="clearSigPad()" style="margin-top:4px">Unterschrift loeschen</button>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gold" onclick="saveConsent('${treatId}')">&#10003; Einwilligung speichern</button>
+      <button class="btn btn-dark" onclick="printConsent('${treatId}')">&#128424; Drucken / PDF</button>
+    </div>
+  `;
+  openModal('addModal');
+  setTimeout(initSigPad,200);
+}
+
+function saveConsent(treatId){
+  if(!selectedClient)return;
+  const check=document.getElementById('consentCheck');
+  if(!check||!check.checked){toast('Bitte Einverstaendnis bestaetigen (Checkbox)','warn');return}
+  if(isSigEmpty()){toast('Bitte Unterschrift leisten','warn');return}
+
+  const sigData=sigCanvas.toDataURL('image/png');
+  const kd=getClientKartei(selectedClient.id);
+  if(!kd.consents)kd.consents=[];
+  kd.consents.unshift({
+    treatmentId:treatId,
+    date:TODAY_STR,
+    signedBy:(selectedClient.fn||'')+' '+(selectedClient.ln||''),
+    signature:sigData
+  });
+  saveClientKartei(selectedClient.id,kd);
+  closeModal('addModal');
+  currentKTab='einwilligung';
+  renderKartei(selectedClient);
+  toast('Einverstaendniserklaerung gespeichert');
+}
+
+function viewSignature(treatId,date){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const c=(kd.consents||[]).find(c=>c.treatmentId===treatId&&c.date===date);
+  if(!c||!c.signature)return;
+  const ct=CONSENT_TREATMENTS.find(x=>x.id===treatId);
+  document.getElementById('addModalContent').innerHTML=`
+    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+    <h2>Unterschrift ansehen</h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:12px">${ct?ct.icon+' '+ct.name:treatId} &middot; ${fmtDate(date)} &middot; ${esc(c.signedBy||'')}</p>
+    <div style="background:#fff;border:2px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+      <img src="${c.signature}" style="max-width:100%;border-radius:8px" alt="Unterschrift">
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn btn-dark btn-sm" onclick="closeModal('addModal')">Schliessen</button>
+      <button class="btn btn-gold btn-sm" onclick="printSignature('${treatId}','${date}')">&#128424; Drucken</button>
+    </div>
+  `;
+  openModal('addModal');
+}
+
+function printConsent(treatId){
+  const ct=CONSENT_TREATMENTS.find(c=>c.id===treatId);
+  const txt=CONSENT_TEXTS[treatId];
+  if(!ct||!txt||!selectedClient)return;
+  const w=window.open('','','width=800,height=900');
+  w.document.write(`<!DOCTYPE html><html><head><title>${txt.title}</title>
+    <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;font-size:13px;line-height:1.6;color:#333}
+    h1{font-size:18px;border-bottom:2px solid #b08d57;padding-bottom:8px;color:#b08d57}
+    h4{margin:14px 0 6px;font-size:14px}ul{margin:4px 0 8px 20px}
+    .sig-area{margin-top:40px;border-top:1px solid #ccc;padding-top:20px}
+    .sig-line{border-bottom:1px solid #333;width:300px;margin-top:60px}
+    .sig-label{font-size:11px;color:#666;margin-top:4px}
+    .meta{color:#666;font-size:12px;margin-bottom:20px}
+    @media print{body{margin:20px}}</style></head><body>
+    <h1>SKINCONCEPT HAGNER &middot; ${esc(txt.title)}</h1>
+    <div class="meta">Kunde: ${esc(selectedClient.fn||'')} ${esc(selectedClient.ln||'')} &middot; Datum: ${fmtDate(TODAY_STR)}</div>
+    ${txt.html}
+    <div class="sig-area">
+      <p><strong>&#9744; Ich habe die Aufklaerung gelesen und verstanden und stimme der Behandlung zu.</strong></p>
+      <div class="sig-line"></div>
+      <div class="sig-label">Unterschrift Kunde &middot; Ort, Datum</div>
+    </div>
+    </body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),400);
+}
+
+function printSignature(treatId,date){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const c=(kd.consents||[]).find(c=>c.treatmentId===treatId&&c.date===date);
+  if(!c)return;
+  const ct=CONSENT_TREATMENTS.find(x=>x.id===treatId);
+  const txt=CONSENT_TEXTS[treatId];
+  const w=window.open('','','width=800,height=900');
+  w.document.write(`<!DOCTYPE html><html><head><title>Einwilligung ${ct?ct.name:''}</title>
+    <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;font-size:13px;line-height:1.6;color:#333}
+    h1{font-size:18px;border-bottom:2px solid #b08d57;padding-bottom:8px;color:#b08d57}
+    h4{margin:14px 0 6px;font-size:14px}ul{margin:4px 0 8px 20px}
+    .meta{color:#666;font-size:12px;margin-bottom:20px}
+    img{max-width:400px;margin-top:12px;border:1px solid #eee;border-radius:8px}
+    @media print{body{margin:20px}}</style></head><body>
+    <h1>SKINCONCEPT HAGNER &middot; ${txt?esc(txt.title):''}</h1>
+    <div class="meta">Kunde: ${esc(c.signedBy||'')} &middot; Unterschrieben am: ${fmtDate(c.date)}</div>
+    ${txt?txt.html:''}
+    <p style="margin-top:20px"><strong>&#9745; Der Kunde hat die Aufklaerung gelesen und der Behandlung zugestimmt.</strong></p>
+    <p><strong>Digitale Unterschrift:</strong></p>
+    <img src="${c.signature}" alt="Unterschrift">
+    </body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),400);
+}
+
+// Auto-Popup bei Behandlung speichern: Consent-Check
+const _origSaveTreatment=saveTreatment;
+saveTreatment=function(){
+  const _tid=selectedTreatmentId;
+  const _cl=selectedClient;
+  _origSaveTreatment();
+  if(!_cl||!_tid)return;
+  const kd=getClientKartei(_cl.id);
+  const ct=CONSENT_TREATMENTS.find(c=>c.id===_tid);
+  if(!ct)return;
+  const s=getConsentStatus(kd,ct.id);
+  if(s.needsRenewal||s.neverSigned){
+    setTimeout(()=>{
+      if(confirm('Achtung: Fuer '+ct.name+' ist eine '+(s.neverSigned?'':'erneute ')+'Einverstaendniserklaerung erforderlich ('+(s.neverSigned?s.totalTreats+' Behandlungen ohne Unterschrift':s.treatsSinceLast+' Behandlungen seit letzter Unterschrift')+').\n\nJetzt unterschreiben lassen?')){
+        openConsentForm(ct.id);
+      }
+    },500);
+  }
+};
 
 // ── NOTIZEN FUNKTIONEN ──
 function openAddNote(){
