@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#b08d57">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -795,7 +798,7 @@ function initSidebar() {
 }
 
 // ============ PIN PROTECTION ============
-const CORRECT_PIN = '2026';
+const CORRECT_PIN = '2503';
 
 function initPin() {
     if (sessionStorage.getItem('monatsabschluss_auth') === 'true') {

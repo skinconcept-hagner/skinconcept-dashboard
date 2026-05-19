@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#b08d57">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,45 +15,59 @@
     <title>Skinconcept Hagner - Studio Hub</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* APP GRID */
+        /* APP GRID — App-like Cards mit Office-Look */
         .app-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
             margin-bottom: 36px;
         }
         .app-tile {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            display: flex; align-items: center; gap: 18px;
             text-decoration: none; color: var(--text);
             background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
-            padding: 30px 16px 26px; text-align: center; box-shadow: var(--shadow);
+            padding: 22px 24px;
+            box-shadow: var(--shadow-sm);
             transition: all 0.3s var(--ease); cursor: pointer; position: relative; overflow: hidden;
         }
         .app-tile::before {
             content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, transparent 60%, var(--accent-glow));
+            background: radial-gradient(circle at 100% 50%, var(--accent-glow), transparent 60%);
             opacity: 0; transition: opacity 0.3s var(--ease);
+            pointer-events: none;
         }
         .app-tile:hover::before { opacity: 1; }
         .app-tile:hover {
-            transform: translateY(-5px); box-shadow: var(--shadow-md);
-            border-color: rgba(196, 162, 101, 0.25);
+            transform: translateY(-3px); box-shadow: var(--shadow-md);
+            border-color: rgba(184, 151, 99, 0.3);
         }
-        .app-tile:active { transform: translateY(-2px); }
+        .app-tile:active { transform: translateY(-1px); }
         .app-tile-icon {
-            width: 58px; height: 58px; border-radius: 16px;
+            width: 56px; height: 56px; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 26px; margin-bottom: 14px; transition: transform 0.3s var(--ease-bounce);
+            font-size: 26px; flex-shrink: 0;
+            transition: transform 0.3s var(--ease-bounce);
             position: relative; z-index: 1;
         }
-        .app-tile:hover .app-tile-icon { transform: scale(1.12); }
+        .app-tile:hover .app-tile-icon { transform: scale(1.08); }
+        .app-tile-body {
+            flex: 1; min-width: 0; position: relative; z-index: 1;
+        }
         .app-tile-label {
-            font-size: 13px; font-weight: 600; color: var(--primary-dark);
-            letter-spacing: 0.3px; position: relative; z-index: 1;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 19px; font-weight: 500; color: var(--primary-dark);
+            letter-spacing: -0.2px; line-height: 1.2;
         }
         .app-tile-desc {
-            font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;
+            font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4;
+        }
+        .app-tile-arrow {
+            font-size: 18px; color: var(--accent); flex-shrink: 0;
+            opacity: 0.6; transition: all 0.3s var(--ease);
             position: relative; z-index: 1;
+        }
+        .app-tile:hover .app-tile-arrow {
+            opacity: 1; transform: translateX(4px);
         }
         .app-tile .tile-badge {
             position: absolute; top: 12px; right: 12px;
@@ -62,13 +79,68 @@
         .app-tile .tile-badge.show { display: flex; }
 
         /* GREETING */
-        .greeting-wrap { margin-bottom: 32px; }
+        .greeting-wrap { margin-bottom: 28px; }
         .greeting {
-            font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 600;
-            color: var(--primary-dark); margin-bottom: 4px; letter-spacing: 0.3px;
+            font-family: 'Cormorant Garamond', 'Playfair Display', serif; font-size: 40px; font-weight: 500;
+            color: var(--primary-dark); margin-bottom: 4px; letter-spacing: -0.5px; line-height: 1.1;
         }
         .greeting-sub {
             font-size: 13px; color: var(--text-muted); letter-spacing: 0.2px;
+        }
+
+        /* OFFICE HERO CARD */
+        .office-hero {
+            display: flex; align-items: center; gap: 22px;
+            padding: 24px 28px; margin-bottom: 32px;
+            background: linear-gradient(135deg, #2A2520 0%, #4C463E 100%);
+            border-radius: var(--radius-lg);
+            color: #FCFAF6; text-decoration: none;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s var(--ease);
+            position: relative; overflow: hidden;
+        }
+        .office-hero::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 80% 50%, rgba(184,151,99,0.18), transparent 60%);
+            pointer-events: none;
+        }
+        .office-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        .office-hero-icon {
+            font-family: 'Cormorant Garamond', serif;
+            width: 64px; height: 64px; border-radius: 16px;
+            background: rgba(184,151,99,0.18); border: 1px solid rgba(184,151,99,0.35);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px; flex-shrink: 0; color: #DCC79A;
+        }
+        .office-hero-text { flex: 1; min-width: 0; }
+        .office-hero-label {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
+            color: #DCC79A; margin-bottom: 4px; font-weight: 500;
+        }
+        .office-hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px; font-weight: 500; letter-spacing: -0.3px;
+            margin-bottom: 2px;
+        }
+        .office-hero-desc {
+            font-size: 13px; color: rgba(252,250,246,0.7);
+        }
+        .office-hero-arrow {
+            font-size: 22px; color: #DCC79A; flex-shrink: 0;
+            transition: transform 0.3s var(--ease);
+        }
+        .office-hero:hover .office-hero-arrow {
+            transform: translateX(6px);
+        }
+
+        @media (max-width: 600px) {
+            .office-hero { padding: 18px 20px; gap: 16px; }
+            .office-hero-icon { width: 48px; height: 48px; font-size: 22px; }
+            .office-hero-title { font-size: 19px; }
+            .office-hero-desc { font-size: 12px; }
         }
 
         /* ALERT CARDS */
@@ -97,9 +169,9 @@
 
         /* Section divider */
         .section-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 20px; font-weight: 600; color: var(--primary-dark);
-            margin-bottom: 6px; letter-spacing: 0.3px;
+            font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+            font-size: 24px; font-weight: 500; color: var(--primary-dark);
+            margin-bottom: 6px; letter-spacing: -0.2px;
         }
         .section-subtitle {
             font-size: 12px; color: var(--text-muted); margin-bottom: 20px;
@@ -132,6 +204,17 @@
             <div class="greeting-sub" id="todayDate"></div>
         </div>
 
+        <!-- Office Hero Card -->
+        <a href="http://localhost:3000" target="_blank" rel="noopener" class="office-hero">
+            <div class="office-hero-icon">&#10070;</div>
+            <div class="office-hero-text">
+                <div class="office-hero-label">SKINCONCEPT</div>
+                <div class="office-hero-title">Office öffnen</div>
+                <div class="office-hero-desc">Rechnungen, Preisliste, Kunden, Mail-Versand &amp; mehr</div>
+            </div>
+            <div class="office-hero-arrow">→</div>
+        </a>
+
         <!-- Alerts -->
         <div class="alerts" id="alerts"></div>
 
@@ -141,16 +224,6 @@
                 <div class="stat-icon green">&#10003;</div>
                 <div class="stat-label">Offene Aufgaben</div>
                 <div class="stat-value" id="kpiOpenTasks">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon gold">&#128222;</div>
-                <div class="stat-label">Nachsorge ausstehend</div>
-                <div class="stat-value" id="kpiNachsorge">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon red">&#9993;</div>
-                <div class="stat-label">Offene Bestellungen</div>
-                <div class="stat-value" id="kpiOpenOrders">-</div>
             </div>
         </div>
 
@@ -162,30 +235,51 @@
             <a href="aufgaben.html" class="app-tile">
                 <span class="tile-badge" id="badge-tasks"></span>
                 <div class="app-tile-icon" style="background: #F3E8FF; color: #7C3AED;">&#9745;</div>
-                <div class="app-tile-label">Aufgaben</div>
-                <div class="app-tile-desc">Todos & Team-Aufgaben</div>
-            </a>
-            <a href="nachsorge.html" class="app-tile">
-                <span class="tile-badge" id="badge-nachsorge"></span>
-                <div class="app-tile-icon" style="background: #DCFCE7; color: #25D366;">&#128222;</div>
-                <div class="app-tile-label">Nachsorge</div>
-                <div class="app-tile-desc">Kunden kontaktieren</div>
+                <div class="app-tile-body">
+                    <div class="app-tile-label">Aufgaben</div>
+                    <div class="app-tile-desc">Todos &amp; Team-Aufgaben</div>
+                </div>
+                <div class="app-tile-arrow">→</div>
             </a>
             <a href="kundenkartei.html" class="app-tile">
                 <div class="app-tile-icon" style="background: #E8F0E4; color: #3D8B5F;">&#128203;</div>
-                <div class="app-tile-label">Kundenkartei</div>
-                <div class="app-tile-desc">Anamnese & Behandlungen</div>
+                <div class="app-tile-body">
+                    <div class="app-tile-label">Kundenkartei</div>
+                    <div class="app-tile-desc">Anamnese &amp; Behandlungen</div>
+                </div>
+                <div class="app-tile-arrow">→</div>
             </a>
-            <a href="bestellungen.html" class="app-tile">
-                <span class="tile-badge" id="badge-orders"></span>
-                <div class="app-tile-icon" style="background: #F0EBFF; color: #6B5CE7;">&#128230;</div>
-                <div class="app-tile-label">Bestellungen</div>
-                <div class="app-tile-desc">Einkaufsliste & Tracking</div>
+            <a href="gutscheine.html" class="app-tile">
+                <div class="app-tile-icon" style="background: #2A2520; color: #DCC79A; border: 1px solid rgba(184,151,99,0.3);">&#127873;</div>
+                <div class="app-tile-body">
+                    <div class="app-tile-label">Gutscheine</div>
+                    <div class="app-tile-desc">Mit Auto-Rechnung &amp; Mail</div>
+                </div>
+                <div class="app-tile-arrow">→</div>
             </a>
             <a href="monatsabschluss.html" class="app-tile">
                 <div class="app-tile-icon" style="background: #FDE8E8; color: #C0544F;">&#128202;</div>
-                <div class="app-tile-label">Elena</div>
-                <div class="app-tile-desc">Monatsabschluss</div>
+                <div class="app-tile-body">
+                    <div class="app-tile-label">Elena</div>
+                    <div class="app-tile-desc">Monatsabschluss</div>
+                </div>
+                <div class="app-tile-arrow">→</div>
+            </a>
+            <a href="crm.html" class="app-tile">
+                <div class="app-tile-icon" style="background: #FEF3C7; color: #92400E;">&#128142;</div>
+                <div class="app-tile-body">
+                    <div class="app-tile-label">CRM</div>
+                    <div class="app-tile-desc">Kunden-Follow-ups</div>
+                </div>
+                <div class="app-tile-arrow">→</div>
+            </a>
+            <a href="hautapp.html" class="app-tile">
+                <div class="app-tile-icon" style="background: #E0F2FE; color: #0369A1;">&#10024;</div>
+                <div class="app-tile-body">
+                    <div class="app-tile-label">HautApp</div>
+                    <div class="app-tile-desc">Kundinnen-PWA verwalten</div>
+                </div>
+                <div class="app-tile-arrow">→</div>
             </a>
         </div>
 
@@ -229,36 +323,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         let overdueTasks = 0;
         tasksSnap.forEach(doc => { if (doc.data().due && doc.data().due < today) overdueTasks++; });
 
-        let nachsorgePending = 0;
-        try {
-            const sixAgo = new Date(); sixAgo.setDate(sixAgo.getDate() - 6);
-            const threeAgo = new Date(); threeAgo.setDate(threeAgo.getDate() - 3);
-            const visitSnap = await db.collection('client_visits')
-                .where('date', '>=', sixAgo.toISOString().slice(0, 10))
-                .where('date', '<=', threeAgo.toISOString().slice(0, 10)).get();
-            visitSnap.forEach(doc => { if (!doc.data().contacted) nachsorgePending++; });
-        } catch(e) {}
-
-        document.getElementById('kpiNachsorge').textContent = nachsorgePending;
-        if (nachsorgePending > 0) {
-            const badge = document.getElementById('badge-nachsorge');
-            badge.textContent = nachsorgePending;
-            badge.classList.add('show');
-        }
-
-        const ordersSnap = await db.collection('orders').where('status', 'in', ['bestellt', 'versandt']).get();
-        const openOrders = ordersSnap.size;
-        document.getElementById('kpiOpenOrders').textContent = openOrders;
-        if (openOrders > 0) {
-            const badge = document.getElementById('badge-orders');
-            badge.textContent = openOrders;
-            badge.classList.add('show');
-        }
-
         const alertsContainer = document.getElementById('alerts');
         let alertsHtml = '';
         if (overdueTasks > 0) alertsHtml += `<div class="alert-item urgent"><span class="alert-icon">&#9888;</span><span class="alert-text"><strong>${overdueTasks} ueberfaellige Aufgabe${overdueTasks > 1 ? 'n' : ''}</strong> – bitte erledigen!</span><a href="aufgaben.html" class="alert-action">Anzeigen</a></div>`;
-        if (nachsorgePending > 0) alertsHtml += `<div class="alert-item info"><span class="alert-icon">&#128222;</span><span class="alert-text"><strong>${nachsorgePending} Kunde${nachsorgePending > 1 ? 'n' : ''}</strong> warten auf Nachsorge</span><a href="nachsorge.html" class="alert-action">Kontaktieren</a></div>`;
         let todayTasks = 0;
         tasksSnap.forEach(doc => { if (doc.data().due === today) todayTasks++; });
         if (todayTasks > 0) alertsHtml += `<div class="alert-item warn"><span class="alert-icon">&#128197;</span><span class="alert-text"><strong>${todayTasks} Aufgabe${todayTasks > 1 ? 'n' : ''}</strong> heute faellig</span><a href="aufgaben.html" class="alert-action">Anzeigen</a></div>`;
@@ -268,8 +335,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('KPI error:', err);
         document.getElementById('kpiOpenTasks').textContent = '0';
-        document.getElementById('kpiNachsorge').textContent = '0';
-        document.getElementById('kpiOpenOrders').textContent = '0';
         document.getElementById('activityList').innerHTML = '<div class="empty-state"><p>Starte, indem du eine Aufgabe erstellst!</p></div>';
     }
 });
@@ -282,7 +347,7 @@ async function loadRecentActivity() {
     } catch(e) {}
     try {
         const visitSnap = await db.collection('client_visits').orderBy('createdAt', 'desc').limit(5).get();
-        visitSnap.forEach(doc => { const d = doc.data(); activities.push({ text: `Besuch: ${d.name} – ${d.treatment || 'Behandlung'}${d.contacted ? ' (kontaktiert)' : ''}`, time: d.createdAt ? d.createdAt.toDate() : new Date() }); });
+        visitSnap.forEach(doc => { const d = doc.data(); activities.push({ text: `Besuch: ${d.name} – ${d.treatment || 'Behandlung'}`, time: d.createdAt ? d.createdAt.toDate() : new Date() }); });
     } catch(e) {}
     try {
         const orderSnap = await db.collection('orders').orderBy('createdAt', 'desc').limit(3).get();

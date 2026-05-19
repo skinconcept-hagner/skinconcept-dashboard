@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cache zuruecksetzen - Skinconcept</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f1eb;color:#2a1f16;margin:0;padding:40px 20px;display:flex;align-items:center;justify-content:center;min-height:100vh;box-sizing:border-box}
+  .box{background:#fff;border-radius:16px;padding:32px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.08);text-align:center}
+  h1{font-size:20px;margin:0 0 8px;color:#7a5a3a}
+  p{color:#555;line-height:1.5;font-size:14px;margin:8px 0}
+  .log{background:#f6f1eb;border-radius:8px;padding:14px;margin:18px 0;text-align:left;font-family:ui-monospace,monospace;font-size:12px;line-height:1.6;max-height:200px;overflow:auto}
+  .log .ok{color:#2a7a3a}
+  .log .err{color:#a03030}
+  .btn{display:inline-block;margin-top:14px;padding:12px 22px;background:#b68855;color:#fff;text-decoration:none;border-radius:10px;font-weight:600;border:none;cursor:pointer;font-size:14px}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid #e0d0bb;border-top-color:#b68855;border-radius:50%;animation:s 1s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Cache zuruecksetzen</h1>
+  <p>Einen Moment — ich raeume alte Daten weg, damit die neueste Version laedt. Deine Kundendaten bleiben sicher.</p>
+  <div class="log" id="log"><span class="spinner"></span> Starte...</div>
+  <a class="btn" href="./kundenkartei.html" id="back" style="display:none">&#8592; Zurueck zur Kundenkartei</a>
+</div>
+<script>
+var log=document.getElementById('log');
+var back=document.getElementById('back');
+function add(cls,msg){var d=document.createElement('div');d.className=cls;d.textContent=msg;log.appendChild(d);log.scrollTop=log.scrollHeight}
+function done(){log.innerHTML='';add('ok','Fertig. Cache ist frisch.');back.style.display='inline-block';setTimeout(function(){window.location.href='./kundenkartei.html'},1500)}
+
+async function reset(){
+  log.innerHTML='';
+  // 1. Service Worker deregistrieren
+  try{
+    if('serviceWorker' in navigator){
+      var regs=await navigator.serviceWorker.getRegistrations();
+      if(regs.length===0){add('ok','Kein Service Worker aktiv')}
+      for(var r of regs){
+        var ok=await r.unregister();
+        add(ok?'ok':'err','Service Worker: '+(ok?'deregistriert':'konnte nicht entfernt werden'));
+      }
+    }
+  }catch(e){add('err','SW-Fehler: '+e.message)}
+  // 2. Alle Caches loeschen (HTML/JS/CSS)
+  try{
+    if('caches' in window){
+      var keys=await caches.keys();
+      if(keys.length===0){add('ok','Keine alten Caches vorhanden')}
+      for(var k of keys){await caches.delete(k);add('ok','Cache geloescht: '+k)}
+    }
+  }catch(e){add('err','Cache-Fehler: '+e.message)}
+  // 3. WICHTIG: localStorage und IndexedDB bleiben — das sind deine Kundendaten!
+  add('ok','Kundendaten (localStorage + IndexedDB) bleiben erhalten');
+  done();
+}
+reset();
+</script>
+</body>
+</html>

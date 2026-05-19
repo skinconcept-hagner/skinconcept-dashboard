@@ -2,31 +2,31 @@
    SKINCONCEPT DASHBOARD — Premium Design System
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Core palette */
-    --primary: #6B5344;
-    --primary-light: #8B7262;
-    --primary-dark: #4A3728;
-    --accent: #C4A265;
-    --accent-light: #E8D5B0;
-    --accent-glow: rgba(196, 162, 101, 0.15);
+    /* Core palette — abgestimmt mit Skinconcept Office */
+    --primary: #2A2520;
+    --primary-light: #4C463E;
+    --primary-dark: #2A2520;
+    --accent: #B89763;
+    --accent-light: #DCC79A;
+    --accent-glow: rgba(184, 151, 99, 0.15);
 
-    /* Backgrounds */
-    --bg: #F6F4F1;
+    /* Backgrounds (Cream-Töne wie Office) */
+    --bg: #FCFAF6;
     --bg-card: #FFFFFF;
-    --bg-elevated: #FDFCFB;
-    --bg-subtle: #EDE9E4;
+    --bg-elevated: #FCFAF6;
+    --bg-subtle: #F8F4EC;
 
-    /* Text */
-    --text: #2C2420;
-    --text-secondary: #6B6360;
-    --text-muted: #9E9894;
+    /* Text (Ink-Töne wie Office) */
+    --text: #2A2520;
+    --text-secondary: #4C463E;
+    --text-muted: #8C857A;
 
     /* Borders & Shadows */
-    --border: rgba(107, 83, 68, 0.08);
-    --border-strong: rgba(107, 83, 68, 0.14);
+    --border: rgba(42, 37, 32, 0.06);
+    --border-strong: rgba(42, 37, 32, 0.12);
     --shadow-sm: 0 1px 3px rgba(74, 55, 40, 0.04), 0 1px 2px rgba(74, 55, 40, 0.02);
     --shadow: 0 4px 16px rgba(74, 55, 40, 0.06), 0 1px 4px rgba(74, 55, 40, 0.04);
     --shadow-md: 0 8px 32px rgba(74, 55, 40, 0.08), 0 2px 8px rgba(74, 55, 40, 0.04);
@@ -119,7 +119,7 @@ body {
 }
 
 .sidebar-brand h1 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
     font-size: 20px;
     font-weight: 600;
     letter-spacing: 3px;
@@ -251,7 +251,7 @@ body {
 }
 
 .page-header h2 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
     font-size: 26px;
     font-weight: 600;
     color: var(--primary-dark);
@@ -346,7 +346,7 @@ body {
 }
 
 .stat-value {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
     font-size: 32px;
     font-weight: 700;
     color: var(--primary-dark);
@@ -665,7 +665,7 @@ tr:hover {
 }
 
 .modal h3 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
     font-size: 20px;
     font-weight: 600;
     color: var(--primary-dark);

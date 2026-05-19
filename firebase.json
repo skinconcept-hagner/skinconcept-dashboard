@@ -1,0 +1,45 @@
+{
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs20",
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
+    }
+  ],
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "*.mjs",
+      "kalender-check.png",
+      "kalender-debug.png",
+      "_april_visits.json",
+      "kalender-kunden.json",
+      "server-dashboard.js",
+      "Rechnungstool/**"
+    ],
+    "headers": [
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" },
+          { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet" },
+          { "key": "Referrer-Policy", "value": "no-referrer" }
+        ]
+      },
+      {
+        "source": "/**",
+        "headers": [
+          { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+        ]
+      }
+    ]
+  }
+}

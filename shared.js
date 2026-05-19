@@ -16,11 +16,13 @@ const db = firebase.firestore();
 // ============ NAVIGATION ============
 const NAV_ITEMS = [
     { href: 'index.html', icon: '\u2302', label: 'Home' },
+    { href: 'http://localhost:3000', icon: '\u2728', label: 'Office', external: true },
     { href: 'aufgaben.html', icon: '\u2611', label: 'Aufgaben' },
-    { href: 'nachsorge.html', icon: '\uD83D\uDCDE', label: 'Nachsorge' },
     { href: 'kundenkartei.html', icon: '\uD83D\uDCC7', label: 'Kundenkartei' },
-    { href: 'bestellungen.html', icon: '\u2750', label: 'Bestellungen' },
-    { href: 'monatsabschluss.html', icon: '\uD83D\uDCCA', label: 'Elena Monatsabschluss' }
+    { href: 'gutscheine.html', icon: '\uD83C\uDF81', label: 'Gutscheine' },
+    { href: 'monatsabschluss.html', icon: '\uD83D\uDCCA', label: 'Elena Monatsabschluss' },
+    { href: 'crm.html', icon: '\uD83D\uDC8E', label: 'CRM' },
+    { href: 'hautapp.html', icon: '\u2728', label: 'HautApp' }
 ];
 
 function initNavigation() {
@@ -36,9 +38,9 @@ function initNavigation() {
         </div>
         <nav class="sidebar-nav">
             ${NAV_ITEMS.map(item => `
-                <a href="${item.href}" class="sidebar-link ${currentPage === item.href ? 'active' : ''}">
+                <a href="${item.href}" ${item.external ? 'target="_blank" rel="noopener"' : ''} class="sidebar-link ${currentPage === item.href ? 'active' : ''}${item.external ? ' sidebar-link-external' : ''}">
                     <span class="icon">${item.icon}</span>
-                    ${item.label}
+                    ${item.label}${item.external ? ' <span style="opacity:0.5; font-size:11px; margin-left:auto">↗</span>' : ''}
                 </a>
             `).join('')}
         </nav>

@@ -1,0 +1,21 @@
+.DS_Store
+node_modules/
+.firebase/
+.env
+.env.local
+.env.*.local
+
+# Lokale Daten-Exports (nicht ins Repo, bleiben aber lokal)
+studio-photos/
+kalender-kunden.json
+_april_visits.json
+
+# Debug-Screenshots (lokale Treatwell-Scraper-Outputs)
+kalender-check.png
+kalender-debug.png
+
+# Logs & Caches
+*.log
+firebase-debug.log
+firebase-debug.*.log
+.runtimeconfig.json

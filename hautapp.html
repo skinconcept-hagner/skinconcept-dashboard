@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b08d57">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Skinconcept Hagner - HautApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .ha-wrap { display:grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+        @media(max-width:1100px){ .ha-wrap{ grid-template-columns: 1fr; } }
+
+        .ha-col {
+            background: var(--bg-card); border:1px solid var(--border); border-radius: var(--radius);
+            padding: 16px; box-shadow: var(--shadow); max-height: calc(100vh - 120px); overflow-y:auto;
+        }
+        .ha-col h3 {
+            font-family: 'Cormorant Garamond', serif; font-size: 20px; margin-bottom: 10px;
+            color: var(--primary-dark); display:flex; align-items:center; justify-content:space-between;
+        }
+        .ha-col h3 .cnt {
+            background: var(--accent); color:#fff; padding: 2px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; font-family: 'Inter', sans-serif;
+        }
+
+        .ha-search input {
+            width:100%; padding: 10px 12px; border:1px solid var(--border); border-radius: 10px;
+            font-size: 13px; background: var(--bg); margin-bottom: 10px; font-family: inherit;
+        }
+        .ha-search input:focus { outline:0; border-color: var(--accent); background: #fff; }
+
+        .ha-tabs { display:flex; gap:4px; background:var(--bg); border-radius:10px; padding:3px; margin-bottom: 12px; }
+        .ha-tabs button {
+            flex:1; padding: 8px; border:0; background:transparent; border-radius: 8px;
+            cursor:pointer; font-family:inherit; font-size:12px; font-weight:500; color:var(--text-muted);
+        }
+        .ha-tabs button.active { background:#fff; color: var(--primary-dark); box-shadow: var(--shadow-sm); }
+
+        .ha-client {
+            padding: 10px 12px; border-radius: 10px; cursor:pointer; margin-bottom: 4px;
+            transition: all .15s; background: var(--bg); border: 1px solid transparent;
+            display:flex; align-items:center; gap:10px;
+        }
+        .ha-client:hover { background: #fff; border-color: var(--border); }
+        .ha-client.selected { background: var(--accent-light); border-color: var(--accent); }
+        .ha-client .avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--primary-dark); color: var(--accent);
+            display:flex; align-items:center; justify-content:center; font-family: 'Cormorant Garamond', serif;
+            font-size: 15px; flex-shrink: 0;
+        }
+        .ha-client .info { flex:1; min-width:0; }
+        .ha-client .n { font-weight: 600; font-size: 13px; color: var(--primary-dark); }
+        .ha-client .m { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .ha-client .dot {
+            width: 10px; height: 10px; border-radius: 50%; background: var(--danger); flex-shrink:0;
+            display: none;
+        }
+        .ha-client.has-update .dot { display: block; }
+
+        .ha-empty {
+            padding: 40px 20px; text-align:center; color: var(--text-muted); font-size: 13px;
+        }
+        .ha-empty .big {
+            font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--text-light);
+            margin-bottom: 6px;
+        }
+
+        .ha-head {
+            background: linear-gradient(165deg, var(--primary-dark), #2a2622); color:#fff;
+            padding: 24px 28px; border-radius: var(--radius); margin-bottom: 16px; position:relative; overflow:hidden;
+        }
+        .ha-head::before {
+            content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px;
+            background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+        }
+        .ha-head h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; margin-bottom: 4px; }
+        .ha-head .email { color: var(--accent-light); font-size: 13px; }
+        .ha-head .meta-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-top: 18px; }
+        .ha-head .meta label { display:block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color:#bcb3a6; margin-bottom:3px; }
+        .ha-head .meta val { display:block; font-size: 14px; font-weight: 500; color:#fff; }
+
+        .ha-tabs-big {
+            display:flex; gap: 3px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto;
+        }
+        .ha-tabs-big button {
+            padding: 10px 16px; background: none; border: 0; border-bottom: 2px solid transparent;
+            font-family:inherit; font-size: 13px; color: var(--text-muted); cursor:pointer; white-space: nowrap;
+            font-weight: 500;
+        }
+        .ha-tabs-big button.active { color: var(--primary-dark); border-bottom-color: var(--accent); }
+
+        .ha-panel { display:none; }
+        .ha-panel.active { display:block; }
+
+        .ha-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px; box-shadow: var(--shadow); margin-bottom: 12px;
+        }
+        .ha-card h3 {
+            font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--primary-dark); margin-bottom: 12px;
+            display:flex; align-items:center; gap: 8px;
+        }
+
+        .stat-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+        .stat-box {
+            padding: 14px; background: var(--bg); border-radius: 10px; text-align:center;
+        }
+        .stat-box .v { font-family:'Cormorant Garamond', serif; font-size: 28px; color: var(--primary-dark); font-weight: 600; }
+        .stat-box .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        .entry {
+            padding: 14px 0; border-bottom: 1px solid var(--border);
+        }
+        .entry:last-child { border-bottom: 0; }
+        .entry .top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; }
+        .entry .date { font-size: 12px; color: var(--text-muted); }
+        .entry .cond { background: var(--accent-light); color: var(--primary-dark); padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .entry .tags { display:flex; flex-wrap:wrap; gap: 4px; margin: 6px 0; }
+        .entry .tag { padding: 2px 9px; background: var(--bg); border:1px solid var(--border); border-radius: 20px; font-size: 11px; color: var(--text-secondary); }
+        .entry .note { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+        .photo-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+        .ph-tile {
+            aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--border);
+            position:relative; cursor:pointer; transition: transform .2s;
+        }
+        .ph-tile:hover { transform: scale(1.02); }
+        .ph-tile img { width:100%; height:100%; object-fit:cover; }
+        .ph-tile .d { position:absolute; bottom:0; left:0; right:0; padding: 5px 8px; background: linear-gradient(transparent, rgba(0,0,0,.6)); color:#fff; font-size: 11px; }
+        .ph-tile .a { position:absolute; top:6px; left:6px; padding: 2px 7px; background: rgba(0,0,0,.6); color:#fff; font-size: 10px; border-radius: 4px; }
+
+        .step { display:flex; align-items:center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .step:last-child { border-bottom: 0; }
+        .step .num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-light); color: var(--primary-dark); display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+        .step .b { flex:1; }
+        .step .n { font-size: 14px; font-weight: 600; }
+        .step .m { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        .routines-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media(max-width:800px){ .routines-grid{ grid-template-columns: 1fr; } }
+
+        .stars { color: var(--accent); font-size: 14px; }
+        .stars .off { opacity: 0.25; }
+
+        .anam-sec { margin-bottom: 16px; }
+        .anam-sec-head { display:flex; align-items:center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+        .anam-sec-head .t { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; flex:1; }
+        .anam-sec-head .ic { font-size: 16px; }
+        .anam-field { padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; background: var(--bg); }
+        .anam-field .l { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .anam-field .v { font-size: 13px; color: var(--text); margin-top: 3px; line-height: 1.5; }
+        .anam-field.empty .v { font-size: 12px; color: var(--text-muted); font-style: italic; }
+        .anam-chip { display:inline-block; padding: 3px 11px; background: var(--accent-light); color: var(--primary-dark); border-radius: 14px; font-size: 11px; margin: 2px 3px 2px 0; font-weight: 500; }
+
+        .change-badge {
+            background: #FEF3C7; color: #92400E; padding: 10px 14px; border-radius: 10px;
+            font-size: 12px; margin-bottom: 12px; display:flex; gap: 8px; align-items: center;
+            border-left: 3px solid #F59E0B;
+        }
+        .change-badge .bell { font-size: 16px; }
+        .change-badge strong { display:block; font-size: 13px; margin-bottom: 2px; }
+
+        .msg-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 14px 16px; margin-bottom: 8px;
+        }
+        .msg-card.new { border-left: 3px solid var(--accent); background: var(--accent-light); }
+        .msg-card.done { opacity: 0.55; }
+        .msg-card .subj { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .msg-card .text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+        .msg-card .foot { display:flex; justify-content:space-between; align-items:center; font-size: 11px; color: var(--text-muted); }
+        .msg-card button {
+            background: #fff; border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px;
+            font-family: inherit; font-size: 11px; cursor: pointer; color: var(--text-secondary);
+        }
+
+        /* Photo viewer */
+        .ph-view { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 1000; display:none; align-items:center; justify-content:center; padding: 2rem; }
+        .ph-view.on { display: flex; }
+        .ph-view img { max-width: 90%; max-height: 85vh; border-radius: 8px; }
+        .ph-view .close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,.15); color:#fff; border:0; width:40px; height:40px; border-radius: 50%; font-size: 20px; cursor: pointer; }
+        .ph-view .cap { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.6); color:#fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; max-width: 80%; text-align:center; }
+
+        .live-pulse {
+            display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%;
+            margin-right: 6px; animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+        <div class="page-header">
+            <h2>HautApp</h2>
+            <p><span class="live-pulse"></span>Live-Verbindung zu Kundinnen-App &middot; Was deine Kundinnen mit euch teilen</p>
+        </div>
+
+        <div class="ha-wrap">
+            <aside class="ha-col">
+                <div class="ha-tabs">
+                    <button class="active" data-section="clients">Kundinnen</button>
+                    <button data-section="messages">Nachrichten <span id="cnt-new-msg" style="display:none;background:var(--danger);color:#fff;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px"></span></button>
+                </div>
+
+                <div id="sect-clients">
+                    <div class="ha-search">
+                        <input type="text" id="search" placeholder="Suche nach Name …">
+                    </div>
+                    <div id="client-list"></div>
+                </div>
+
+                <div id="sect-messages" style="display:none">
+                    <div id="msg-list"></div>
+                </div>
+            </aside>
+
+            <section>
+                <div id="empty-panel" class="ha-card" style="text-align:center;padding: 80px 20px">
+                    <h2 style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;margin-bottom:8px">Willkommen</h2>
+                    <p style="color:var(--text-muted);font-size:14px">Wähle links eine Kundin aus, um alles zu sehen,<br>was sie in der HautApp mit euch teilt.</p>
+                </div>
+
+                <div id="client-view" style="display:none">
+                    <div class="ha-head" id="client-head"></div>
+
+                    <div class="ha-tabs-big">
+                        <button class="active" data-panel="overview">Übersicht</button>
+                        <button data-panel="diary">Skin Diary</button>
+                        <button data-panel="photos">Fotos</button>
+                        <button data-panel="routine">Routine</button>
+                        <button data-panel="products">Produkte</button>
+                        <button data-panel="anamnese">Anamnese</button>
+                    </div>
+
+                    <div class="ha-panel active" id="panel-overview"></div>
+                    <div class="ha-panel" id="panel-diary"></div>
+                    <div class="ha-panel" id="panel-photos"></div>
+                    <div class="ha-panel" id="panel-routine"></div>
+                    <div class="ha-panel" id="panel-products"></div>
+                    <div class="ha-panel" id="panel-anamnese"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<div class="ph-view" id="ph-view">
+    <button class="close" onclick="document.getElementById('ph-view').classList.remove('on')">&times;</button>
+    <img id="ph-img" src="">
+    <div class="cap" id="ph-cap"></div>
+</div>
+
+<!-- Modal: Produkt -->
+<div id="prod-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;padding:28px">
+        <h3 id="prod-modal-title" style="font-family:'Cormorant Garamond',serif;font-size:26px;margin-bottom:4px;color:var(--primary-dark)">Produkt für Kundin eintragen</h3>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px">Das Produkt erscheint in ihrer App. Sie bekommt eine Benachrichtigung.</p>
+
+        <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Produktname *</label>
+            <input type="text" id="pm-name" placeholder="z.B. Ultimate A" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit"></div>
+
+        <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Marke</label>
+            <input type="text" id="pm-brand" placeholder="z.B. Noon Aesthetics" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Typ</label>
+                <select id="pm-type" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff">
+                    <option>Reiniger</option><option>Toner</option><option>Serum</option><option>Creme</option>
+                    <option>Augenpflege</option><option>Sonnenschutz</option><option>Maske</option><option>Peeling</option><option>Sonstiges</option>
+                </select></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Wann</label>
+                <select id="pm-timing" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff">
+                    <option value="both">Morgens &amp; Abends</option><option value="morning">Nur morgens</option>
+                    <option value="evening">Nur abends</option><option value="weekly">Wöchentlich</option>
+                </select></div>
+        </div>
+
+        <div style="margin-bottom:16px"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Notiz / Empfehlung</label>
+            <textarea id="pm-note" placeholder="z.B. 2x pro Woche abends, mit Feuchtigkeit kombinieren" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;min-height:80px;resize:vertical"></textarea></div>
+
+        <div style="display:flex;gap:10px">
+            <button onclick="document.getElementById('prod-modal').style.display='none'" style="flex:1;padding:12px;border:1px solid var(--border);background:#fff;border-radius:10px;font-family:inherit;font-weight:500;cursor:pointer">Abbrechen</button>
+            <button id="pm-save" style="flex:1;padding:12px;border:0;background:var(--primary-dark);color:#fff;border-radius:10px;font-family:inherit;font-weight:500;cursor:pointer">Für Kundin speichern</button>
+        </div>
+        <button id="pm-delete" style="display:none;width:100%;margin-top:8px;padding:10px;border:1px solid var(--danger);background:#fff;color:var(--danger);border-radius:10px;font-family:inherit;font-weight:500;cursor:pointer">Produkt entfernen</button>
+    </div>
+</div>
+
+<!-- Modal: Routine-Schritt -->
+<div id="rs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:28px">
+        <h3 id="rs-modal-title" style="font-family:'Cormorant Garamond',serif;font-size:24px;margin-bottom:4px;color:var(--primary-dark)">Routine-Schritt</h3>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px">Trage einen Schritt in die App-Routine der Kundin ein.</p>
+
+        <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Produkt *</label>
+            <select id="rs-product" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff">
+                <option value="">— Produkt wählen —</option>
+            </select></div>
+
+        <div style="margin-bottom:16px"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Anweisung</label>
+            <input type="text" id="rs-instruction" placeholder="z.B. 2 Tropfen, kreisend einmassieren" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit"></div>
+
+        <div style="display:flex;gap:10px">
+            <button onclick="document.getElementById('rs-modal').style.display='none'" style="flex:1;padding:12px;border:1px solid var(--border);background:#fff;border-radius:10px;font-family:inherit;font-weight:500;cursor:pointer">Abbrechen</button>
+            <button id="rs-save" style="flex:1;padding:12px;border:0;background:var(--primary-dark);color:#fff;border-radius:10px;font-family:inherit;font-weight:500;cursor:pointer">Hinzufügen</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<!-- shared.js initialisiert Firebase für das Haupt-Projekt (skinconcept-tool) und stellt db bereit -->
+<script src="shared.js"></script>
+
+<script>
+// Zweites Firebase-Projekt für die Anamnese (skinconcept-hagner Realtime DB)
+const karteiApp = firebase.initializeApp({
+    apiKey: "AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+    authDomain: "skinconcept-hagner.firebaseapp.com",
+    databaseURL: "https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+    storageBucket: "skinconcept-hagner.firebasestorage.app"
+}, 'kartei');
+const karteiDb = karteiApp.database();
+</script>
+
+<script>
+// STATE
+let CLIENTS = [], SELECTED = null;
+let ALL_DIARY = [], ALL_PHOTOS = [], ALL_PRODUCTS = [], ALL_ROUTINES = {};
+let ANAM_DATA = {}, ANAM_NOTIFICATIONS = [];
+let MESSAGES = [];
+let UPDATED_UIDS = new Set();
+const IS_PREVIEW = new URLSearchParams(location.search).get('preview') === '1' || location.hash === '#preview';
+
+// Mock-Daten für Preview-Modus
+const ts = (mins) => ({ seconds: Math.floor((Date.now() - mins*60000)/1000), toDate: () => new Date(Date.now() - mins*60000) });
+
+const MOCK = {
+  clients: [
+    { id:'julia', name:'Julia Schmidt', vorname:'Julia', nachname:'Schmidt', email:'julia.schmidt@gmail.com', telefon:'0171 2341234', geburtsdatum:'1989-03-12', hauttyp:'Mischhaut', allergien:'Duftstoffe, Alkohol', ziele:'Rötungen mindern, Poren verfeinern, glättere Haut', createdAt: ts(60*24*12) },
+    { id:'marie', name:'Marie Keller', vorname:'Marie', nachname:'Keller', email:'marie.keller@web.de', telefon:'0176 5551122', geburtsdatum:'1995-07-22', hauttyp:'Trocken', allergien:'-', ziele:'Anti-Aging, Feuchtigkeit', createdAt: ts(60*24*5) },
+    { id:'sarah', name:'Sarah Wagner', vorname:'Sarah', nachname:'Wagner', email:'sarah.w@outlook.de', telefon:'0151 9988776', geburtsdatum:'1992-11-04', hauttyp:'', allergien:'', ziele:'', createdAt: ts(45) }
+  ],
+  diary: {
+    julia: [
+      { id:'d1', uid:'julia', mood:4, skinCondition:8, tags:['Glatt','Glänzend'], note:'Nach der letzten Behandlung ist die Haut deutlich ruhiger. Die Rötungen an den Wangen sind fast weg — begeistert!', isPrivate:false, createdAt: ts(60*3), date:'2026-04-16' },
+      { id:'d2', uid:'julia', mood:3, skinCondition:6, tags:['Trockenheit','Spannungsgefühl'], note:'Gestern wieder Sport gemacht, danach spannt die Haut. Trinke jetzt mehr Wasser.', isPrivate:false, createdAt: ts(60*24), date:'2026-04-15' },
+      { id:'d3', uid:'julia', mood:2, skinCondition:4, tags:['Rötung','Unreinheit'], note:'Stressige Woche, die Haut zeigt es. Kleine Pickelchen am Kinn, typisch vor der Periode.', isPrivate:false, createdAt: ts(60*24*3), date:'2026-04-13' },
+      { id:'d4', uid:'julia', mood:5, skinCondition:9, tags:['Glatt'], note:'Wow — die Haut fühlt sich fantastisch an! Routine mit dem Ultimate A funktioniert.', isPrivate:false, createdAt: ts(60*24*6), date:'2026-04-10' }
+    ],
+    marie: [
+      { id:'d5', uid:'marie', mood:3, skinCondition:5, tags:['Trockenheit'], note:'Heizungsluft im Büro macht der Haut zu schaffen.', isPrivate:false, createdAt: ts(60*8), date:'2026-04-16' }
+    ],
+    sarah: []
+  },
+  photos: {
+    julia: [
+      { id:'p1', uid:'julia', url:'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?w=600&q=80', area:'Gesicht (Frontal)', tags:['Nachher'], note:'Nach dem Peeling vor 2 Tagen — Rötung abgeklungen', isPrivate:false, createdAt: ts(60*3), date:'2026-04-16' },
+      { id:'p2', uid:'julia', url:'https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=600&q=80', area:'Wange links', tags:['Akne','Vorher'], note:'Der Pickel am Kinn den ich meinte', isPrivate:false, createdAt: ts(60*24*2), date:'2026-04-14' },
+      { id:'p3', uid:'julia', url:'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=80', area:'Gesicht (Frontal)', tags:['Vorher'], note:'Morgens ohne Make-up', isPrivate:false, createdAt: ts(60*24*6), date:'2026-04-10' }
+    ],
+    marie: [
+      { id:'p4', uid:'marie', url:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&q=80', area:'Stirn', tags:['Trockenheit'], note:'Die Stellen fühlen sich rau an', isPrivate:false, createdAt: ts(60*8), date:'2026-04-16' }
+    ],
+    sarah: []
+  },
+  products: {
+    julia: [
+      { id:'pr1', uid:'julia', name:'Ultimate A', brand:'Noon Aesthetics', type:'Serum', timing:'evening', rating:5, note:'Leichter Glow schon nach 2 Wochen', addedBy:'studio' },
+      { id:'pr2', uid:'julia', name:'Mandelic Clear', brand:'Noon Aesthetics', type:'Toner', timing:'both', rating:4, note:'Perfekt gegen die Unreinheiten', addedBy:'studio' },
+      { id:'pr3', uid:'julia', name:'Sunbrella SPF50', brand:'Noon Aesthetics', type:'Sonnenschutz', timing:'morning', rating:5, note:'Zieht schnell ein, klebt nicht', addedBy:'studio' },
+      { id:'pr4', uid:'julia', name:'Hydra Cream', brand:'Laroche-Posay', type:'Creme', timing:'both', rating:2, note:'Hat kleine Pickel verursacht, lasse ich weg', addedBy:'client' }
+    ],
+    marie: [
+      { id:'pr5', uid:'marie', name:'Cleansing Gel', brand:'Noon Aesthetics', type:'Reiniger', timing:'both', rating:4, note:'Schäumt gut' }
+    ],
+    sarah: []
+  },
+  routines: {
+    julia: {
+      morning: [
+        { productId:'pr5', instruction:'Mit lauwarmem Wasser', addedBy:'client' },
+        { productId:'pr2', instruction:'2 Tropfen, einklopfen', addedBy:'studio' },
+        { productId:'pr3', instruction:'Großzügig auftragen', addedBy:'studio' }
+      ],
+      evening: [
+        { productId:'pr5', instruction:'Gründlich abschminken', addedBy:'client' },
+        { productId:'pr2', instruction:'Auf Wattepad', addedBy:'studio' },
+        { productId:'pr1', instruction:'1 Pipette, kreisend', addedBy:'studio' }
+      ]
+    },
+    marie: { morning:[{productId:'pr5', instruction:''}], evening:[{productId:'pr5', instruction:''}] },
+    sarah: { morning:[], evening:[] }
+  },
+  anamnese: {
+    julia: {
+      vorname:'Julia', name:'Schmidt', email:'julia.schmidt@gmail.com', telefon:'0171 2341234',
+      geburtsdatum:'1989-03-12', plz:'54497', adresse:'Hauptstraße 12, Morbach',
+      hautprobleme_seit:'Seit der Pubertät, verstärkt hormonell',
+      sachlagen:['Allergien','Hohes Stresslevel'],
+      sachlagen_details:'Duftstoffe, Parabene, Alkohol — starke Reaktion',
+      medikamente_checks:['Pille'],
+      medikamente_weitere:'Magnesium 400mg, Omega-3',
+      lebensumstaende:['Hoher Wasserkonsum','Sport','Regelmäßige Essgewohnheiten'],
+      hormonstatus:['Zyklusschwankungen','Akne / unreine Haut'],
+      vorbehandlungen_aesthetisch:['Peeling'],
+      vorbehandlungen_details:'2x Fruchtsäurepeeling bei euch letztes Jahr',
+      braeunung:['Keines'],
+      haeusliche_pflege:['Tagescreme mit LSF','Wirkstoff Serum','Toner','Reinigung'],
+      pflege_details:'Noon Aesthetics Ultimate A, Mandelic Clear, Sunbrella',
+      hautproblem:['Unreine Haut','Pigmentstörungen'],
+      besuchsgrund:'Rötungen reduzieren, ebenmäßigeres Hautbild, Poren verfeinern',
+      erfahrung_medical:['Erfahrung mit Medical Beauty'],
+      _at: new Date(Date.now() - 60*60000).toISOString(),
+      _source:'hautapp', _uid:'julia'
+    },
+    marie: {
+      vorname:'Marie', name:'Keller', email:'marie.keller@web.de', telefon:'0176 5551122',
+      geburtsdatum:'1995-07-22',
+      lebensumstaende:['Niedriger Wasserkonsum'],
+      hautproblem:['Trockene Haut'],
+      _at: new Date(Date.now() - 60*60000*24*2).toISOString(),
+      _source:'hautapp', _uid:'marie'
+    },
+    sarah: {
+      vorname:'Sarah', name:'Wagner', email:'sarah.w@outlook.de', telefon:'0151 9988776',
+      geburtsdatum:'1992-11-04',
+      _at: new Date(Date.now() - 45*60000).toISOString(),
+      _source:'hautapp', _uid:'sarah', _status:'registriert'
+    }
+  },
+  notifications: [
+    { id:'n1', uid:'julia', type:'anamnese_updated', changedFields:['Aktuelle Medikamente','Weitere Medikamente / Vitamine'], status:'new', userName:'Julia Schmidt', createdAt: ts(55) },
+    { id:'n2', uid:'sarah', type:'registered', status:'new', userName:'Sarah Wagner', createdAt: ts(45) }
+  ],
+  messages: [
+    { id:'m1', uid:'julia', userName:'Julia Schmidt', userEmail:'julia.schmidt@gmail.com', subject:'Rötung nach Behandlung', text:'Hi Tamara, seit dem Peeling gestern habe ich wieder eine leichte Rötung an der rechten Wange. Ist das normal oder sollte ich was beachten? Liebe Grüße Julia', status:'new', createdAt: ts(90) },
+    { id:'m2', uid:'marie', userName:'Marie Keller', userEmail:'marie.keller@web.de', subject:'Produktempfehlung?', text:'Liebe Tamara, kannst du mir ein Produkt gegen Trockenheit empfehlen? Meine Haut spannt extrem seit die Heizung an ist.', status:'new', createdAt: ts(60*6) },
+    { id:'m3', uid:'julia', userName:'Julia Schmidt', userEmail:'julia.schmidt@gmail.com', subject:'Termin verschieben?', text:'Hi, ich müsste den Termin am Freitag leider verschieben. Geht Montag 14 Uhr? Danke!', status:'done', createdAt: ts(60*48) }
+  ]
+};
+
+// Hilfsfunktionen
+function fmtDate(ts) {
+    if (!ts) return '';
+    const d = ts && ts.toDate ? ts.toDate() : (ts && ts.seconds ? new Date(ts.seconds*1000) : new Date(ts));
+    return d.toLocaleDateString('de-DE', { day:'2-digit', month:'short', year:'numeric' });
+}
+function fmtDateTime(ts) {
+    if (!ts) return '';
+    const d = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds*1000) : new Date(ts));
+    return d.toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function initials(n) { return (n||'?').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Clients laden + Live-Listener
+async function initApp() {
+    if (IS_PREVIEW) {
+        // Demo-Banner oben anzeigen
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:linear-gradient(90deg,#C4A265,#E8D5B0);color:#4A3728;text-align:center;padding:10px 14px;font-size:13px;font-weight:600;border-radius:10px;margin-bottom:16px;box-shadow:var(--shadow-sm)';
+        banner.innerHTML = '✨ Demo-Modus &middot; So sieht es aus, wenn Kundinnen bereits Inhalte geteilt haben. Keine echten Daten.';
+        document.querySelector('.page-header').after(banner);
+
+        CLIENTS = MOCK.clients;
+        MESSAGES = MOCK.messages;
+        UPDATED_UIDS = new Set(MOCK.notifications.filter(n => n.status === 'new').map(n => n.uid));
+        renderClients();
+        const newC = MESSAGES.filter(m => m.status === 'new').length;
+        const badge = document.getElementById('cnt-new-msg');
+        if (newC > 0) { badge.style.display=''; badge.textContent = newC; }
+        renderMessages();
+        // Auto-select erste Kundin mit Update
+        selectClient('julia');
+        return;
+    }
+    try {
+        db.collection('app_users').onSnapshot(snap => {
+            CLIENTS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderClients();
+            if (SELECTED) renderClientHead();
+        }, err => console.error('app_users listen:', err));
+
+        // Live: Notifications (neue Einträge/Anamnese-Updates)
+        db.collection('app_notifications').where('status', '==', 'new').onSnapshot(snap => {
+            snap.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                    const n = change.doc.data();
+                    UPDATED_UIDS.add(n.uid);
+                    renderClients();
+                    const added = change.doc.metadata.hasPendingWrites ? false : true;
+                    if (added && !change.doc.metadata.fromCache) {
+                        showNotification(n);
+                    }
+                }
+            });
+        }, err => console.error('notifications:', err));
+
+        // Live: Nachrichten
+        db.collection('app_messages').onSnapshot(snap => {
+            MESSAGES = snap.docs.map(d => ({id:d.id, ...d.data()}))
+                .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+            const newC = MESSAGES.filter(m => m.status === 'new').length;
+            const badge = document.getElementById('cnt-new-msg');
+            if (newC > 0) { badge.style.display=''; badge.textContent = newC; }
+            else badge.style.display = 'none';
+            renderMessages();
+        });
+
+        // Live: Anamnese-Änderungen aus Realtime DB
+        karteiDb.ref('anamneseboegen').on('child_changed', snap => {
+            const entry = snap.val();
+            if (!entry || entry._source !== 'hautapp') return;
+            if (entry._uid) {
+                UPDATED_UIDS.add(entry._uid);
+                renderClients();
+            }
+        });
+    } catch (e) { console.error('init:', e); }
+}
+
+function renderClients() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const filtered = CLIENTS
+        .filter(c => !q || (c.name||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q))
+        .sort((a,b) => {
+            const ua = UPDATED_UIDS.has(a.id) ? 0 : 1;
+            const ub = UPDATED_UIDS.has(b.id) ? 0 : 1;
+            if (ua !== ub) return ua - ub;
+            return (a.name||'').localeCompare(b.name||'');
+        });
+
+    const box = document.getElementById('client-list');
+    const count = document.createElement('span');
+    if (!CLIENTS.length) {
+        box.innerHTML = '<div class="ha-empty"><div class="big">Noch niemand</div>Sobald sich Kundinnen registrieren,<br>erscheinen sie hier.</div>';
+        return;
+    }
+    if (!filtered.length) { box.innerHTML = '<div class="ha-empty">Keine Treffer</div>'; return; }
+
+    box.innerHTML = filtered.map(c => `
+        <div class="ha-client ${SELECTED?.id===c.id?'selected':''} ${UPDATED_UIDS.has(c.id)?'has-update':''}" data-id="${c.id}">
+            <div class="avatar">${initials(c.name)}</div>
+            <div class="info">
+                <div class="n">${esc(c.name||'(ohne Name)')}</div>
+                <div class="m">${esc(c.hauttyp||'—')} &middot; ${esc(c.email||'')}</div>
+            </div>
+            <div class="dot" title="Neue Inhalte"></div>
+        </div>
+    `).join('');
+    box.querySelectorAll('.ha-client').forEach(el => {
+        el.addEventListener('click', () => selectClient(el.dataset.id));
+    });
+}
+document.getElementById('search').addEventListener('input', renderClients);
+
+async function selectClient(id) {
+    SELECTED = CLIENTS.find(c => c.id === id);
+    UPDATED_UIDS.delete(id);
+    renderClients();
+    document.getElementById('empty-panel').style.display = 'none';
+    document.getElementById('client-view').style.display = '';
+    renderClientHead();
+
+    if (IS_PREVIEW) {
+        ALL_DIARY = MOCK.diary[id] || [];
+        ALL_PHOTOS = MOCK.photos[id] || [];
+        ALL_PRODUCTS = MOCK.products[id] || [];
+        ALL_ROUTINES = MOCK.routines[id] || { morning:[], evening:[] };
+        ANAM_NOTIFICATIONS = MOCK.notifications.filter(n => n.uid === id);
+        ANAM_DATA = MOCK.anamnese[id] || {};
+        renderOverview(); renderDiaryPanel(); renderPhotosPanel(); renderRoutinesPanel(); renderProductsPanel(); renderAnamnesePanel();
+        return;
+    }
+
+    // Alle Daten parallel laden
+    const [diarySnap, photoSnap, prodSnap, routDoc, notifSnap] = await Promise.all([
+        db.collection('app_diary').where('uid','==',id).get(),
+        db.collection('app_photos').where('uid','==',id).get(),
+        db.collection('app_products').where('uid','==',id).get(),
+        db.collection('app_routines').doc(id).get(),
+        db.collection('app_notifications').where('uid','==',id).get()
+    ]);
+
+    ALL_DIARY = diarySnap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>!e.isPrivate)
+        .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    ALL_PHOTOS = photoSnap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>!p.isPrivate)
+        .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    ALL_PRODUCTS = prodSnap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    ALL_ROUTINES = routDoc.exists ? routDoc.data() : { morning:[], evening:[] };
+    ANAM_NOTIFICATIONS = notifSnap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+
+    // Anamnese aus Realtime DB laden
+    try {
+        const anamSnap = await karteiDb.ref('anamneseboegen/app_' + id).once('value');
+        ANAM_DATA = anamSnap.val() || {};
+    } catch (e) { ANAM_DATA = {}; }
+
+    // Offene Notifications auf "seen" setzen
+    const batch = db.batch();
+    ANAM_NOTIFICATIONS.filter(n => n.status === 'new').forEach(n => {
+        batch.update(db.collection('app_notifications').doc(n.id), { status: 'seen' });
+    });
+    try { await batch.commit(); } catch(e) {}
+
+    renderOverview(); renderDiaryPanel(); renderPhotosPanel(); renderRoutinesPanel(); renderProductsPanel(); renderAnamnesePanel();
+}
+
+function renderClientHead() {
+    const c = SELECTED;
+    document.getElementById('client-head').innerHTML = `
+        <h2>${esc(c.name||'(ohne Name)')}</h2>
+        <div class="email">${esc(c.email||'')}</div>
+        <div class="meta-grid">
+            <div class="meta"><label>Hauttyp</label><val>${esc(c.hauttyp||'—')}</val></div>
+            <div class="meta"><label>Telefon</label><val>${esc(c.telefon||'—')}</val></div>
+            <div class="meta"><label>Geburtsdatum</label><val>${esc(c.geburtsdatum||'—')}</val></div>
+            <div class="meta"><label>Allergien</label><val>${esc(c.allergien||'—')}</val></div>
+            <div class="meta"><label>Ziele</label><val>${esc(c.ziele||'—')}</val></div>
+            <div class="meta"><label>Registriert</label><val>${fmtDate(c.createdAt)}</val></div>
+        </div>
+    `;
+}
+
+function renderOverview() {
+    const lastDiary = ALL_DIARY[0];
+    const lastPhoto = ALL_PHOTOS[0];
+    const lastNotif = ANAM_NOTIFICATIONS[0];
+
+    let changesHtml = '';
+    if (lastNotif && lastNotif.type === 'anamnese_updated' && lastNotif.changedFields?.length) {
+        changesHtml = `
+            <div class="change-badge">
+                <span class="bell">🔔</span>
+                <div>
+                    <strong>Anamnese wurde aktualisiert &middot; ${fmtDateTime(lastNotif.createdAt)}</strong>
+                    Geänderte Felder: ${lastNotif.changedFields.map(f => '<span class="anam-chip" style="background:#FEF3C7;color:#92400E">'+esc(f)+'</span>').join(' ')}
+                </div>
+            </div>
+        `;
+    }
+
+    document.getElementById('panel-overview').innerHTML = `
+        ${changesHtml}
+        <div class="ha-card">
+            <h3>Statistik</h3>
+            <div class="stat-row">
+                <div class="stat-box"><div class="v">${ALL_DIARY.length}</div><div class="l">Diary-Einträge</div></div>
+                <div class="stat-box"><div class="v">${ALL_PHOTOS.length}</div><div class="l">Fotos</div></div>
+                <div class="stat-box"><div class="v">${ALL_PRODUCTS.length}</div><div class="l">Produkte</div></div>
+                <div class="stat-box"><div class="v">${(ALL_ROUTINES.morning?.length||0)+(ALL_ROUTINES.evening?.length||0)}</div><div class="l">Routine-Schritte</div></div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+            <div class="ha-card">
+                <h3>Letzter Diary-Eintrag</h3>
+                ${lastDiary ? `
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${fmtDate(lastDiary.createdAt)}</div>
+                    <p style="margin-bottom:6px"><strong>Hautzustand:</strong> ${lastDiary.skinCondition}/10</p>
+                    ${lastDiary.tags?.length ? '<div class="tags">'+lastDiary.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : ''}
+                    <p class="note" style="margin-top:8px;padding:10px;background:var(--bg);border-radius:8px;font-size:13px">${esc(lastDiary.note||'Keine Notiz')}</p>
+                ` : '<div class="ha-empty">Noch nichts geteilt.</div>'}
+            </div>
+            <div class="ha-card">
+                <h3>Letztes geteiltes Foto</h3>
+                ${lastPhoto ? `
+                    <img src="${lastPhoto.url}" style="width:100%;border-radius:10px;max-height:280px;object-fit:cover;cursor:pointer" onclick="viewPhoto('${lastPhoto.url}','${esc(lastPhoto.area||'')} &middot; ${fmtDate(lastPhoto.createdAt)}')">
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:6px">${esc(lastPhoto.area||'')} &middot; ${fmtDate(lastPhoto.createdAt)}</div>
+                ` : '<div class="ha-empty">Noch keine Fotos geteilt.</div>'}
+            </div>
+        </div>
+    `;
+}
+
+function renderDiaryPanel() {
+    const b = document.getElementById('panel-diary');
+    if (!ALL_DIARY.length) { b.innerHTML = '<div class="ha-card ha-empty"><div class="big">Nichts geteilt</div>Diese Kundin teilt keine Diary-Einträge.</div>'; return; }
+    const moods = {1:'😔 Nicht gut', 2:'😐 Okay', 3:'🙂 Gut', 4:'😃 Sehr gut', 5:'😍 Ausgezeichnet'};
+    b.innerHTML = '<div class="ha-card">' + ALL_DIARY.map(e => `
+        <div class="entry">
+            <div class="top">
+                <div class="date">${fmtDate(e.createdAt)}</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <span>${moods[e.mood]||''}</span>
+                    <span class="cond">Haut ${e.skinCondition}/10</span>
+                </div>
+            </div>
+            ${e.tags?.length ? '<div class="tags">'+e.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : ''}
+            <div class="note">${esc(e.note||'Keine Notiz')}</div>
+        </div>
+    `).join('') + '</div>';
+}
+
+function renderPhotosPanel() {
+    const b = document.getElementById('panel-photos');
+    if (!ALL_PHOTOS.length) { b.innerHTML = '<div class="ha-card ha-empty"><div class="big">Keine Fotos</div>Diese Kundin teilt keine Fotos.</div>'; return; }
+    b.innerHTML = '<div class="ha-card"><div class="photo-grid">' + ALL_PHOTOS.map(p => `
+        <div class="ph-tile" onclick="viewPhoto('${p.url}','${esc(p.area||'')} &middot; ${fmtDate(p.createdAt)}${p.tags?.length?(' &middot; '+p.tags.map(esc).join(', ')):''}')">
+            <img src="${p.url}" loading="lazy">
+            ${p.area ? '<div class="a">'+esc(p.area)+'</div>' : ''}
+            <div class="d">${fmtDate(p.createdAt)}</div>
+        </div>
+    `).join('') + '</div></div>';
+}
+
+function renderRoutinesPanel() {
+    const b = document.getElementById('panel-routine');
+    const render = (slot, title, icon) => {
+        const steps = ALL_ROUTINES[slot] || [];
+        const headBtn = `<button onclick="openRoutineStepModal('${slot}')" style="padding:6px 12px;background:var(--accent);color:#fff;border:0;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">+ Schritt</button>`;
+        const headRow = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0">${icon} ${title}</h3>${headBtn}</div>`;
+        if (!steps.length) return '<div class="ha-card">'+headRow+'<div class="ha-empty" style="padding:20px 10px">Keine Schritte eingetragen.</div></div>';
+        return '<div class="ha-card">'+headRow + steps.map((s,i) => {
+            const p = ALL_PRODUCTS.find(x => x.id === s.productId);
+            const origin = s.addedBy === 'studio'
+                ? '<span class="anam-chip" style="background:#FEF3C7;color:#92400E;font-size:9px;padding:1px 7px">Studio</span>'
+                : '<span class="anam-chip" style="background:#EDE9E4;color:var(--text-muted);font-size:9px;padding:1px 7px">Kundin</span>';
+            const delBtn = s.addedBy === 'studio' ? `<button onclick="deleteRoutineStep('${slot}',${i})" style="background:none;border:0;color:var(--text-light);font-size:18px;cursor:pointer;padding:4px 8px">×</button>` : '';
+            return '<div class="step"><div class="num">'+(i+1)+'</div><div class="b"><div class="n">'+esc(p?p.name:'—')+' '+origin+'</div><div class="m">'+esc(p?.type||'')+(s.instruction?' &middot; '+esc(s.instruction):'')+'</div></div>'+delBtn+'</div>';
+        }).join('') + '</div>';
+    };
+    b.innerHTML = '<div class="routines-grid">'+render('morning','Morgen','☀')+render('evening','Abend','☾')+'</div>';
+}
+
+function renderProductsPanel() {
+    const b = document.getElementById('panel-products');
+    const header = `<div class="ha-card" style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#FEF9E7,#fff);border-color:#F59E0B">
+        <div><h3 style="margin:0">Produkte für Kundin eintragen</h3>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:4px">Erscheint in ihrer App mit "Von Studio" · sie bekommt eine Benachrichtigung.</p></div>
+        <button onclick="openProductModal(null)" style="padding:10px 16px;background:var(--accent);color:#fff;border:0;border-radius:10px;font-family:inherit;font-weight:600;cursor:pointer">+ Produkt eintragen</button>
+    </div>`;
+    if (!ALL_PRODUCTS.length) { b.innerHTML = header + '<div class="ha-card ha-empty"><div class="big">Keine Produkte</div>Diese Kundin hat noch nichts eingetragen.</div>'; return; }
+    const timingLabel = t => ({both:'Morgens & Abends',morning:'Morgens',evening:'Abends',weekly:'Wöchentlich'}[t]||'');
+    const byChip = p => p.addedBy === 'studio'
+        ? '<span class="anam-chip" style="background:#FEF3C7;color:#92400E">Von Studio</span>'
+        : '<span class="anam-chip" style="background:#EDE9E4;color:var(--text-muted)">Von Kundin</span>';
+    b.innerHTML = header + '<div class="ha-card">' + ALL_PRODUCTS.map(p => `
+        <div class="step" style="cursor:${p.addedBy==='studio'?'pointer':'default'}" ${p.addedBy==='studio'?`onclick="openProductModal('${p.id}')"`:''}>
+            <div class="num">${esc(p.type?p.type[0]:'?')}</div>
+            <div class="b">
+                <div class="n">${esc(p.name)} ${byChip(p)}</div>
+                <div class="m">${esc(p.brand||'')}${p.brand?' &middot; ':''}${esc(p.type||'')} &middot; ${timingLabel(p.timing)}${p.note?' &middot; '+esc(p.note):''}</div>
+            </div>
+            <div class="stars">${[1,2,3,4,5].map(i=>'<span class="'+(i<=p.rating?'':'off')+'">★</span>').join('')}</div>
+        </div>
+    `).join('') + '</div>';
+}
+
+const ANAM_SECTIONS = [
+    { icon:'👤', title:'Kontaktdaten', fields:[
+        { id:'vorname', label:'Vorname' },{ id:'name', label:'Nachname' },
+        { id:'geburtsdatum', label:'Geburtsdatum' },{ id:'telefon', label:'Telefon' },
+        { id:'email', label:'E-Mail' },{ id:'plz', label:'PLZ' },
+        { id:'adresse', label:'Adresse' },{ id:'hautprobleme_seit', label:'Hautprobleme seit' }
+    ]},
+    { icon:'⚕', title:'Gesundheitliche Angaben', fields:[
+        { id:'sachlagen', label:'Gesundheit', type:'chips' },
+        { id:'sachlagen_details', label:'Details (z.B. welche Allergien?)' }
+    ]},
+    { icon:'💊', title:'Medikamente', fields:[
+        { id:'medikamente_checks', label:'Aktuelle Medikamente', type:'chips' },
+        { id:'medikamente_weitere', label:'Weitere Medikamente' }
+    ]},
+    { icon:'🍽', title:'Lebensumstände', fields:[
+        { id:'lebensumstaende', label:'Lebensumstände', type:'chips' }
+    ]},
+    { icon:'⚡', title:'Hormonstatus', fields:[
+        { id:'hormonstatus', label:'Hormonstatus', type:'chips' }
+    ]},
+    { icon:'✨', title:'Bisherige Behandlungen', fields:[
+        { id:'vorbehandlungen_aesthetisch', label:'Ästhetische Vorbehandlungen', type:'chips' },
+        { id:'vorbehandlungen_details', label:'Details' },
+        { id:'braeunung', label:'Bräunung', type:'chips' }
+    ]},
+    { icon:'🧴', title:'Aktuelle Pflege', fields:[
+        { id:'haeusliche_pflege', label:'Pflegeroutine', type:'chips' },
+        { id:'pflege_details', label:'Produkte / Marken' }
+    ]},
+    { icon:'🔍', title:'Hautprobleme', fields:[
+        { id:'hautproblem', label:'Hautprobleme', type:'chips' }
+    ]},
+    { icon:'🎯', title:'Hautziel', fields:[
+        { id:'besuchsgrund', label:'Grund' }
+    ]},
+    { icon:'💆', title:'Erfahrung', fields:[
+        { id:'erfahrung_medical', label:'Erfahrung' }
+    ]}
+];
+
+function renderAnamnesePanel() {
+    const b = document.getElementById('panel-anamnese');
+
+    if (!ANAM_DATA || Object.keys(ANAM_DATA).length === 0) {
+        b.innerHTML = '<div class="ha-card ha-empty"><div class="big">Noch keine Anamnese</div>Die Kundin hat in der HautApp noch keinen Anamnesebogen ausgefüllt.</div>';
+        return;
+    }
+
+    // Änderungshistorie (Notifications)
+    const anamNotifs = ANAM_NOTIFICATIONS.filter(n => n.type === 'anamnese_updated');
+    let historyHtml = '';
+    if (anamNotifs.length) {
+        historyHtml = `<div class="ha-card" style="background:#FEF9E7;border-color:#F59E0B">
+            <h3>🔔 Änderungen von der Kundin</h3>
+            ${anamNotifs.slice(0,10).map(n => `
+                <div class="entry">
+                    <div class="date">${fmtDateTime(n.createdAt)}</div>
+                    <div style="margin-top:4px">${(n.changedFields||[]).map(f=>'<span class="anam-chip" style="background:#FEF3C7;color:#92400E">'+esc(f)+'</span>').join(' ')}</div>
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
+    let total=0, filled=0;
+    ANAM_SECTIONS.forEach(s => s.fields.forEach(f => {
+        total++;
+        const v = ANAM_DATA[f.id];
+        if (Array.isArray(v) ? v.length : (v && String(v).trim())) filled++;
+    }));
+    const pct = total ? Math.round(filled/total*100) : 0;
+
+    const sectionsHtml = ANAM_SECTIONS.map(sec => `
+        <div class="anam-sec">
+            <div class="anam-sec-head"><span class="ic">${sec.icon}</span><span class="t">${sec.title}</span></div>
+            ${sec.fields.map(f => {
+                const v = ANAM_DATA[f.id];
+                const hasFill = Array.isArray(v) ? v.length>0 : (v && String(v).trim());
+                if (!hasFill) return `<div class="anam-field empty"><div class="l">${esc(f.label)}</div><div class="v">Nicht ausgefüllt</div></div>`;
+                let valHtml;
+                if (f.type === 'chips' && Array.isArray(v)) {
+                    valHtml = v.map(x => '<span class="anam-chip">'+esc(x)+'</span>').join('');
+                } else {
+                    valHtml = esc(String(v));
+                }
+                return `<div class="anam-field"><div class="l">${esc(f.label)}</div><div class="v">${valHtml}</div></div>`;
+            }).join('')}
+        </div>
+    `).join('');
+
+    b.innerHTML = `
+        ${historyHtml}
+        <div class="ha-card">
+            <div style="display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:14px">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--accent)">${pct}%</div>
+                <div style="flex:1">
+                    <div style="font-size:13px;font-weight:600;color:var(--primary-dark)">Vollständigkeit</div>
+                    <div style="font-size:11px;color:var(--text-muted)">${filled} von ${total} Feldern ausgefüllt</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted)">Zuletzt aktualisiert: ${ANAM_DATA._at ? fmtDateTime(new Date(ANAM_DATA._at)) : '—'}</div>
+            </div>
+            ${sectionsHtml}
+        </div>
+    `;
+}
+
+// TABS umschalten
+document.querySelectorAll('.ha-tabs-big button').forEach(b => {
+    b.addEventListener('click', () => {
+        document.querySelectorAll('.ha-tabs-big button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        document.querySelectorAll('.ha-panel').forEach(x=>x.classList.remove('active'));
+        document.getElementById('panel-'+b.dataset.panel).classList.add('active');
+    });
+});
+
+// Sidebar-Tabs
+document.querySelectorAll('.ha-tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+        document.querySelectorAll('.ha-tabs button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        document.getElementById('sect-clients').style.display = b.dataset.section==='clients'?'':'none';
+        document.getElementById('sect-messages').style.display = b.dataset.section==='messages'?'':'none';
+    });
+});
+
+// Photo viewer
+window.viewPhoto = function(url, caption) {
+    document.getElementById('ph-img').src = url;
+    document.getElementById('ph-cap').innerHTML = caption || '';
+    document.getElementById('ph-view').classList.add('on');
+};
+
+// Nachrichten
+function renderMessages() {
+    const b = document.getElementById('msg-list');
+    if (!MESSAGES.length) { b.innerHTML = '<div class="ha-empty">Keine Nachrichten.</div>'; return; }
+    b.innerHTML = MESSAGES.map(m => `
+        <div class="msg-card ${m.status==='done'?'done':(m.status==='new'?'new':'')}">
+            <div class="subj">${esc(m.subject||'(kein Thema)')}</div>
+            <div class="text">${esc(m.text||'')}</div>
+            <div class="foot">
+                <span>${esc(m.userName||'?')} &middot; ${fmtDateTime(m.createdAt)}</span>
+                <button data-toggle="${m.id}">${m.status==='done'?'Wieder offen':'Erledigt'}</button>
+            </div>
+        </div>
+    `).join('');
+    b.querySelectorAll('[data-toggle]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const m = MESSAGES.find(x => x.id === btn.dataset.toggle);
+            m.status = m.status==='done' ? 'new' : 'done';
+            if (IS_PREVIEW) { renderMessages(); return; }
+            await db.collection('app_messages').doc(m.id).update({ status: m.status });
+        });
+    });
+}
+
+// ===== STUDIO → KUNDIN: Produkte & Routine anlegen =====
+let EDITING_PRODUCT_ID = null;
+let ROUTINE_SLOT = 'morning';
+
+window.openProductModal = function(id) {
+    if (!SELECTED) return;
+    EDITING_PRODUCT_ID = id;
+    const p = id ? ALL_PRODUCTS.find(x => x.id === id) : null;
+    document.getElementById('prod-modal-title').textContent = p ? 'Produkt bearbeiten' : 'Produkt für ' + SELECTED.name + ' eintragen';
+    document.getElementById('pm-name').value = p?.name || '';
+    document.getElementById('pm-brand').value = p?.brand || '';
+    document.getElementById('pm-type').value = p?.type || 'Serum';
+    document.getElementById('pm-timing').value = p?.timing || 'both';
+    document.getElementById('pm-note').value = p?.note || '';
+    document.getElementById('pm-delete').style.display = (p && p.addedBy === 'studio') ? '' : 'none';
+    document.getElementById('prod-modal').style.display = 'flex';
+};
+
+document.getElementById('pm-save').addEventListener('click', async () => {
+    const name = document.getElementById('pm-name').value.trim();
+    if (!name) { alert('Bitte Produktname eingeben'); return; }
+    const data = {
+        uid: SELECTED.id,
+        name,
+        brand: document.getElementById('pm-brand').value.trim(),
+        type: document.getElementById('pm-type').value,
+        timing: document.getElementById('pm-timing').value,
+        note: document.getElementById('pm-note').value.trim(),
+        addedBy: 'studio',
+        addedByName: 'Studio',
+        updatedAt: new Date()
+    };
+    const btn = document.getElementById('pm-save');
+    btn.disabled = true; btn.textContent = 'Speichere …';
+    try {
+        if (IS_PREVIEW) {
+            if (EDITING_PRODUCT_ID) {
+                const idx = ALL_PRODUCTS.findIndex(x => x.id === EDITING_PRODUCT_ID);
+                if (idx >= 0) ALL_PRODUCTS[idx] = { ...ALL_PRODUCTS[idx], ...data };
+            } else {
+                data.id = 'prev-' + Date.now();
+                data.rating = 0;
+                ALL_PRODUCTS.push(data);
+                MOCK.products[SELECTED.id] = ALL_PRODUCTS;
+            }
+            if (typeof showToast === 'function') showToast(EDITING_PRODUCT_ID ? 'Produkt aktualisiert (Demo)' : 'Produkt hinzugefügt — Kundin wird benachrichtigt (Demo)');
+            renderProductsPanel(); renderRoutinesPanel();
+            document.getElementById('prod-modal').style.display = 'none';
+        } else {
+            if (EDITING_PRODUCT_ID) {
+                await db.collection('app_products').doc(EDITING_PRODUCT_ID).update({ ...data, addedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            } else {
+                data.rating = 0;
+                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                data.addedAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('app_products').add(data);
+            }
+            // Benachrichtigung an Kundin
+            await db.collection('app_notifications').add({
+                uid: SELECTED.id,
+                direction: 'to_client',
+                type: EDITING_PRODUCT_ID ? 'product_updated' : 'product_added',
+                message: EDITING_PRODUCT_ID
+                    ? 'Dein Studio hat "' + name + '" aktualisiert'
+                    : 'Dein Studio hat "' + name + '" für dich eingetragen',
+                status: 'new',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            if (typeof showToast === 'function') showToast('Gespeichert — Kundin wird informiert');
+            await selectClient(SELECTED.id);
+            document.getElementById('prod-modal').style.display = 'none';
+        }
+    } catch(e) { console.error(e); alert('Fehler beim Speichern: '+e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Für Kundin speichern'; }
+});
+
+document.getElementById('pm-delete').addEventListener('click', async () => {
+    if (!EDITING_PRODUCT_ID) return;
+    if (!confirm('Produkt entfernen?')) return;
+    if (IS_PREVIEW) {
+        ALL_PRODUCTS = ALL_PRODUCTS.filter(p => p.id !== EDITING_PRODUCT_ID);
+        MOCK.products[SELECTED.id] = ALL_PRODUCTS;
+        renderProductsPanel(); renderRoutinesPanel();
+        document.getElementById('prod-modal').style.display = 'none';
+        return;
+    }
+    try {
+        await db.collection('app_products').doc(EDITING_PRODUCT_ID).delete();
+        await selectClient(SELECTED.id);
+        document.getElementById('prod-modal').style.display = 'none';
+    } catch(e) { alert('Fehler: '+e.message); }
+});
+
+window.openRoutineStepModal = function(slot) {
+    if (!SELECTED) return;
+    ROUTINE_SLOT = slot;
+    document.getElementById('rs-modal-title').textContent = 'Schritt — ' + (slot === 'morning' ? '☀ Morgen' : '☾ Abend');
+    const sel = document.getElementById('rs-product');
+    if (!ALL_PRODUCTS.length) {
+        alert('Lege zuerst ein Produkt für die Kundin an.');
+        return;
+    }
+    sel.innerHTML = '<option value="">— Produkt wählen —</option>' + ALL_PRODUCTS.map(p =>
+        `<option value="${p.id}">${esc(p.name)}${p.brand?' ('+esc(p.brand)+')':''}</option>`).join('');
+    document.getElementById('rs-instruction').value = '';
+    document.getElementById('rs-modal').style.display = 'flex';
+};
+
+document.getElementById('rs-save').addEventListener('click', async () => {
+    const pid = document.getElementById('rs-product').value;
+    if (!pid) { alert('Bitte Produkt wählen'); return; }
+    const instruction = document.getElementById('rs-instruction').value.trim();
+    ALL_ROUTINES[ROUTINE_SLOT] = ALL_ROUTINES[ROUTINE_SLOT] || [];
+    ALL_ROUTINES[ROUTINE_SLOT].push({ productId: pid, instruction, addedBy: 'studio' });
+    if (IS_PREVIEW) {
+        MOCK.routines[SELECTED.id] = ALL_ROUTINES;
+        if (typeof showToast === 'function') showToast('Schritt eingetragen — Kundin wird benachrichtigt (Demo)');
+        renderRoutinesPanel();
+        document.getElementById('rs-modal').style.display = 'none';
+        return;
+    }
+    try {
+        await db.collection('app_routines').doc(SELECTED.id).set(ALL_ROUTINES, { merge: true });
+        await db.collection('app_notifications').add({
+            uid: SELECTED.id,
+            direction: 'to_client',
+            type: 'routine_updated',
+            message: 'Dein Studio hat deine ' + (ROUTINE_SLOT === 'morning' ? 'Morgen-' : 'Abend-') + 'Routine angepasst',
+            status: 'new',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        if (typeof showToast === 'function') showToast('Routine aktualisiert — Kundin wird informiert');
+        await selectClient(SELECTED.id);
+        document.getElementById('rs-modal').style.display = 'none';
+    } catch(e) { alert('Fehler: '+e.message); }
+});
+
+window.deleteRoutineStep = async function(slot, idx) {
+    if (!confirm('Schritt entfernen?')) return;
+    ALL_ROUTINES[slot].splice(idx, 1);
+    if (IS_PREVIEW) {
+        MOCK.routines[SELECTED.id] = ALL_ROUTINES;
+        renderRoutinesPanel();
+        return;
+    }
+    try {
+        await db.collection('app_routines').doc(SELECTED.id).set(ALL_ROUTINES, { merge: true });
+        renderRoutinesPanel();
+    } catch(e) { alert('Fehler: '+e.message); }
+};
+
+// Pop-up bei neuen Inhalten
+function showNotification(n) {
+    if (typeof showToast === 'function') {
+        const user = CLIENTS.find(c => c.id === n.uid);
+        const name = user ? user.name : 'Kundin';
+        const msg = n.type === 'anamnese_updated' ? name + ' hat die Anamnese aktualisiert' : name + ' hat etwas geteilt';
+        showToast(msg);
+    }
+}
+
+// START
+initApp();
+</script>
+
+</body>
+</html>

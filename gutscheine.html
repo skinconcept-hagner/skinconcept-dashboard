@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b08d57">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Skinconcept">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <title>Skinconcept Hagner - Gutscheine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="jspdf.min.js"></script>
+    <style>
+        /* TABS */
+        .rg-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
+        .rg-tab {
+            padding: 14px 28px; font-size: 15px; font-weight: 600; color: var(--text-secondary);
+            cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent;
+            transition: all 0.2s; font-family: inherit; min-height: 48px;
+        }
+        .rg-tab:hover { color: var(--primary); }
+        .rg-tab.active { color: var(--primary); border-bottom-color: var(--accent); }
+        .rg-section { display: none; }
+        .rg-section.active { display: block; }
+
+        /* FORM ROWS */
+        .rg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+        .rg-row.three { grid-template-columns: 2fr 1fr 1fr; }
+        .rg-row.full { grid-template-columns: 1fr; }
+        @media (max-width: 700px) { .rg-row, .rg-row.three { grid-template-columns: 1fr; } }
+
+        /* SECTION TITLES */
+        .rg-section-title {
+            font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600;
+            color: var(--primary-dark); margin: 8px 0 16px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .rg-section-title:first-child { margin-top: 0; }
+
+        /* GUTSCHEIN PREVIEW */
+        .gs-preview {
+            background: linear-gradient(135deg, #2C2420 0%, #4A3728 100%);
+            color: #fff; padding: 32px 28px; border-radius: var(--radius);
+            text-align: center; box-shadow: var(--shadow-lg); position: relative;
+            border: 1px solid rgba(196,162,101,0.3);
+        }
+        .gs-preview .gs-brand {
+            font-family: 'Cormorant Garamond', serif; font-size: 22px;
+            letter-spacing: 4px; margin-bottom: 4px;
+        }
+        .gs-preview .gs-sub { font-size: 10px; letter-spacing: 3px; color: var(--accent); margin-bottom: 18px; }
+        .gs-preview .gs-label { font-size: 10px; letter-spacing: 3px; color: var(--accent); margin-bottom: 14px; }
+        .gs-preview .gs-amount {
+            font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 600;
+            margin: 6px 0;
+        }
+        .gs-preview .gs-for { font-size: 15px; color: #E5E0D8; margin-bottom: 4px; }
+        .gs-preview .gs-from { font-size: 12px; color: #B8B0A8; font-style: italic; margin-bottom: 16px; }
+        .gs-preview .gs-meta { font-size: 11px; color: #9A938C; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(196,162,101,0.2); }
+        .gs-preview .gs-meta div { margin: 3px 0; }
+
+        /* GUTSCHEIN LAYOUT */
+        .gs-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start; }
+        @media (max-width: 900px) { .gs-layout { grid-template-columns: 1fr; } }
+
+        /* HEADER STATS */
+        .rg-stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px; margin-bottom: 24px;
+        }
+        .rg-stat {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 16px; text-align: center; box-shadow: var(--shadow-sm);
+        }
+        .rg-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; color: var(--primary-dark); }
+        .rg-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-top: 4px; }
+
+        /* ACTION BAR */
+        .rg-actions {
+            display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;
+            padding-top: 20px; border-top: 1px solid var(--border);
+        }
+        .rg-actions .btn { min-height: 48px; font-size: 15px; }
+        .rg-actions .btn-primary {
+            background: var(--primary-dark); color: #fff; border: none;
+            padding: 14px 28px; border-radius: var(--radius-sm); font-weight: 600;
+            cursor: pointer; transition: all 0.2s; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 10px;
+        }
+        .rg-actions .btn-primary:hover { background: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .rg-actions .btn-secondary {
+            background: #fff; color: var(--text); border: 1px solid var(--border-strong);
+            padding: 14px 22px; border-radius: var(--radius-sm); font-weight: 500;
+            cursor: pointer; font-family: inherit;
+        }
+        .rg-actions .btn-secondary:hover { background: var(--bg-subtle); }
+
+        /* INFO HINT */
+        .rg-hint {
+            background: var(--info-light); border-left: 3px solid var(--info); border-radius: var(--radius-sm);
+            padding: 10px 14px; font-size: 12px; color: var(--text-secondary); margin: 8px 0 16px;
+        }
+        .rg-hint strong { color: var(--text); }
+
+        /* ARCHIV TABLE */
+        .rg-archive-filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .rg-archive-filters input, .rg-archive-filters select {
+            padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 14px;
+        }
+        .rg-archive-filters input { flex: 1; min-width: 200px; }
+        .rg-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .rg-badge.redeemed { background: var(--success-light); color: var(--success); }
+        .rg-badge.active { background: var(--warning-light); color: var(--warning); }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+        <div class="page-header">
+            <h2>Gutscheine</h2>
+            <p>Hochwertige Gutscheine ausstellen &mdash; die zugehörige Rechnung wird automatisch erzeugt und an die Käuferin gesendet.</p>
+        </div>
+
+        <!-- STATS -->
+        <div class="rg-stats">
+            <div class="rg-stat">
+                <div class="rg-stat-val" id="stat-vouchers-month">0</div>
+                <div class="rg-stat-label">Gutscheine diesen Monat</div>
+            </div>
+            <div class="rg-stat">
+                <div class="rg-stat-val" id="stat-vouchers-open">0</div>
+                <div class="rg-stat-label">Offene Gutscheine</div>
+            </div>
+            <div class="rg-stat">
+                <div class="rg-stat-val" id="stat-vouchers-open-value">0 €</div>
+                <div class="rg-stat-label">Wert offener Gutscheine</div>
+            </div>
+            <div class="rg-stat">
+                <div class="rg-stat-val" id="stat-vouchers-redeemed-month">0</div>
+                <div class="rg-stat-label">Eingelöst diesen Monat</div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="rg-tabs">
+            <button class="rg-tab active" onclick="switchSection('voucher')">Gutschein erstellen</button>
+            <button class="rg-tab" onclick="switchSection('archive')">Archiv</button>
+        </div>
+
+        <!-- =========================================================== -->
+        <!-- TAB 1: GUTSCHEIN ERSTELLEN                                  -->
+        <!-- =========================================================== -->
+        <section id="section-voucher" class="rg-section active">
+            <div class="rg-hint">
+                <strong>So einfach:</strong> Felder ausfüllen &rarr; Vorschau prüfen &rarr; <em>"Gutschein &amp; Rechnung erstellen"</em> klicken.
+                Beide PDFs werden lokal heruntergeladen, automatisch im Archiv gespeichert und (sobald Google verbunden) per E-Mail an die Käuferin geschickt.
+            </div>
+
+            <div class="gs-layout">
+                <!-- LINKS: Eingabefelder -->
+                <div class="card">
+                    <div class="rg-section-title">Geschenk</div>
+                    <div class="rg-row">
+                        <div class="form-group">
+                            <label>Für wen ist der Gutschein? *</label>
+                            <input type="text" id="g-beneficiary" placeholder="z.B. Maria Schmitt" oninput="updateVoucherPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Von wem (Schenker) <small style="color:var(--text-muted)">&mdash; optional</small></label>
+                            <input type="text" id="g-gifter" placeholder="z.B. Thomas Schmitt" oninput="updateVoucherPreview()">
+                        </div>
+                    </div>
+                    <div class="rg-row">
+                        <div class="form-group">
+                            <label>Wert (EUR, brutto) *</label>
+                            <input type="number" id="g-value" step="0.01" min="0" placeholder="100" oninput="updateVoucherPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Gültig bis *</label>
+                            <input type="date" id="g-valid-until" oninput="updateVoucherPreview()">
+                        </div>
+                    </div>
+                    <div class="rg-row full">
+                        <div class="form-group">
+                            <label>Beschreibung <small style="color:var(--text-muted)">&mdash; erscheint auf dem Gutschein</small></label>
+                            <input type="text" id="g-description" placeholder="z.B. Wertgutschein Beauty &amp; Pflege" oninput="updateVoucherPreview()">
+                        </div>
+                    </div>
+
+                    <div class="rg-section-title">Käuferin (Rechnungsempfänger)</div>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
+                            <input type="checkbox" id="g-buyer-same" onchange="toggleBuyerSame()" style="width:18px;height:18px;">
+                            Käuferin = Schenker (Daten übernehmen)
+                        </label>
+                    </div>
+                    <div class="rg-row">
+                        <div class="form-group">
+                            <label>Name (Vor- &amp; Nachname) *</label>
+                            <input type="text" id="g-buyer-name" placeholder="Vor- und Nachname">
+                        </div>
+                        <div class="form-group">
+                            <label>E-Mail <small style="color:var(--text-muted)">&mdash; für Auto-Versand</small></label>
+                            <input type="email" id="g-buyer-email" placeholder="kunde@email.de">
+                        </div>
+                    </div>
+                    <div class="rg-row three">
+                        <div class="form-group">
+                            <label>Straße &amp; Hausnummer</label>
+                            <input type="text" id="g-buyer-street" placeholder="Musterstraße 12">
+                        </div>
+                        <div class="form-group">
+                            <label>PLZ</label>
+                            <input type="text" id="g-buyer-zip" placeholder="54497">
+                        </div>
+                        <div class="form-group">
+                            <label>Ort</label>
+                            <input type="text" id="g-buyer-city" placeholder="Morbach">
+                        </div>
+                    </div>
+
+                    <div class="rg-section-title">Verkauf</div>
+                    <div class="rg-row">
+                        <div class="form-group">
+                            <label>Datum *</label>
+                            <input type="date" id="g-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Gutschein-Nr.</label>
+                            <input type="text" id="g-code" placeholder="wird automatisch vergeben" readonly style="background:var(--bg-subtle);color:var(--text-muted);">
+                        </div>
+                    </div>
+
+                    <div class="rg-actions">
+                        <button class="btn-primary" onclick="createVoucher()">
+                            <span>&#10003;</span> Gutschein &amp; Rechnung erstellen
+                        </button>
+                        <button class="btn-secondary" onclick="resetVoucherForm()">Zurücksetzen</button>
+                    </div>
+                </div>
+
+                <!-- RECHTS: Live-Vorschau -->
+                <div>
+                    <div class="rg-section-title" style="border:none;">Vorschau</div>
+                    <div class="gs-preview" id="voucher-preview">
+                        <div class="gs-brand">SKINCONCEPT</div>
+                        <div class="gs-sub">TAMARA HAGNER</div>
+                        <div class="gs-label">&mdash; GUTSCHEIN &mdash;</div>
+                        <div class="gs-amount" id="pv-amount">0,00 €</div>
+                        <div class="gs-for" id="pv-for">für &hellip;</div>
+                        <div class="gs-from" id="pv-from" style="display:none;"></div>
+                        <div class="gs-meta">
+                            <div id="pv-description" style="display:none;"></div>
+                            <div>Code: <span id="pv-code">&mdash;</span></div>
+                            <div>Gültig bis: <span id="pv-valid">&mdash;</span></div>
+                        </div>
+                    </div>
+                    <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:10px;">
+                        So sieht der gedruckte Gutschein aus
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================== -->
+        <!-- TAB 2: ARCHIV (nur Gutscheine)                              -->
+        <!-- =========================================================== -->
+        <section id="section-archive" class="rg-section">
+            <div class="card">
+                <div class="rg-archive-filters">
+                    <input type="text" id="arch-search" placeholder="Suchen (Name, Code, Schenker &hellip;)" oninput="renderArchive()">
+                    <select id="arch-status" onchange="renderArchive()">
+                        <option value="all">Alle Status</option>
+                        <option value="active">Offen</option>
+                        <option value="redeemed">Eingelöst</option>
+                    </select>
+                </div>
+                <div id="archive-list">
+                    <div class="loading"><div class="spinner"></div> Lade Archiv&hellip;</div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+// ============================================================
+// SKINCONCEPT — Gutscheine
+// ============================================================
+
+const STUDIO = {
+    name: 'Skinconcept Hagner',
+    owner: 'Tamara Hagner',
+    street: 'Bahnhofstrasse 67a',
+    zip: '54497',
+    city: 'Morbach',
+    phone: '+49 176 61742511',
+    taxNr: '43/058/411/46',
+    iban: 'DE87 5875 1230 0032 9300 59',
+    bic: '',
+    email: 'skinconcept.hagner@gmail.com'
+};
+
+// MwSt-Modus für Gutscheine: 'einzweck' (sofort 19% ausgewiesen) oder 'mehrzweck' (erst bei Einlösung)
+const VOUCHER_VAT_MODE = 'einzweck';
+
+const today = new Date().toISOString().slice(0, 10);
+const currentUser = (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown';
+
+let allVouchers = [];
+let unsubVouchers = null;
+
+// ============ TAB SWITCHING ============
+function switchSection(name) {
+    document.querySelectorAll('.rg-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.rg-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.querySelectorAll('.rg-tab').forEach(t => {
+        if (t.textContent.toLowerCase().includes(name === 'voucher' ? 'gutschein erstellen' : 'archiv')) {
+            t.classList.add('active');
+        }
+    });
+}
+
+// ============ FORMAT HELPERS ============
+function formatEUR(val) {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val || 0);
+}
+function formatEURpdf(val) {
+    return (val || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR';
+}
+function formatDateDE(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+}
+function escHtml(str) {
+    if (str == null) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============ AUTO NUMMERIERUNG (Firestore Transaction) ============
+async function getNextNumber(type) {
+    const year = new Date().getFullYear();
+    const ref = db.collection('counters').doc(type + '_' + year);
+    const next = await db.runTransaction(async tx => {
+        const doc = await tx.get(ref);
+        const current = (doc.exists && doc.data().current) ? doc.data().current + 1 : 1;
+        tx.set(ref, { current, year }, { merge: true });
+        return current;
+    });
+    const padded = String(next).padStart(4, '0');
+    return type === 'voucher' ? `SCH-${year}-${padded}` : `${year}-${padded}`;
+}
+
+// ============ BUYER-SAME ============
+function toggleBuyerSame() {
+    const checked = document.getElementById('g-buyer-same').checked;
+    if (checked) {
+        const gifter = document.getElementById('g-gifter').value.trim();
+        if (!gifter) {
+            showToast('Bitte erst einen Schenker eintragen.', 'error');
+            document.getElementById('g-buyer-same').checked = false;
+            return;
+        }
+        document.getElementById('g-buyer-name').value = gifter;
+    }
+}
+
+// ============ LIVE PREVIEW ============
+function updateVoucherPreview() {
+    const beneficiary = document.getElementById('g-beneficiary').value.trim();
+    const gifter = document.getElementById('g-gifter').value.trim();
+    const value = parseFloat(document.getElementById('g-value').value) || 0;
+    const desc = document.getElementById('g-description').value.trim();
+    const valid = document.getElementById('g-valid-until').value;
+
+    document.getElementById('pv-amount').textContent = formatEUR(value);
+    document.getElementById('pv-for').textContent = beneficiary ? 'für ' + beneficiary : 'für …';
+
+    const fromEl = document.getElementById('pv-from');
+    if (gifter) {
+        fromEl.textContent = 'von ' + gifter;
+        fromEl.style.display = 'block';
+    } else {
+        fromEl.style.display = 'none';
+    }
+
+    const descEl = document.getElementById('pv-description');
+    if (desc) {
+        descEl.textContent = desc;
+        descEl.style.display = 'block';
+    } else {
+        descEl.style.display = 'none';
+    }
+
+    document.getElementById('pv-valid').textContent = valid ? formatDateDE(valid) : '—';
+}
+
+// ============ MAIL VIA CLOUD FUNCTION ============
+// Schickt Gutschein + Rechnung per E-Mail an die Käuferin.
+// Backend: functions/index.js → exports.sendMail (europe-west1)
+async function sendVoucherEmailAndArchive(p) {
+    const fn = firebase.app().functions('europe-west1').httpsCallable('sendMail');
+
+    function pdfToBase64(pdf) {
+        const dataUri = pdf.output('datauristring');
+        const i = dataUri.indexOf(',');
+        return i >= 0 ? dataUri.slice(i + 1) : dataUri;
+    }
+
+    const safe = (p.beneficiary || 'Gutschein').replace(/[^a-zA-Z0-9äöüÄÖÜß]+/g, '_');
+    const subject = 'Ihr Gutschein von Skinconcept Hagner (' + p.voucherCode + ')';
+    const body =
+        'Hallo ' + (p.buyerName || '').split(' ')[0] + ',\n\n' +
+        'vielen Dank für Ihre Bestellung!\n\n' +
+        'Anbei erhalten Sie den Gutschein "' + p.voucherCode + '" für ' + p.beneficiary +
+        ' sowie die zugehörige Rechnung ' + p.invoiceNumber + '.\n\n' +
+        'Den Gutschein kann der Empfänger unter Angabe der Gutschein-Nummer im Studio einlösen.\n\n' +
+        'Liebe Grüße\nSkinconcept Hagner\nTamara Hagner\n' +
+        'Bahnhofstrasse 67a, 54497 Morbach\n+49 176 61742511';
+
+    await fn({
+        to: p.buyerEmail,
+        subject,
+        body,
+        attachments: [
+            { filename: 'Gutschein_' + safe + '_' + p.voucherCode + '.pdf',  base64: pdfToBase64(p.voucherPdf) },
+            { filename: 'Rechnung_' + safe + '_' + p.invoiceNumber + '.pdf', base64: pdfToBase64(p.invoicePdf) },
+        ],
+    });
+}
+
+// ============ CREATE VOUCHER ============
+async function createVoucher() {
+    const beneficiary = document.getElementById('g-beneficiary').value.trim();
+    const gifter = document.getElementById('g-gifter').value.trim();
+    const value = parseFloat(document.getElementById('g-value').value) || 0;
+    const description = document.getElementById('g-description').value.trim() || 'Wertgutschein Beauty & Pflege';
+    const validUntil = document.getElementById('g-valid-until').value;
+    const date = document.getElementById('g-date').value || today;
+
+    const buyerName = document.getElementById('g-buyer-name').value.trim();
+    const buyerEmail = document.getElementById('g-buyer-email').value.trim();
+    const buyerStreet = document.getElementById('g-buyer-street').value.trim();
+    const buyerZip = document.getElementById('g-buyer-zip').value.trim();
+    const buyerCity = document.getElementById('g-buyer-city').value.trim();
+
+    // Validierung
+    if (!beneficiary) { showToast('Bitte Empfänger des Gutscheins eintragen.', 'error'); return; }
+    if (!value || value <= 0) { showToast('Bitte einen Wert größer 0 angeben.', 'error'); return; }
+    if (!validUntil) { showToast('Bitte Gültigkeitsdatum angeben.', 'error'); return; }
+    if (!buyerName) { showToast('Bitte den Namen der Käuferin eintragen (für die Rechnung).', 'error'); return; }
+
+    const btn = event && event.target && event.target.closest('button');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+    try {
+        // Nummern parallel ziehen
+        const [voucherCode, invoiceNumber] = await Promise.all([
+            getNextNumber('voucher'),
+            getNextNumber('invoice')
+        ]);
+
+        const voucherData = {
+            code: voucherCode,
+            beneficiary, gifter, value, description, validUntil,
+            date, status: 'active',
+            invoiceNumber,
+            buyer: { name: buyerName, email: buyerEmail, street: buyerStreet, zip: buyerZip, city: buyerCity },
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: currentUser
+        };
+
+        const invoiceData = {
+            number: invoiceNumber,
+            type: 'voucher',
+            voucherCode,
+            customer: { name: buyerName, email: buyerEmail, street: buyerStreet, zip: buyerZip, city: buyerCity },
+            date, due: 'SOFORT',
+            vatMode: VOUCHER_VAT_MODE,
+            items: [{
+                description: 'Gutschein ' + voucherCode + ' (' + description + ')',
+                qty: 1,
+                priceBrutto: value
+            }],
+            subtotal: VOUCHER_VAT_MODE === 'einzweck' ? +(value / 1.19).toFixed(2) : value,
+            vat: VOUCHER_VAT_MODE === 'einzweck' ? +(value - (value / 1.19)).toFixed(2) : 0,
+            total: value,
+            notes: 'Gutschein für ' + beneficiary + (gifter ? ' (von ' + gifter + ')' : ''),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: currentUser
+        };
+
+        // Beide parallel speichern
+        await Promise.all([
+            db.collection('vouchers').doc(voucherCode).set(voucherData),
+            db.collection('invoices').doc(invoiceNumber).set(invoiceData)
+        ]);
+
+        // PDF 1: Gutschein (A5 quer)
+        const { jsPDF } = window.jspdf;
+        const voucherPdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+        buildVoucherPDF(voucherPdf, { voucherCode, beneficiary, gifter, value, description, validUntil, date });
+
+        // PDF 2: Rechnung (A4 hoch) — separat, weil Drive nur die Rechnung bekommt
+        const invoicePdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        buildInvoicePDF(invoicePdf, invoiceData);
+
+        const safeName = beneficiary.replace(/[^a-zA-Z0-9äöüÄÖÜß]+/g, '_');
+        voucherPdf.save('Gutschein_' + safeName + '_' + voucherCode + '.pdf');
+        invoicePdf.save('Rechnung_' + safeName + '_' + invoiceNumber + '.pdf');
+
+        // Versand/Drive kommt sobald OAuth eingerichtet ist
+        if (typeof sendVoucherEmailAndArchive === 'function' && buyerEmail) {
+            try {
+                await sendVoucherEmailAndArchive({
+                    buyerEmail, buyerName, beneficiary,
+                    voucherCode, invoiceNumber,
+                    voucherPdf, invoicePdf
+                });
+                showToast('Gutschein & Rechnung erstellt, per E-Mail verschickt und in Drive abgelegt.', 'success');
+            } catch (mailErr) {
+                console.error('Versand/Drive fehlgeschlagen:', mailErr);
+                showToast('Gespeichert — aber Versand/Drive fehlgeschlagen: ' + (mailErr.message || ''), 'error');
+            }
+        } else {
+            showToast('Gutschein & Rechnung erstellt — im Archiv gespeichert.', 'success');
+        }
+
+        resetVoucherForm();
+        loadStats();
+    } catch (err) {
+        console.error('Fehler beim Erstellen:', err);
+        showToast('Fehler beim Erstellen: ' + (err.message || 'unbekannt'), 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    }
+}
+
+function resetVoucherForm() {
+    ['g-beneficiary','g-gifter','g-value','g-description','g-buyer-name','g-buyer-email',
+     'g-buyer-street','g-buyer-zip','g-buyer-city'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('g-buyer-same').checked = false;
+    document.getElementById('g-date').value = today;
+    setDefaultValidity();
+    updateVoucherPreview();
+}
+
+function setDefaultValidity() {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    document.getElementById('g-valid-until').value = d.toISOString().slice(0, 10);
+}
+
+// ============ PDF: VOUCHER (A5 LANDSCAPE) ============
+function buildVoucherPDF(doc, d) {
+    const w = doc.internal.pageSize.getWidth();
+    const h = doc.internal.pageSize.getHeight();
+    const accent = [196, 162, 101];
+    const dark = [44, 36, 32];
+
+    doc.setFillColor(...dark);
+    doc.rect(0, 0, w, h, 'F');
+
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.4);
+    doc.rect(7, 7, w - 14, h - 14, 'S');
+    doc.setLineWidth(0.15);
+    doc.rect(9, 9, w - 18, h - 18, 'S');
+
+    const cs = 10;
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(...accent);
+    [[10,10,1,1],[w-10,10,-1,1],[10,h-10,1,-1],[w-10,h-10,-1,-1]].forEach(([x,y,dx,dy])=>{
+        doc.line(x, y, x + cs*dx, y);
+        doc.line(x, y, x, y + cs*dy);
+    });
+
+    let y = 22;
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
+    doc.text('SKINCONCEPT', w / 2, y, { align: 'center' });
+    y += 5;
+    doc.setFontSize(7);
+    doc.setTextColor(...accent);
+    doc.text('TAMARA HAGNER', w / 2, y, { align: 'center', charSpace: 1.5 });
+
+    y += 5;
+    doc.setLineWidth(0.2);
+    doc.line(w/2 - 18, y, w/2 + 18, y);
+
+    y += 8;
+    doc.setFontSize(10);
+    doc.setTextColor(...accent);
+    doc.text('G U T S C H E I N', w / 2, y, { align: 'center', charSpace: 2 });
+
+    y += 18;
+    doc.setFont('times', 'normal');
+    doc.setFontSize(42);
+    doc.setTextColor(255, 255, 255);
+    doc.text(formatEURpdf(d.value).replace('EUR', '€'), w / 2, y, { align: 'center' });
+
+    y += 12;
+    doc.setFontSize(13);
+    doc.setTextColor(225, 220, 210);
+    doc.text('für ' + d.beneficiary, w / 2, y, { align: 'center' });
+
+    if (d.gifter) {
+        y += 6;
+        doc.setFontSize(10);
+        doc.setFont('times', 'italic');
+        doc.setTextColor(180, 175, 165);
+        doc.text('von ' + d.gifter, w / 2, y, { align: 'center' });
+        doc.setFont('times', 'normal');
+    }
+
+    if (d.description) {
+        y += 7;
+        doc.setFontSize(9);
+        doc.setTextColor(180, 175, 165);
+        doc.text(d.description, w / 2, y, { align: 'center' });
+    }
+
+    y += 10;
+    doc.setLineWidth(0.15);
+    doc.setDrawColor(...accent);
+    doc.line(w/2 - 30, y, w/2 + 30, y);
+
+    y += 6;
+    doc.setFontSize(8);
+    doc.setTextColor(150, 145, 138);
+    doc.text('Gutschein-Nr.: ' + d.voucherCode, w / 2, y, { align: 'center' });
+    y += 4;
+    doc.text('Gültig bis: ' + formatDateDE(d.validUntil), w / 2, y, { align: 'center' });
+
+    doc.setFontSize(6.5);
+    doc.setTextColor(120, 115, 108);
+    doc.text(STUDIO.name + '  |  ' + STUDIO.street + ', ' + STUDIO.zip + ' ' + STUDIO.city + '  |  ' + STUDIO.phone,
+        w / 2, h - 8, { align: 'center' });
+}
+
+// ============ PDF: INVOICE (A4 PORTRAIT) ============
+function buildInvoicePDF(doc, inv) {
+    const pageW = 210;
+    const pageH = 297;
+    const ml = 22;
+    const mr = 22;
+    const cw = pageW - ml - mr;
+    const accent = [196, 162, 101];
+    const dark = [44, 36, 32];
+    const txt = [60, 55, 50];
+    const muted = [130, 125, 120];
+
+    doc.setFillColor(...accent);
+    doc.rect(0, 0, pageW, 2.5, 'F');
+
+    let y = 22;
+    doc.setFont('times', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(...dark);
+    doc.text(STUDIO.name, ml, y);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    [STUDIO.owner, STUDIO.street, STUDIO.zip + ' ' + STUDIO.city, 'Tel.: ' + STUDIO.phone, 'Steuer-Nr.: ' + STUDIO.taxNr].forEach(line => {
+        y += 5;
+        doc.text(line, ml, y);
+    });
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(13);
+    doc.setTextColor(...dark);
+    doc.text('SKINCONCEPT', pageW - mr, 22, { align: 'right', charSpace: 1.2 });
+    doc.setFontSize(7);
+    doc.setTextColor(...accent);
+    doc.text('TAMARA HAGNER', pageW - mr, 27, { align: 'right', charSpace: 1.5 });
+
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text(STUDIO.name + ' · ' + STUDIO.street + ' · ' + STUDIO.zip + ' ' + STUDIO.city, ml, y);
+    y += 2;
+    doc.setLineWidth(0.2);
+    doc.setDrawColor(220, 215, 210);
+    doc.line(ml, y, ml + 80, y);
+
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(...txt);
+    doc.text(inv.customer.name, ml, y);
+    if (inv.customer.street) { y += 5; doc.text(inv.customer.street, ml, y); }
+    if (inv.customer.zip || inv.customer.city) {
+        y += 5;
+        doc.text(((inv.customer.zip || '') + ' ' + (inv.customer.city || '')).trim(), ml, y);
+    }
+
+    let rightY = y - 18;
+    doc.setFont('times', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(...dark);
+    doc.text('Rechnung', pageW - mr, rightY, { align: 'right' });
+
+    rightY += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    doc.text('Rechnungs-Nr.', pageW - mr - 35, rightY);
+    doc.setTextColor(...txt);
+    doc.text(inv.number, pageW - mr, rightY, { align: 'right' });
+
+    rightY += 5;
+    doc.setTextColor(...muted);
+    doc.text('Datum', pageW - mr - 35, rightY);
+    doc.setTextColor(...txt);
+    doc.text(formatDateDE(inv.date), pageW - mr, rightY, { align: 'right' });
+
+    rightY += 5;
+    doc.setTextColor(...muted);
+    doc.text('Fälligkeit', pageW - mr - 35, rightY);
+    doc.setTextColor(...txt);
+    doc.text(inv.due || 'SOFORT', pageW - mr, rightY, { align: 'right' });
+
+    y = Math.max(y, rightY) + 14;
+    doc.setFillColor(247, 244, 240);
+    doc.rect(ml, y - 5, cw, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...accent);
+    doc.text('Pos.', ml + 2, y);
+    doc.text('Beschreibung', ml + 14, y);
+    doc.text('Menge', ml + 110, y, { align: 'center' });
+    doc.text('Einzel netto', ml + 138, y, { align: 'right' });
+    doc.text('Gesamt netto', pageW - mr - 2, y, { align: 'right' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...txt);
+
+    let posIdx = 0;
+    inv.items.forEach(item => {
+        posIdx++;
+        y += 9;
+        const netPrice = item.priceBrutto / 1.19;
+        const netTotal = netPrice * item.qty;
+        doc.text(String(posIdx), ml + 2, y);
+        const descLines = doc.splitTextToSize(item.description, 90);
+        doc.text(descLines, ml + 14, y);
+        if (descLines.length > 1) y += (descLines.length - 1) * 5;
+        doc.text(String(item.qty), ml + 110, y, { align: 'center' });
+        doc.text(formatEURpdf(netPrice), ml + 138, y, { align: 'right' });
+        doc.text(formatEURpdf(netTotal), pageW - mr - 2, y, { align: 'right' });
+    });
+
+    y += 10;
+    doc.setDrawColor(220, 215, 210);
+    doc.setLineWidth(0.3);
+    doc.line(ml + 95, y, pageW - mr, y);
+
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...muted);
+    doc.text('Zwischensumme (netto)', ml + 100, y);
+    doc.setTextColor(...txt);
+    doc.text(formatEURpdf(inv.subtotal), pageW - mr, y, { align: 'right' });
+
+    y += 6;
+    doc.setTextColor(...muted);
+    if (inv.vatMode === 'mehrzweck') {
+        doc.text('MwSt.', ml + 100, y);
+        doc.setTextColor(...txt);
+        doc.text('— bei Einlösung', pageW - mr, y, { align: 'right' });
+    } else {
+        doc.text('zzgl. MwSt. 19 %', ml + 100, y);
+        doc.setTextColor(...txt);
+        doc.text(formatEURpdf(inv.vat), pageW - mr, y, { align: 'right' });
+    }
+
+    y += 4;
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.5);
+    doc.line(ml + 95, y, pageW - mr, y);
+
+    y += 8;
+    doc.setFont('times', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(...dark);
+    doc.text('Gesamt', ml + 100, y);
+    doc.setTextColor(...accent);
+    doc.text(formatEURpdf(inv.total), pageW - mr, y, { align: 'right' });
+
+    y += 14;
+    if (inv.type === 'voucher' && inv.vatMode === 'mehrzweck') {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...muted);
+        const txt1 = 'Hinweis: Mehrzweckgutschein gem. § 3 Abs. 15 UStG. Die Umsatzsteuer entsteht erst bei Einlösung.';
+        doc.text(doc.splitTextToSize(txt1, cw), ml, y);
+        y += 8;
+    }
+    if (inv.notes) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.setTextColor(...muted);
+        const noteLines = doc.splitTextToSize(inv.notes, cw);
+        doc.text(noteLines, ml, y);
+        y += noteLines.length * 4.5;
+    }
+
+    y += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...txt);
+    doc.text('Vielen Dank für Ihren Besuch bei Skinconcept Hagner.', ml, y);
+
+    const fy = pageH - 22;
+    doc.setDrawColor(220, 215, 210);
+    doc.setLineWidth(0.3);
+    doc.line(ml, fy - 3, pageW - mr, fy - 3);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...muted);
+    doc.text(STUDIO.name + ' · ' + STUDIO.owner + ' · ' + STUDIO.street + ' · ' + STUDIO.zip + ' ' + STUDIO.city,
+        pageW / 2, fy, { align: 'center' });
+    doc.text('Steuer-Nr.: ' + STUDIO.taxNr + '  ·  IBAN: ' + STUDIO.iban + '  ·  ' + STUDIO.email,
+        pageW / 2, fy + 4, { align: 'center' });
+}
+
+// ============ ARCHIV ============
+function loadArchive() {
+    if (unsubVouchers) unsubVouchers();
+    unsubVouchers = db.collection('vouchers').orderBy('createdAt', 'desc').limit(300)
+        .onSnapshot(snap => {
+            allVouchers = [];
+            snap.forEach(d => allVouchers.push({ ...d.data(), _id: d.id }));
+            renderArchive();
+            loadStats();
+        }, err => {
+            console.error('vouchers:', err);
+            document.getElementById('archive-list').innerHTML =
+                '<div class="empty-state" style="padding:40px;text-align:center;color:var(--text-muted);">Fehler beim Laden: ' + escHtml(err.message) + '</div>';
+        });
+}
+
+function renderArchive() {
+    const search = document.getElementById('arch-search').value.toLowerCase();
+    const statusF = document.getElementById('arch-status').value;
+
+    const filtered = allVouchers.filter(v => {
+        if (statusF !== 'all') {
+            const st = v.status || 'active';
+            if (statusF === 'redeemed' && st !== 'redeemed') return false;
+            if (statusF === 'active' && st !== 'active') return false;
+        }
+        if (search) {
+            const hay = [v.code, v.beneficiary, v.gifter, v.buyer?.name, v.invoiceNumber]
+                .filter(Boolean).join(' ').toLowerCase();
+            if (!hay.includes(search)) return false;
+        }
+        return true;
+    });
+
+    const list = document.getElementById('archive-list');
+    if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty-state" style="padding:40px;text-align:center;color:var(--text-muted);">Keine Gutscheine gefunden.</div>';
+        return;
+    }
+
+    list.innerHTML = `
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Gutschein-Nr.</th>
+                        <th>Empfänger</th>
+                        <th>Käuferin</th>
+                        <th>Gültig bis</th>
+                        <th style="text-align:right;">Wert</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtered.map(v => renderArchiveRow(v)).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderArchiveRow(v) {
+    const status = v.status === 'redeemed'
+        ? '<span class="rg-badge redeemed">Eingelöst</span>'
+        : '<span class="rg-badge active">Offen</span>';
+    const action = v.status !== 'redeemed'
+        ? `<button onclick="markRedeemed('${v.code}')" style="padding:6px 12px;border:1px solid var(--success);background:#fff;color:var(--success);border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">Einlösen</button>`
+        : '';
+
+    return `
+        <tr>
+            <td>${escHtml(formatDateDE(v.date))}</td>
+            <td><strong>${escHtml(v.code)}</strong></td>
+            <td>${escHtml(v.beneficiary || '—')}</td>
+            <td>${escHtml(v.buyer?.name || '—')}</td>
+            <td>${escHtml(formatDateDE(v.validUntil))}</td>
+            <td style="text-align:right;font-weight:600;">${formatEUR(v.value)}</td>
+            <td>${status}</td>
+            <td>${action}</td>
+        </tr>
+    `;
+}
+
+async function markRedeemed(voucherCode) {
+    if (!confirm('Gutschein ' + voucherCode + ' als eingelöst markieren?')) return;
+    try {
+        await db.collection('vouchers').doc(voucherCode).update({
+            status: 'redeemed',
+            redeemedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            redeemedBy: currentUser
+        });
+        showToast('Gutschein als eingelöst markiert.', 'success');
+    } catch (err) {
+        showToast('Fehler: ' + err.message, 'error');
+    }
+}
+
+// ============ STATS ============
+function loadStats() {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+
+    let monthCount = 0, openCount = 0, openValue = 0, redeemedThisMonth = 0;
+    allVouchers.forEach(v => {
+        if (v.date >= monthStart) monthCount++;
+        if (v.status !== 'redeemed') {
+            openCount++;
+            openValue += v.value || 0;
+        }
+        if (v.status === 'redeemed' && v.redeemedAt && v.redeemedAt.toMillis) {
+            const r = new Date(v.redeemedAt.toMillis()).toISOString().slice(0, 10);
+            if (r >= monthStart) redeemedThisMonth++;
+        }
+    });
+
+    document.getElementById('stat-vouchers-month').textContent = monthCount;
+    document.getElementById('stat-vouchers-open').textContent = openCount;
+    document.getElementById('stat-vouchers-open-value').textContent = formatEUR(openValue);
+    document.getElementById('stat-vouchers-redeemed-month').textContent = redeemedThisMonth;
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('g-date').value = today;
+    setDefaultValidity();
+    updateVoucherPreview();
+    loadArchive();
+});
+</script>
+
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}</script>
+</body>
+</html>

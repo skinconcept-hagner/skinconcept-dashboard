@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b08d57">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Skinconcept">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <title>Skinconcept Hagner - CRM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+/* ═══════════════════════════════════════
+   SKINCONCEPT CRM — Premium Design
+   ═══════════════════════════════════════ */
+
+/* ── ACTION CENTER ── */
+.action-center{background:linear-gradient(135deg,var(--primary-dark) 0%,#5C4333 100%);border-radius:var(--radius-lg);padding:28px 32px;margin-bottom:28px;color:#fff;position:relative;overflow:hidden}
+.action-center::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(196,162,101,.08);border-radius:50%}
+.action-center::after{content:'';position:absolute;bottom:-60px;left:-20px;width:160px;height:160px;background:rgba(196,162,101,.05);border-radius:50%}
+.ac-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;gap:24px;flex-wrap:wrap}
+.ac-left h2{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;margin-bottom:4px}
+.ac-left p{font-size:13px;opacity:.65;max-width:400px;line-height:1.5}
+.ac-alerts{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ac-alert{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,.1);border-radius:10px;font-size:12px;font-weight:500;backdrop-filter:blur(4px);cursor:pointer;transition:background .2s}
+.ac-alert:hover{background:rgba(255,255,255,.18)}
+.ac-alert .num{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--accent-light)}
+.ac-right{display:flex;gap:10px;flex-shrink:0;position:relative;z-index:1}
+.ac-btn{padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px);letter-spacing:.3px}
+.ac-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3)}
+.ac-btn.gold{background:var(--accent);border-color:var(--accent)}
+.ac-btn.gold:hover{background:#9a7a48}
+
+/* ── WEEK PROGRESS ── */
+.week-bar{margin-top:18px;position:relative;z-index:1}
+.week-label{display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-bottom:6px}
+.week-track{height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+.week-fill{height:100%;background:linear-gradient(90deg,var(--accent-light),var(--accent));border-radius:3px;transition:width .6s var(--ease)}
+
+/* ── SEGMENT STATS ── */
+.seg-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.seg-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .25s var(--ease);position:relative;overflow:hidden}
+.seg-stat::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
+.seg-stat:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.seg-stat.active{border-color:var(--accent);box-shadow:var(--shadow-glow)}
+.seg-stat.s-green::before{background:var(--success)}
+.seg-stat.s-yellow::before{background:var(--warning)}
+.seg-stat.s-orange::before{background:#EA580C}
+.seg-stat.s-red::before{background:var(--danger)}
+.seg-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.seg-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;line-height:1}
+.seg-stat.s-green .seg-num{color:var(--success)}
+.seg-stat.s-yellow .seg-num{color:var(--warning)}
+.seg-stat.s-orange .seg-num{color:#EA580C}
+.seg-stat.s-red .seg-num{color:var(--danger)}
+.seg-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.seg-stat.s-green .seg-icon{background:var(--success-light);color:var(--success)}
+.seg-stat.s-yellow .seg-icon{background:var(--warning-light);color:var(--warning)}
+.seg-stat.s-orange .seg-icon{background:#FFF7ED;color:#EA580C}
+.seg-stat.s-red .seg-icon{background:var(--danger-light);color:var(--danger)}
+.seg-label{font-size:12px;font-weight:600;color:var(--primary-dark);margin-bottom:2px}
+.seg-sub{font-size:11px;color:var(--text-muted)}
+.seg-progress{margin-top:10px}
+.seg-prog-bar{height:4px;background:var(--bg-subtle);border-radius:2px;overflow:hidden}
+.seg-prog-fill{height:100%;border-radius:2px;transition:width .4s var(--ease)}
+.seg-stat.s-green .seg-prog-fill{background:var(--success)}
+.seg-stat.s-yellow .seg-prog-fill{background:var(--warning)}
+.seg-stat.s-orange .seg-prog-fill{background:#EA580C}
+.seg-stat.s-red .seg-prog-fill{background:var(--danger)}
+.seg-prog-text{font-size:10px;color:var(--text-muted);margin-top:3px;text-align:right}
+
+/* ── TOOLBAR ── */
+.crm-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.crm-search{flex:1;min-width:220px;padding:11px 16px 11px 42px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card);font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:all .2s;box-shadow:var(--shadow-sm);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%239E9894' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center}
+.crm-search:focus{border-color:var(--accent);box-shadow:var(--shadow-glow)}
+.crm-select{padding:11px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card);font-family:inherit;font-size:13px;color:var(--text);cursor:pointer;outline:none;box-shadow:var(--shadow-sm)}
+.crm-select:focus{border-color:var(--accent)}
+.quick-filters{display:flex;gap:6px;flex-wrap:wrap}
+.qf{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.qf:hover{border-color:var(--accent);color:var(--accent)}
+.qf.on{background:var(--primary-dark);color:#fff;border-color:var(--primary-dark)}
+.qf .qf-count{font-weight:700;opacity:.7}
+
+/* ── SEGMENT SECTIONS ── */
+.seg-section{margin-bottom:28px}
+.seg-head{display:flex;align-items:center;gap:12px;padding:10px 0;margin-bottom:10px;border-bottom:2px solid var(--border);cursor:pointer;user-select:none}
+.seg-head:hover .seg-head-title{color:var(--accent)}
+.seg-stripe{width:4px;height:24px;border-radius:2px;flex-shrink:0}
+.seg-head-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--primary-dark);transition:color .2s}
+.seg-head-count{font-size:11px;color:#fff;padding:2px 10px;border-radius:10px;font-weight:700}
+.seg-head-info{margin-left:auto;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:12px}
+.seg-head-arrow{font-size:14px;color:var(--text-muted);transition:transform .2s;margin-left:4px}
+.seg-head.collapsed .seg-head-arrow{transform:rotate(-90deg)}
+
+/* ── CLIENT TABLE ── */
+.crm-table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.crm-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:600;padding:0 12px 4px}
+.crm-table th.r{text-align:right}
+.crm-table th.c{text-align:center}
+.crm-row{background:var(--bg-card);transition:all .2s var(--ease);cursor:default}
+.crm-row:hover{box-shadow:var(--shadow)}
+.crm-row.contacted{opacity:.45}
+.crm-row td{padding:14px 12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.crm-row td:first-child{border-left:1px solid var(--border);border-radius:var(--radius-sm) 0 0 var(--radius-sm);position:relative;padding-left:18px}
+.crm-row td:first-child::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:var(--radius-sm) 0 0 var(--radius-sm)}
+.crm-row.seg-green td:first-child::before{background:var(--success)}
+.crm-row.seg-yellow td:first-child::before{background:var(--warning)}
+.crm-row.seg-orange td:first-child::before{background:#EA580C}
+.crm-row.seg-red td:first-child::before{background:var(--danger)}
+.crm-row td:last-child{border-right:1px solid var(--border);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.crm-row .name{font-size:14px;font-weight:600;color:var(--primary-dark);display:flex;align-items:center;gap:8px}
+.crm-row .name a{color:inherit;text-decoration:none}
+.crm-row .name a:hover{color:var(--accent)}
+.crm-row .sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.crm-row .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.crm-row .days-cell{text-align:center;min-width:50px}
+.crm-row .days-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;line-height:1}
+.crm-row .days-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.crm-row .visits-cell{text-align:center;font-size:13px;font-weight:600;color:var(--text-secondary)}
+.crm-row .date-cell{font-size:12px;color:var(--text-secondary);white-space:nowrap}
+.crm-row .actions-cell{display:flex;gap:5px;justify-content:flex-end}
+
+/* ── BADGES ── */
+.badge-s{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;letter-spacing:.3px}
+.b-vip{background:#FEF3C7;color:#92400E}
+.b-bday{background:#FCE7F3;color:#9D174D}
+.b-reminder{background:#DBEAFE;color:#1D4ED8}
+.b-new{background:var(--info-light);color:var(--info)}
+
+/* ── BUTTONS ── */
+.crm-btn{padding:6px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);font-size:11px;font-family:inherit;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.crm-btn:hover{border-color:var(--accent);color:var(--accent)}
+.crm-btn.wa{background:#25d366;color:#fff;border-color:#25d366;font-weight:600}
+.crm-btn.wa:hover{background:#1da851}
+.crm-btn.mark{background:var(--info-light);color:var(--info);border-color:rgba(74,127,181,.3)}
+.crm-btn.mark:hover{background:var(--info);color:#fff}
+.crm-btn.done{background:var(--bg-subtle);color:var(--text-muted)}
+.crm-btn.kartei{background:var(--bg);color:var(--text-secondary)}
+.crm-btn.kartei:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── MODAL ── */
+.crm-modal-bg{position:fixed;inset:0;background:rgba(44,36,32,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
+.crm-modal-bg.open{display:flex}
+.crm-modal{background:var(--bg-card);border-radius:var(--radius-lg);padding:32px;max-width:520px;width:92%;box-shadow:var(--shadow-lg);position:relative;max-height:90vh;overflow-y:auto}
+.crm-modal h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--primary-dark);margin-bottom:4px}
+.crm-modal .modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.5}
+.crm-modal label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;letter-spacing:.5px;text-transform:uppercase}
+.crm-modal textarea,.crm-modal select,.crm-modal input[type="date"]{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;color:var(--text);outline:none;background:var(--bg);margin-bottom:14px;transition:border-color .2s}
+.crm-modal textarea:focus,.crm-modal select:focus,.crm-modal input:focus{border-color:var(--accent)}
+.crm-modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;color:var(--text-muted);cursor:pointer;padding:4px;line-height:1}
+.crm-modal-close:hover{color:var(--text)}
+.modal-actions{display:flex;gap:8px;margin-top:6px}
+.modal-btn{padding:11px 22px;border-radius:var(--radius-sm);border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.2px}
+.modal-btn.primary{background:var(--accent);color:#fff}.modal-btn.primary:hover{background:#9a7a48}
+.modal-btn.secondary{background:var(--bg);color:var(--text-secondary);border:1px solid var(--border)}.modal-btn.secondary:hover{background:var(--bg-subtle)}
+.wa-templates{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.wa-tpl{padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);cursor:pointer;transition:all .2s;line-height:1.5}
+.wa-tpl:hover{border-color:var(--accent);background:var(--accent-glow)}
+.wa-tpl.selected{border-color:var(--accent);background:var(--accent-glow);color:var(--text);font-weight:500}
+.fu-history{margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.fu-entry{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.fu-entry:last-child{border-bottom:none}
+.fu-date{color:var(--text-muted);min-width:70px;flex-shrink:0}
+.fu-channel{font-weight:600;color:var(--primary-dark);min-width:70px}
+.fu-note{color:var(--text-secondary);flex:1}
+
+/* ── TOAST ── */
+.crm-toast{position:fixed;bottom:24px;right:24px;background:var(--primary-dark);color:#fff;padding:14px 22px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:600;opacity:0;transform:translateY(10px);transition:all .3s var(--ease);pointer-events:none;display:flex;align-items:center;gap:8px}
+.crm-toast.show{opacity:1;transform:translateY(0)}
+
+/* ── EMPTY ── */
+.crm-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.crm-empty-icon{font-size:48px;opacity:.3;margin-bottom:12px}
+.crm-empty h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--text-secondary);margin-bottom:6px}
+
+/* ── DETAIL PANEL ── */
+.detail-overlay{position:fixed;inset:0;background:rgba(44,36,32,.4);backdrop-filter:blur(3px);z-index:400;opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
+.detail-overlay.open{opacity:1;pointer-events:auto}
+.detail-panel{position:fixed;top:0;right:0;width:440px;max-width:92vw;height:100vh;background:var(--bg-card);box-shadow:-8px 0 40px rgba(44,36,32,.15);z-index:401;transform:translateX(100%);transition:transform .35s var(--ease);overflow-y:auto;display:flex;flex-direction:column}
+.detail-panel.open{transform:translateX(0)}
+.dp-header{padding:24px 28px 20px;border-bottom:1px solid var(--border);background:var(--bg-elevated);position:sticky;top:0;z-index:2}
+.dp-back{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;border:none;background:none;font-family:inherit;padding:0;margin-bottom:14px;transition:color .2s}
+.dp-back:hover{color:var(--accent)}
+.dp-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--primary-dark);margin-bottom:6px}
+.dp-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.dp-contact{display:flex;flex-direction:column;gap:8px}
+.dp-contact-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-secondary)}
+.dp-contact-row a{color:var(--accent);text-decoration:none;font-weight:500}
+.dp-contact-row a:hover{text-decoration:underline}
+.dp-contact-row .icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.dp-contact-row .copy-btn{margin-left:auto;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);font-size:10px;font-family:inherit;cursor:pointer;transition:all .2s}
+.dp-contact-row .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dp-body{padding:24px 28px;flex:1}
+.dp-section{margin-bottom:20px}
+.dp-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.dp-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.dp-metric{text-align:center;padding:14px 10px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.dp-metric-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1}
+.dp-metric-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-top:4px}
+.dp-treat{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}
+.dp-treat:last-child{border-bottom:none}
+.dp-treat-date{color:var(--text-muted);min-width:70px;flex-shrink:0}
+.dp-treat-name{font-weight:600;color:var(--primary-dark)}
+.dp-actions{padding:20px 28px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:var(--bg-elevated);position:sticky;bottom:0}
+.dp-actions .crm-btn{padding:10px 16px;font-size:12px}
+
+/* ── PRINT ── */
+@media print{
+  .sidebar,.menu-toggle,.sidebar-overlay,.action-center,.crm-toolbar,.crm-btn,.ac-btn,.qf,.seg-head-arrow,.detail-overlay,.detail-panel{display:none!important}
+  .main{margin-left:0!important;padding:10px!important}
+  .crm-row{break-inside:avoid}
+  .crm-row.contacted{opacity:1}
+  .seg-stats{display:none}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .seg-stats{grid-template-columns:repeat(2,1fr)}
+  .crm-table th:nth-child(4),.crm-row td:nth-child(4){display:none}
+}
+@media(max-width:768px){
+  .seg-stats{grid-template-columns:1fr 1fr;gap:8px}
+  .seg-stat{padding:14px}
+  .seg-num{font-size:26px}
+  .action-center{padding:20px}
+  .ac-left h2{font-size:20px}
+  .crm-table,.crm-table thead,.crm-table tbody,.crm-table tr,.crm-table th,.crm-table td{display:block}
+  .crm-table thead{display:none}
+  .crm-row{display:flex;flex-wrap:wrap;gap:8px;padding:14px;margin-bottom:8px;border-radius:var(--radius)!important;border:1px solid var(--border)!important}
+  .crm-row td{border:none!important;padding:0!important;border-radius:0!important}
+  .crm-row td:first-child{padding-left:0!important}
+  .crm-row td:first-child::before{display:none}
+  .crm-row .actions-cell{width:100%;margin-top:6px}
+}
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle">&#9776;</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+        <div class="page-header">
+            <h2>CRM</h2>
+            <p>Kunden im Blick behalten &middot; Follow-ups planen &middot; Niemanden verlieren</p>
+        </div>
+
+        <!-- Action Center -->
+        <div class="action-center" id="actionCenter"></div>
+
+        <!-- Segment Stats -->
+        <div class="seg-stats" id="segStats"></div>
+
+        <!-- Toolbar -->
+        <div class="crm-toolbar">
+            <input type="text" class="crm-search" id="crmSearch" placeholder="Kunde suchen...">
+            <div class="quick-filters" id="quickFilters"></div>
+            <select class="crm-select" id="crmSort">
+                <option value="days-desc">Laengste Abwesenheit zuerst</option>
+                <option value="days-asc">Kuerzeste Abwesenheit zuerst</option>
+                <option value="name-asc">Name A–Z</option>
+                <option value="visits-desc">Meiste Besuche zuerst</option>
+            </select>
+        </div>
+
+        <!-- Client List -->
+        <div id="crmContent"></div>
+    </main>
+</div>
+
+<!-- Detail Panel -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel"></div>
+
+<!-- Follow-Up Modal -->
+<div class="crm-modal-bg" id="fuModal">
+    <div class="crm-modal" id="fuModalContent"></div>
+</div>
+
+<!-- Toast -->
+<div class="crm-toast" id="crmToast"></div>
+
+<!-- Scripts -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<!-- Shared Nav -->
+<script src="shared.js"></script>
+
+<!-- Trello Data -->
+<script>var alleKunden = [];</script>
+<script src="./trello_all_kunden.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   SKINCONCEPT CRM v2
+   Kundenbeziehungs-Management & Follow-Up System
+   ═══════════════════════════════════════════════════════ */
+
+// ── FIREBASE ──
+const fbApp2=firebase.initializeApp({
+  apiKey:"AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+  authDomain:"skinconcept-hagner.firebaseapp.com",
+  databaseURL:"https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"skinconcept-hagner",
+  storageBucket:"skinconcept-hagner.firebasestorage.app",
+  messagingSenderId:"101205413833",
+  appId:"1:101205413833:web:9734e0906dd71d1a9d2218"
+},'crm');
+const fbDb=fbApp2.database();
+const FB_VAULT='v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
+
+const nsApp=firebase.initializeApp({
+  apiKey:"AIzaSyAdGdgPnS3Cw3Rpiubx6_s61FyfiTQxfFc",
+  authDomain:"skinconcept-tool.firebaseapp.com",
+  projectId:"skinconcept-tool",
+  storageBucket:"skinconcept-tool.firebasestorage.app",
+  messagingSenderId:"188823880943",
+  appId:"1:188823880943:web:ae87750be002cbe491071a"
+},'nachsorge');
+const nsDb=nsApp.firestore();
+
+// ── CONSTANTS ──
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const TODAY_STR=TODAY.toISOString().split('T')[0];
+const STORE_KEY='sc_kartei_v2';
+const CRM_KEY='sc_crm_data';
+
+// ── HELPERS ──
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function normalize(s){return s.toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/-/g,' ').trim()}
+function diffDays(dateStr){if(!dateStr)return 9999;return Math.max(0,Math.floor((TODAY-new Date(dateStr))/(864e5)))}
+function fmtDate(d){if(!d)return'–';if(d.includes('-')){const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}return d}
+function formatDays(d){if(d===0)return'Heute';if(d===1)return'Gestern';if(d<7)return d+' Tage';if(d<30){const w=Math.floor(d/7);return w+' Woche'+(w>1?'n':'');}if(d<365){const m=Math.floor(d/30);return m+' Monat'+(m>1?'e':'');}const y=Math.floor(d/365),m=Math.floor((d%365)/30);return y+' Jahr'+(y>1?'e':'')+(m>0?', '+m+' Mon.':'')}
+function formatPhone(ph){if(!ph)return'';return ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'')}
+function getWaUrl(ph){const n=formatPhone(ph);return n?'https://wa.me/'+n:''}
+function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
+function getWeekStart(){const d=new Date(TODAY);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return d.toISOString().split('T')[0]}
+
+// ── KARTEI ──
+let _karteiCache=null;
+function loadKartei(){if(_karteiCache)return _karteiCache;try{_karteiCache=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return _karteiCache}catch{_karteiCache={};return _karteiCache}}
+function getClientKartei(id){const k=loadKartei();if(!k[id])k[id]={treatments:[],products:[],photos:[],contacts:[],plan:[],hautanalysen:[],hautberichte:[],notesList:[]};return k[id]}
+// WICHTIG: nur den geaenderten Kunden in Firebase aktualisieren, NIEMALS das gesamte kartei_data mit .set() ueberschreiben,
+// sonst werden andere Geraete (insbesondere Handy mit leerem localStorage) die gesamte Cloud-Kartei loeschen.
+function saveClientKartei(id,data){const k=loadKartei();k[id]=data;_karteiCache=k;localStorage.setItem(STORE_KEY,JSON.stringify(k));try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).update(data)}catch(e){}}
+// Nur einzelne Felder eines Kunden anfassen (Kontaktiert-Status, Erinnerungen usw.) — Consents/Behandlungen bleiben unberuehrt.
+function updateCrmClientFields(id,fields){const kd=getClientKartei(id);Object.assign(kd,fields);const k=loadKartei();k[id]=kd;_karteiCache=k;localStorage.setItem(STORE_KEY,JSON.stringify(k));try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).update(fields)}catch(e){}}
+
+// ── CRM DATA ──
+let crmData={};
+function loadCrmData(){try{crmData=JSON.parse(localStorage.getItem(CRM_KEY)||'{}')}catch{crmData={}}return crmData}
+// Cloud-Schreibzugriff erst freischalten wenn die initiale FB-Synchronisierung abgeschlossen ist
+// — sonst koennte ein Klick auf dem Handy (leerer localStorage) die Cloud-Daten ueberschreiben.
+let _fbCrmReady=false;
+function saveCrmData(id){localStorage.setItem(CRM_KEY,JSON.stringify(crmData));if(!_fbCrmReady)return;try{if(id){const v=crmData[id];if(v===undefined||v===null)fbDb.ref(FB_VAULT+'/crm_data/'+id).remove();else fbDb.ref(FB_VAULT+'/crm_data/'+id).set(v)}else{Object.keys(crmData).forEach(function(k){fbDb.ref(FB_VAULT+'/crm_data/'+k).set(crmData[k])})}}catch(e){}}
+function getCrmEntry(id){if(!crmData[id])crmData[id]={followUps:[],kontaktiert:null,erinnerung:null,notiz:''};return crmData[id]}
+
+// ── SEGMENTS ──
+const SEGMENTS=[
+  {key:'m1',label:'Unter 1 Monat',sub:'Alles im gruenen Bereich',color:'green',icon:'&#10003;',min:0,max:30},
+  {key:'m23',label:'1–3 Monate',sub:'Follow-up sinnvoll',color:'yellow',icon:'&#9888;',min:31,max:90},
+  {key:'m36',label:'3–6 Monate',sub:'Drohen abzuwandern',color:'orange',icon:'&#9888;',min:91,max:182},
+  {key:'m6',label:'6+ Monate',sub:'Rueckgewinnung noetig',color:'red',icon:'&#10071;',min:183,max:99999}
+];
+function getSegment(days){if(days<=30)return SEGMENTS[0];if(days<=90)return SEGMENTS[1];if(days<=182)return SEGMENTS[2];return SEGMENTS[3]}
+
+// ── WHATSAPP TEMPLATES ──
+function getWaTemplates(c,seg){
+  const name=(c.fn||'').split(' ')[0];
+  return [
+    {label:'Freundliche Erinnerung',text:'Hallo '+name+'! Hier ist Tamara von Skinconcept Hagner. Ich wollte mich mal melden — wie geht es dir und deiner Haut? Wenn du Lust hast, koennen wir gerne einen Termin fuer deine naechste Behandlung vereinbaren. Liebe Gruesse!'},
+    {label:'Neues Angebot',text:'Hey '+name+'! Ich habe tolle Neuigkeiten: Wir haben neue Behandlungen im Studio, die perfekt fuer dich sein koennten. Soll ich dir mehr dazu erzaehlen? Ich wuerde mich freuen, dich wiederzusehen! Liebe Gruesse, Tamara'},
+    {label:'Geburtstagsglueckwuensche',text:'Liebe '+name+', ich wuensche dir alles Gute zum Geburtstag! Als kleines Geschenk moechte ich dir eine besondere Behandlung anbieten. Meld dich gerne bei mir! Deine Tamara von Skinconcept'},
+    {label:'Rueckgewinnung',text:'Hallo '+name+'! Es ist schon eine Weile her, dass du bei uns warst. Ich wuerde mich sehr freuen, dich wiederzusehen und mich um deine Haut zu kuemmern. Sollen wir einen Termin vereinbaren? Liebe Gruesse, Tamara'}
+  ];
+}
+
+// ── PARSE TRELLO ──
+function parseTrello(raw,i){
+  const desc=raw.desc||'';
+  const emailM=desc.match(/mailto:([\w.\-+]+@[\w.\-]+)/i)||desc.match(/([\w.\-+]+@[\w.\-]+\.\w{2,})/i);
+  const email=emailM?emailM[1].toLowerCase():'';
+  const phoneM=desc.match(/(\+?\d[\d\s\/\-]{7,})/);
+  let telefon=phoneM?phoneM[1].replace(/\s+/g,' ').trim():'';
+  const gebM=desc.match(/(\d{1,2})\\?\.(\d{1,2})\\?\.(\d{2,4})/);
+  let geburtsdatum='',gebDate=null;
+  if(gebM){const day=gebM[1].padStart(2,'0'),month=gebM[2].padStart(2,'0');let year=gebM[3];if(year.length===2)year=(parseInt(year)>50?'19':'20')+year;geburtsdatum=day+'.'+month+'.'+year;gebDate=new Date(parseInt(year),parseInt(month)-1,parseInt(day))}
+  let name=(raw.name||'').trim(),fn='',ln='';
+  if(name.includes(',')){const p=name.split(',');ln=p[0].trim();fn=p.slice(1).join(',').trim()}else{const p=name.split(' ');fn=p[0]||'';ln=p.slice(1).join(' ')||''}
+  const trelloDate=raw.lastActivity?raw.lastActivity.split('T')[0]:'';
+  return{id:raw.id||'t'+i,name,fn,ln,ph:telefon,em:email,bd:geburtsdatum,gebDate,lv:trelloDate,visits:0,visitDates:[]}
+}
+
+// ── BUILD CLIENTS ──
+let clients=[];
+let activeFilter='all';
+let searchQuery='';
+let sortMode='days-desc';
+let quickFilter='';
+let collapsedSegments={m1:true}; // Gruene Kunden standardmaessig eingeklappt
+
+let TW_CONTACTS=[];
+let KB_VISITS=[];
+
+function loadExternalData(){
+  try{const c=localStorage.getItem('sc_tw_contacts');if(c)TW_CONTACTS=JSON.parse(c)}catch(e){}
+  try{const c=localStorage.getItem('sc_kb_visits');if(c)KB_VISITS=JSON.parse(c)}catch(e){}
+}
+
+function initClients(){
+  const allParsed=alleKunden.map((raw,i)=>parseTrello(raw,i));
+  const seenNames=new Set();
+  clients=allParsed.filter(c=>{
+    const key=normalize(c.fn+' '+c.ln);const key2=normalize(c.ln+' '+c.fn);
+    if(seenNames.has(key)||seenNames.has(key2))return false;
+    seenNames.add(key);seenNames.add(key2);return true;
+  });
+
+  // KB visits
+  const kbMap={};
+  KB_VISITS.forEach(v=>{
+    const key=v.n.toLowerCase();
+    if(!kbMap[key])kbMap[key]={latest:v.d,count:1,dates:[v.d]};
+    else{kbMap[key].count++;kbMap[key].dates.push(v.d);if(v.d>kbMap[key].latest)kbMap[key].latest=v.d}
+  });
+  clients.forEach(c=>{
+    const fullName=normalize(c.fn+' '+c.ln);const nameRev=normalize(c.ln+' '+c.fn);const nameOrig=normalize(c.name);
+    let match=null;
+    for(const key of Object.keys(kbMap)){const kn=normalize(key);if(kn===fullName||kn===nameRev||kn===nameOrig){match=kbMap[key];break}}
+    if(!match){const fnLow=normalize(c.fn),lnLow=normalize(c.ln);for(const key of Object.keys(kbMap)){const parts=key.split(' ');const kfn=normalize(parts[0]);const kln=normalize(parts.slice(1).join(' '));if((kfn===fnLow&&kln===lnLow)||(kfn===lnLow&&kln===fnLow)){match=kbMap[key];break}}}
+    if(match){if(!c.lv||match.latest>c.lv)c.lv=match.latest;c.visits=Math.max(c.visits,match.count);c.visitDates=match.dates.sort().reverse()}
+  });
+
+  // Treatwell merge
+  const twMap={};
+  TW_CONTACTS.forEach(tw=>{if(!tw.fn||tw.fn.length>40)return;const key=normalize(tw.fn+' '+tw.ln);if(key.length<3)return;if(!twMap[key]||tw.b>twMap[key].b)twMap[key]=tw;const keyRev=normalize(tw.ln+' '+tw.fn);if(!twMap[keyRev]||tw.b>twMap[keyRev].b)twMap[keyRev]=tw});
+  clients.forEach(c=>{
+    const tw=twMap[normalize(c.fn+' '+c.ln)]||twMap[normalize(c.ln+' '+c.fn)]||twMap[normalize(c.name)]||null;
+    if(tw){if(!c.ph&&tw.ph)c.ph=tw.ph;if(!c.em&&tw.em)c.em=tw.em;if(!c.bd&&tw.bd){const parts=tw.bd.split('-');if(parts.length===3){c.bd=parts[0]+'.'+parts[1]+'.'+parts[2];c.gebDate=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]))}}if(tw.b>0)c.visits=Math.max(c.visits||0,tw.b)}
+    c.days=diffDays(c.lv);
+    c.bdSoon=false;
+    if(c.gebDate){const bd=new Date(TODAY.getFullYear(),c.gebDate.getMonth(),c.gebDate.getDate());const diff=Math.floor((bd-TODAY)/(864e5));c.bdSoon=diff>=0&&diff<=14}
+  });
+
+  // Treatwell-only
+  const clientKeys=new Set();
+  clients.forEach(c=>{clientKeys.add(normalize(c.fn+' '+c.ln));clientKeys.add(normalize(c.ln+' '+c.fn));clientKeys.add(normalize(c.name))});
+  TW_CONTACTS.forEach(tw=>{
+    if(!tw.fn||tw.fn.length>40)return;const key=normalize(tw.fn+' '+tw.ln);const keyRev=normalize(tw.ln+' '+tw.fn);
+    if(key.length<3||clientKeys.has(key)||clientKeys.has(keyRev))return;
+    const nc={id:'tw_'+key.replace(/\s/g,'_'),name:tw.fn+' '+tw.ln,fn:tw.fn,ln:tw.ln,ph:tw.ph||'',em:tw.em||'',bd:'',gebDate:null,lv:'',visits:tw.b||0,visitDates:[]};
+    nc.days=diffDays(nc.lv);nc.bdSoon=false;
+    clients.push(nc);clientKeys.add(key);clientKeys.add(keyRev);
+  });
+
+  // Manually created
+  const kartei=loadKartei();
+  if(kartei.__newClients){kartei.__newClients.forEach(nc=>{if(!clients.find(c=>c.id===nc.id))clients.push(nc)})}
+  clients.sort((a,b)=>a.days-b.days);
+}
+
+// ── NACHSORGE: Firestore ──
+function loadNachsorge(){
+  const ago=new Date(TODAY);ago.setDate(ago.getDate()-180);
+  nsDb.collection('client_visits').where('date','>=',ago.toISOString().split('T')[0]).orderBy('date','desc').get().then(snap=>{
+    snap.forEach(doc=>{
+      const d=doc.data();const name=(d.clientName||'').trim();if(!name)return;
+      const c=clients.find(x=>normalize(x.fn+' '+x.ln)===normalize(name)||normalize(x.name)===normalize(name));
+      if(c){const vd=d.date||'';if(vd&&(!c.lv||vd>c.lv)){c.lv=vd;c.days=diffDays(vd)}}
+    });
+    clients.sort((a,b)=>a.days-b.days);
+    render();
+  }).catch(()=>render());
+}
+
+// ── FIREBASE SYNC ──
+function initFirebaseSync(){
+  fbDb.ref(FB_VAULT+'/crm_data').once('value').then(snap=>{
+    const cloud=snap.val()||{};
+    const local=loadCrmData();
+    Object.keys(cloud).forEach(id=>{
+      if(!local[id]){local[id]=cloud[id]}
+      else{const cf=cloud[id].followUps||[];const lf=local[id].followUps||[];const merged=[...lf];cf.forEach(c=>{if(!merged.some(l=>l.date===c.date&&l.note===c.note))merged.push(c)});local[id].followUps=merged.sort((a,b)=>b.date.localeCompare(a.date));if(cloud[id].kontaktiert&&(!local[id].kontaktiert||cloud[id].kontaktiert>local[id].kontaktiert))local[id].kontaktiert=cloud[id].kontaktiert}
+    });
+    crmData=local;
+    localStorage.setItem(CRM_KEY,JSON.stringify(crmData));
+    _fbCrmReady=true; // ab jetzt duerfen Schreibzugriffe in die Cloud gehen
+    render();
+  }).catch(e=>{console.warn('CRM Firebase Sync Fehler:',e&&e.message);_fbCrmReady=true});
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+
+function render(){
+  renderActionCenter();
+  renderSegStats();
+  renderQuickFilters();
+  renderList();
+}
+
+// ── ACTION CENTER ──
+function renderActionCenter(){
+  const known=clients.filter(c=>c.days<9999);
+  const needAttention=known.filter(c=>c.days>30);
+  const remindersToday=known.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR});
+  const birthdays=known.filter(c=>c.bdSoon);
+  const weekStart=getWeekStart();
+  let contactedThisWeek=0;
+  Object.values(crmData).forEach(e=>{if(e.kontaktiert&&e.kontaktiert>=weekStart)contactedThisWeek++});
+  const weekGoal=Math.max(10,Math.round(needAttention.length*0.3));
+  const weekPct=Math.min(100,Math.round(contactedThisWeek/weekGoal*100));
+
+  document.getElementById('actionCenter').innerHTML=`
+    <div class="ac-row">
+      <div class="ac-left">
+        <h2>Dein CRM Dashboard</h2>
+        <p>${known.length} Kunden &middot; ${needAttention.length} brauchen Aufmerksamkeit &middot; ${contactedThisWeek} diese Woche kontaktiert</p>
+        <div class="ac-alerts">
+          ${remindersToday.length?'<div class="ac-alert" onclick="setQuickFilter(\'reminder\')"><span>&#128276;</span><span class="num">'+remindersToday.length+'</span> Erinnerung'+(remindersToday.length>1?'en':'')+' heute</div>':''}
+          ${birthdays.length?'<div class="ac-alert" onclick="setQuickFilter(\'bday\')"><span>&#127874;</span><span class="num">'+birthdays.length+'</span> Geburtstag'+(birthdays.length>1?'e':'')+' bald</div>':''}
+          ${needAttention.length>20?'<div class="ac-alert" onclick="setFilter(\'m36\')"><span>&#9888;</span><span class="num">'+clients.filter(c=>c.days>90&&c.days<9999).length+'</span> drohen abzuwandern</div>':''}
+        </div>
+        <div class="week-bar">
+          <div class="week-label"><span>Wochenziel: ${contactedThisWeek} / ${weekGoal} kontaktiert</span><span>${weekPct}%</span></div>
+          <div class="week-track"><div class="week-fill" style="width:${weekPct}%"></div></div>
+        </div>
+      </div>
+      <div class="ac-right">
+        <button class="ac-btn" onclick="window.print()">&#128424; Drucken</button>
+        <button class="ac-btn gold" onclick="startBatchFollowUp()">&#128172; Batch Follow-up</button>
+      </div>
+    </div>`;
+}
+
+// ── SEGMENT STATS ──
+function renderSegStats(){
+  const counts={};const contacted={};
+  SEGMENTS.forEach(s=>{counts[s.key]=0;contacted[s.key]=0});
+  clients.forEach(c=>{
+    if(c.days>=9999)return;
+    const seg=getSegment(c.days);counts[seg.key]++;
+    const e=crmData[c.id];if(e&&e.kontaktiert)contacted[seg.key]++;
+  });
+
+  document.getElementById('segStats').innerHTML=SEGMENTS.map(s=>{
+    const total=counts[s.key];const done=contacted[s.key];const pct=total?Math.round(done/total*100):0;
+    return `
+    <div class="seg-stat s-${s.color} ${activeFilter===s.key?'active':''}" onclick="setFilter('${s.key}')">
+      <div class="seg-top">
+        <div class="seg-num">${total}</div>
+        <div class="seg-icon">${s.icon}</div>
+      </div>
+      <div class="seg-label">${s.label}</div>
+      <div class="seg-sub">${s.sub}</div>
+      <div class="seg-progress">
+        <div class="seg-prog-bar"><div class="seg-prog-fill" style="width:${pct}%"></div></div>
+        <div class="seg-prog-text">${done}/${total} kontaktiert</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── QUICK FILTERS ──
+function renderQuickFilters(){
+  const reminders=clients.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR}).length;
+  const bdays=clients.filter(c=>c.bdSoon&&c.days<9999).length;
+  const unkontaktiert=clients.filter(c=>c.days>=31&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
+
+  document.getElementById('quickFilters').innerHTML=`
+    <button class="qf ${quickFilter==='open'?'on':''}" onclick="setQuickFilter('open')">Offen <span class="qf-count">${unkontaktiert}</span></button>
+    ${reminders?'<button class="qf '+(quickFilter==='reminder'?'on':'')+'" onclick="setQuickFilter(\'reminder\')">&#128276; Erinnerungen <span class="qf-count">'+reminders+'</span></button>':''}
+    ${bdays?'<button class="qf '+(quickFilter==='bday'?'on':'')+'" onclick="setQuickFilter(\'bday\')">&#127874; Geburtstage <span class="qf-count">'+bdays+'</span></button>':''}
+    <button class="qf ${quickFilter==='vip'?'on':''}" onclick="setQuickFilter('vip')">VIP</button>
+  `;
+}
+
+// ── CLIENT LIST ──
+function getFilteredClients(){
+  let list=clients.filter(c=>c.days<9999);
+
+  if(activeFilter!=='all'){const seg=SEGMENTS.find(s=>s.key===activeFilter);if(seg)list=list.filter(c=>c.days>=seg.min&&c.days<=seg.max)}
+
+  if(quickFilter==='open')list=list.filter(c=>c.days>=31&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
+  else if(quickFilter==='reminder')list=list.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR});
+  else if(quickFilter==='bday')list=list.filter(c=>c.bdSoon);
+  else if(quickFilter==='vip')list=list.filter(c=>c.visits>=8);
+
+  if(searchQuery){const q=normalize(searchQuery);list=list.filter(c=>normalize(c.name).includes(q)||normalize(c.fn+' '+c.ln).includes(q)||(c.ph&&c.ph.includes(searchQuery)))}
+
+  switch(sortMode){
+    case'days-asc':list.sort((a,b)=>a.days-b.days);break;
+    case'days-desc':list.sort((a,b)=>b.days-a.days);break;
+    case'name-asc':list.sort((a,b)=>(a.fn+a.ln).localeCompare(b.fn+b.ln));break;
+    case'visits-desc':list.sort((a,b)=>(b.visits||0)-(a.visits||0));break;
+  }
+  return list;
+}
+
+function renderList(){
+  const list=getFilteredClients();
+  if(!list.length){document.getElementById('crmContent').innerHTML='<div class="crm-empty"><div class="crm-empty-icon">&#128203;</div><h3>Keine Kunden gefunden</h3><p>'+(searchQuery?'Versuche einen anderen Suchbegriff.':'Keine Kunden in dieser Kategorie.')+'</p></div>';return}
+
+  // Group by segment when showing all
+  if(activeFilter==='all'&&!searchQuery&&!quickFilter){
+    let html='';
+    SEGMENTS.forEach(seg=>{
+      const sc=list.filter(c=>c.days>=seg.min&&c.days<=seg.max);
+      if(!sc.length)return;
+      const collapsed=collapsedSegments[seg.key];
+      const unkontaktiert=sc.filter(c=>!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
+      html+=`
+        <div class="seg-section">
+          <div class="seg-head ${collapsed?'collapsed':''}" onclick="toggleSeg('${seg.key}')">
+            <div class="seg-stripe" style="background:${seg.color==='green'?'var(--success)':seg.color==='yellow'?'var(--warning)':seg.color==='orange'?'#EA580C':'var(--danger)'}"></div>
+            <div class="seg-head-title">${seg.label}</div>
+            <div class="seg-head-count" style="background:${seg.color==='green'?'var(--success)':seg.color==='yellow'?'var(--warning)':seg.color==='orange'?'#EA580C':'var(--danger)'}">${sc.length}</div>
+            <div class="seg-head-info">
+              ${unkontaktiert>0?'<span style="color:'+((seg.color==='green')?'var(--text-muted)':'var(--danger)')+'">'+unkontaktiert+' offen</span>':'<span style="color:var(--success)">Alle kontaktiert</span>'}
+            </div>
+            <span class="seg-head-arrow">&#9660;</span>
+          </div>
+          ${collapsed?'':'<table class="crm-table"><thead><tr><th>Kunde</th><th class="c">Tage</th><th class="c">Besuche</th><th>Letzter Besuch</th><th class="r">Aktionen</th></tr></thead><tbody>'+sc.map(c=>renderRow(c,seg)).join('')+'</tbody></table>'}
+        </div>`;
+    });
+    document.getElementById('crmContent').innerHTML=html;
+  } else {
+    document.getElementById('crmContent').innerHTML=`
+      <table class="crm-table"><thead><tr><th>Kunde</th><th class="c">Tage</th><th class="c">Besuche</th><th>Letzter Besuch</th><th class="r">Aktionen</th></tr></thead>
+      <tbody>${list.map(c=>renderRow(c,getSegment(c.days))).join('')}</tbody></table>`;
+  }
+}
+
+function renderRow(c,seg){
+  const crm=crmData[c.id]||{};
+  const isK=!!crm.kontaktiert;
+  const waUrl=getWaUrl(c.ph);
+  const initials=((c.fn||'?')[0]+(c.ln||'?')[0]).toUpperCase();
+  const dayColor=seg.color==='green'?'var(--success)':seg.color==='yellow'?'var(--warning)':seg.color==='orange'?'#EA580C':'var(--danger)';
+  const lastFu=crm.followUps&&crm.followUps.length?crm.followUps[0]:null;
+  const hasReminder=crm.erinnerung&&crm.erinnerung>=TODAY_STR;
+  const reminderToday=crm.erinnerung===TODAY_STR;
+  const kd=getClientKartei(c.id);
+  const lastTreatment=kd.treatments&&kd.treatments.length?kd.treatments[kd.treatments.length-1]:null;
+
+  let badges='';
+  if(c.visits>=8)badges+='<span class="badge-s b-vip">VIP</span> ';
+  if(c.bdSoon)badges+='<span class="badge-s b-bday">&#127874; Geburtstag</span> ';
+  if(reminderToday)badges+='<span class="badge-s b-reminder">&#128276; Heute</span> ';
+  else if(hasReminder)badges+='<span class="badge-s" style="background:var(--bg-subtle);color:var(--text-secondary)">&#128197; '+fmtDate(crm.erinnerung)+'</span> ';
+
+  return `
+    <tr class="crm-row seg-${seg.color} ${isK?'contacted':''}">
+      <td>
+        <div class="name">
+          <div class="crm-avatar" style="background:${avatarColor(c.name)};width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+          <div>
+            <a href="#" onclick="event.preventDefault();openDetail('${c.id}')" title="Kundendetails oeffnen">${esc(c.fn)} ${esc(c.ln)}</a>
+            <div class="badges">${badges}</div>
+          </div>
+        </div>
+        ${lastFu?'<div class="sub">Letztes Follow-up: '+fmtDate(lastFu.date)+' via '+esc(lastFu.kanal||'')+'</div>':''}
+        ${lastTreatment?'<div class="sub">Letzte Behandlung: '+esc(lastTreatment.name||lastTreatment.title||'')+'</div>':''}
+      </td>
+      <td class="days-cell">
+        <div class="days-num" style="color:${dayColor}">${c.days}</div>
+        <div class="days-lbl">${formatDays(c.days)}</div>
+      </td>
+      <td class="visits-cell">${c.visits||0}</td>
+      <td class="date-cell">${fmtDate(c.lv)}</td>
+      <td>
+        <div class="actions-cell">
+          ${waUrl?'<button class="crm-btn wa" onclick="openWaModal(\''+c.id+'\')" title="WhatsApp">&#128172;</button>':''}
+          <button class="crm-btn" onclick="openFollowUp('${c.id}')" title="Follow-up">&#128221;</button>
+          ${isK
+            ?'<button class="crm-btn done" onclick="undoKontaktiert(\''+c.id+'\')" title="Kontaktiert rueckgaengig">&#10003;</button>'
+            :'<button class="crm-btn mark" onclick="markKontaktiert(\''+c.id+'\')" title="Als kontaktiert markieren">&#9744;</button>'
+          }
+          <button class="crm-btn kartei" onclick="openDetail('${c.id}')" title="Kundendetails">&#128203;</button>
+          <button class="crm-btn" onclick="deleteClientCRM('${c.id}')" title="Kunde loeschen" style="color:var(--danger);border-color:rgba(192,84,79,.3)">&#128465;</button>
+        </div>
+      </td>
+    </tr>`;
+}
+
+// ═══════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════
+
+function setFilter(key){activeFilter=activeFilter===key?'all':key;quickFilter='';render()}
+function setQuickFilter(key){quickFilter=quickFilter===key?'':key;activeFilter='all';render()}
+function toggleSeg(key){collapsedSegments[key]=!collapsedSegments[key];renderList()}
+
+function markKontaktiert(id){const e=getCrmEntry(id);e.kontaktiert=TODAY_STR;crmData[id]=e;saveCrmData(id);updateCrmClientFields(id,{kontaktiert:TODAY_STR,zuletztKontaktiert:TODAY_STR});render();toast('&#10003; Als kontaktiert markiert')}
+function undoKontaktiert(id){const e=getCrmEntry(id);e.kontaktiert=null;crmData[id]=e;saveCrmData(id);updateCrmClientFields(id,{kontaktiert:null});render();toast('Kontaktiert-Status entfernt')}
+
+// ── WHATSAPP MODAL ──
+function openWaModal(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const seg=getSegment(c.days);
+  const templates=getWaTemplates(c,seg);
+  const waBase=getWaUrl(c.ph);
+
+  document.getElementById('fuModalContent').innerHTML=`
+    <button class="crm-modal-close" onclick="closeModal()">&times;</button>
+    <h2>&#128172; WhatsApp an ${esc(c.fn)}</h2>
+    <div class="modal-sub">Waehle eine Vorlage oder schreibe eine eigene Nachricht</div>
+    <label>Nachrichtenvorlage</label>
+    <div class="wa-templates" id="waTpls">
+      ${templates.map((t,i)=>'<div class="wa-tpl" onclick="selectWaTpl('+i+')" data-idx="'+i+'"><strong>'+t.label+'</strong><br>'+esc(t.text).substring(0,100)+'...</div>').join('')}
+    </div>
+    <label>Nachricht bearbeiten</label>
+    <textarea id="waText" rows="5">${templates[0].text}</textarea>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="sendWa('${id}','${waBase}')">&#128172; WhatsApp oeffnen</button>
+      <button class="modal-btn secondary" onclick="closeModal()">Abbrechen</button>
+    </div>`;
+  // Highlight first template
+  setTimeout(()=>{const first=document.querySelector('.wa-tpl');if(first)first.classList.add('selected')},0);
+  document.getElementById('fuModal').classList.add('open');
+  window._waTemplates=templates;
+}
+
+function selectWaTpl(idx){
+  document.querySelectorAll('.wa-tpl').forEach(el=>el.classList.remove('selected'));
+  document.querySelector('.wa-tpl[data-idx="'+idx+'"]').classList.add('selected');
+  document.getElementById('waText').value=window._waTemplates[idx].text;
+}
+
+function sendWa(id,baseUrl){
+  const text=document.getElementById('waText').value.trim();
+  const url=text?baseUrl+'?text='+encodeURIComponent(text):baseUrl;
+  window.open(url,'_blank');
+  const e=getCrmEntry(id);
+  e.kontaktiert=TODAY_STR;
+  e.followUps=e.followUps||[];
+  e.followUps.unshift({date:TODAY_STR,kanal:'WhatsApp',note:text.substring(0,100)+'...'});
+  crmData[id]=e;saveCrmData(id);
+  updateCrmClientFields(id,{kontaktiert:TODAY_STR,zuletztKontaktiert:TODAY_STR});
+  closeModal();
+  setTimeout(()=>render(),300);
+  toast('&#128172; WhatsApp geoeffnet & als kontaktiert markiert');
+}
+
+// ── FOLLOW-UP MODAL ──
+function openFollowUp(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const entry=getCrmEntry(id);
+  const seg=getSegment(c.days);
+  const kd=getClientKartei(c.id);
+  const lastTreatment=kd.treatments&&kd.treatments.length?kd.treatments[kd.treatments.length-1]:null;
+
+  document.getElementById('fuModalContent').innerHTML=`
+    <button class="crm-modal-close" onclick="closeModal()">&times;</button>
+    <h2>Follow-up: ${esc(c.fn)} ${esc(c.ln)}</h2>
+    <div class="modal-sub">
+      Letzter Besuch: <strong>${fmtDate(c.lv)}</strong> (${formatDays(c.days)}) &middot; ${c.visits} Besuche
+      ${lastTreatment?' &middot; Letzte Behandlung: <strong>'+esc(lastTreatment.name||lastTreatment.title||'')+'</strong>':''}
+    </div>
+    <label>Kanal</label>
+    <select id="fuKanal">
+      <option>WhatsApp</option><option>Telefon</option><option>E-Mail</option><option>SMS</option><option>Im Studio</option><option>Instagram</option>
+    </select>
+    <label>Notiz</label>
+    <textarea id="fuNote" rows="3" placeholder="Was wurde besprochen?"></textarea>
+    <label>Erinnerung setzen (optional)</label>
+    <input type="date" id="fuReminder" value="${entry.erinnerung||''}" min="${TODAY_STR}">
+    ${entry.followUps&&entry.followUps.length?`
+      <div class="fu-history">
+        <label>Bisherige Follow-ups</label>
+        ${entry.followUps.slice(0,8).map(f=>`
+          <div class="fu-entry">
+            <span class="fu-date">${fmtDate(f.date)}</span>
+            <span class="fu-channel">${esc(f.kanal||'')}</span>
+            <span class="fu-note">${esc(f.note||'')}</span>
+          </div>`).join('')}
+      </div>`:''}
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="saveFollowUp('${id}')">Follow-up speichern</button>
+      <button class="modal-btn secondary" onclick="closeModal()">Abbrechen</button>
+    </div>`;
+  document.getElementById('fuModal').classList.add('open');
+}
+
+function saveFollowUp(id){
+  const entry=getCrmEntry(id);
+  const kanal=document.getElementById('fuKanal').value;
+  const note=document.getElementById('fuNote').value.trim();
+  const reminder=document.getElementById('fuReminder').value;
+  entry.followUps=entry.followUps||[];
+  entry.followUps.unshift({date:TODAY_STR,kanal,note});
+  entry.kontaktiert=TODAY_STR;
+  if(reminder)entry.erinnerung=reminder;
+  crmData[id]=entry;saveCrmData(id);
+  updateCrmClientFields(id,{zuletztKontaktiert:TODAY_STR});
+  closeModal();render();toast('&#10003; Follow-up gespeichert');
+}
+
+// ── BATCH FOLLOW-UP ──
+function startBatchFollowUp(){
+  // Zeige die dringendsten unkontaktierten Kunden
+  const urgent=clients.filter(c=>c.days>=31&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).sort((a,b)=>b.days-a.days).slice(0,10);
+  if(!urgent.length){toast('Alle Kunden sind kontaktiert!');return}
+
+  document.getElementById('fuModalContent').innerHTML=`
+    <button class="crm-modal-close" onclick="closeModal()">&times;</button>
+    <h2>Batch Follow-up</h2>
+    <div class="modal-sub">Die ${urgent.length} dringendsten unkontaktierten Kunden. Klicke auf WhatsApp um direkt zu kontaktieren.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto">
+      ${urgent.map(c=>{
+        const seg=getSegment(c.days);
+        const waUrl=getWaUrl(c.ph);
+        const dayColor=seg.color==='green'?'var(--success)':seg.color==='yellow'?'var(--warning)':seg.color==='orange'?'#EA580C':'var(--danger)';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:10px">
+          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:${dayColor};min-width:40px;text-align:center">${c.days}</div>
+          <div style="flex:1"><div style="font-weight:600;font-size:13px">${esc(c.fn)} ${esc(c.ln)}</div><div style="font-size:11px;color:var(--text-muted)">${c.visits} Besuche &middot; ${fmtDate(c.lv)}</div></div>
+          ${waUrl?'<button class="crm-btn wa" onclick="openWaModal(\''+c.id+'\');closeModal()" style="font-size:12px">&#128172; WhatsApp</button>':'<span style="font-size:11px;color:var(--text-muted)">Keine Nr.</span>'}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="modal-btn secondary" onclick="closeModal()">Schliessen</button>
+    </div>`;
+  document.getElementById('fuModal').classList.add('open');
+}
+
+function closeModal(){document.getElementById('fuModal').classList.remove('open')}
+
+// ── DETAIL PANEL ──
+function openDetail(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const seg=getSegment(c.days);
+  const kd=getClientKartei(c.id);
+  const crm=crmData[c.id]||{};
+  const waUrl=getWaUrl(c.ph);
+  const dayColor=seg.color==='green'?'var(--success)':seg.color==='yellow'?'var(--warning)':seg.color==='orange'?'#EA580C':'var(--danger)';
+  const initials=((c.fn||'?')[0]+(c.ln||'?')[0]).toUpperCase();
+
+  let badges='';
+  if(c.visits>=8)badges+='<span class="badge-s b-vip">VIP</span> ';
+  if(c.bdSoon)badges+='<span class="badge-s b-bday">&#127874; Geburtstag</span> ';
+  if(crm.kontaktiert)badges+='<span class="badge-s" style="background:var(--info-light);color:var(--info)">&#10003; Kontaktiert '+fmtDate(crm.kontaktiert)+'</span> ';
+
+  // Treatments (letzte 5)
+  const treatments=(kd.treatments||[]).slice(-5).reverse();
+
+  // Follow-ups (letzte 5)
+  const followUps=(crm.followUps||[]).slice(0,5);
+
+  document.getElementById('detailPanel').innerHTML=`
+    <div class="dp-header">
+      <button class="dp-back" onclick="closeDetail()">&#8592; Zurueck zur CRM-Liste</button>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div class="crm-avatar" style="background:${avatarColor(c.name)};width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+        <div>
+          <div class="dp-name">${esc(c.fn)} ${esc(c.ln)}</div>
+          <div class="dp-badges">${badges}</div>
+        </div>
+      </div>
+      <div class="dp-contact">
+        ${c.ph?'<div class="dp-contact-row"><div class="icon" style="background:var(--success-light);color:var(--success)">&#128222;</div><a href="tel:'+esc(c.ph)+'">'+esc(c.ph)+'</a><button class="copy-btn" onclick="copyToClipboard(\''+esc(c.ph)+'\')">Kopieren</button></div>':'<div class="dp-contact-row"><div class="icon" style="background:var(--danger-light);color:var(--danger)">&#128222;</div><span style="color:var(--danger)">Keine Telefonnummer</span></div>'}
+        ${c.em?'<div class="dp-contact-row"><div class="icon" style="background:var(--info-light);color:var(--info)">&#9993;</div><a href="mailto:'+esc(c.em)+'">'+esc(c.em)+'</a><button class="copy-btn" onclick="copyToClipboard(\''+esc(c.em)+'\')">Kopieren</button></div>':''}
+        ${c.bd?'<div class="dp-contact-row"><div class="icon" style="background:#FCE7F3;color:#9D174D">&#127874;</div><span>'+esc(c.bd)+'</span></div>':''}
+      </div>
+    </div>
+    <div class="dp-body">
+      <div class="dp-metrics">
+        <div class="dp-metric"><div class="dp-metric-val" style="color:${dayColor}">${c.days<9999?c.days:'–'}</div><div class="dp-metric-lbl">Tage her</div></div>
+        <div class="dp-metric"><div class="dp-metric-val">${c.visits||0}</div><div class="dp-metric-lbl">Besuche</div></div>
+        <div class="dp-metric"><div class="dp-metric-val" style="font-size:14px">${fmtDate(c.lv)}</div><div class="dp-metric-lbl">Letzter Besuch</div></div>
+      </div>
+
+      ${treatments.length?'<div class="dp-section"><div class="dp-section-title">&#128137; Letzte Behandlungen</div>'+treatments.map(t=>'<div class="dp-treat"><span class="dp-treat-date">'+fmtDate(t.date)+'</span><span class="dp-treat-name">'+esc(t.name||t.title||'Behandlung')+'</span></div>').join('')+'</div>':''}
+
+      ${followUps.length?'<div class="dp-section"><div class="dp-section-title">&#128172; Follow-up Verlauf</div>'+followUps.map(f=>'<div class="dp-treat"><span class="dp-treat-date">'+fmtDate(f.date)+'</span><span class="dp-treat-name">'+esc(f.kanal||'')+'</span><span style="color:var(--text-muted);margin-left:8px">'+esc(f.note||'').substring(0,60)+'</span></div>').join('')+'</div>':''}
+
+      ${(kd.notesList||[]).length?'<div class="dp-section"><div class="dp-section-title">&#128221; Notizen</div>'+kd.notesList.slice(0,3).map(n=>'<div style="padding:8px 12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-secondary);margin-bottom:6px;line-height:1.5">'+esc(n.text||n)+'</div>').join('')+'</div>':''}
+
+      <div class="dp-section">
+        <div class="dp-section-title">&#128279; Vollstaendige Kartei</div>
+        <a href="kundenkartei.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);text-decoration:none;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">&#128203; Kundenkartei oeffnen (neuer Tab)</a>
+      </div>
+    </div>
+    <div class="dp-actions">
+      ${waUrl?'<button class="crm-btn wa" onclick="closeDetail();openWaModal(\''+c.id+'\')">&#128172; WhatsApp</button>':''}
+      <button class="crm-btn" onclick="closeDetail();openFollowUp('${c.id}')">&#128221; Follow-up</button>
+      ${crm.kontaktiert
+        ?'<button class="crm-btn done" onclick="undoKontaktiert(\''+c.id+'\');openDetail(\''+c.id+'\')">&#10003; Kontaktiert aufheben</button>'
+        :'<button class="crm-btn mark" onclick="markKontaktiert(\''+c.id+'\');openDetail(\''+c.id+'\')">&#9744; Als kontaktiert markieren</button>'
+      }
+      <button class="crm-btn" onclick="deleteClientCRM('${c.id}')" style="color:var(--danger);border-color:rgba(192,84,79,.3);margin-left:auto">&#128465; Kunde loeschen</button>
+    </div>`;
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('detailOverlay').classList.add('open');
+  // Scroll-Lock
+  document.body.style.overflow='hidden';
+}
+
+function closeDetail(){
+  document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function copyToClipboard(text){
+  navigator.clipboard.writeText(text).then(()=>toast('&#128203; Kopiert: '+text)).catch(()=>{
+    const el=document.createElement('textarea');el.value=text;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);toast('&#128203; Kopiert: '+text);
+  });
+}
+
+// ── KUNDE LOESCHEN ──
+function deleteClientCRM(id){
+  const c=clients.find(x=>x.id===id);
+  if(!c||!confirm('Kunde "'+c.fn+' '+c.ln+'" wirklich loeschen?\n\nAlle Karteidaten gehen verloren.'))return;
+  // Aus Client-Liste entfernen
+  clients=clients.filter(x=>x.id!==id);
+  // Aus Kartei-localStorage entfernen + nur diesen EINEN Kunden aus der Cloud entfernen
+  const k=loadKartei();if(k[id]){delete k[id];_karteiCache=k;localStorage.setItem(STORE_KEY,JSON.stringify(k));try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).remove()}catch(e){}}
+  // Aus CRM-Daten entfernen
+  if(crmData[id]){delete crmData[id];saveCrmData(id)}
+  // Panel schliessen falls offen
+  closeDetail();
+  render();
+  toast('&#128465; Kunde geloescht');
+}
+
+// ESC schliesst Detail-Panel
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(document.getElementById('fuModal').classList.contains('open'))closeModal();else if(document.getElementById('detailPanel').classList.contains('open'))closeDetail()}})
+
+// ── TOAST ──
+let toastTimer=null;
+function toast(msg){const el=document.getElementById('crmToast');el.innerHTML=msg;el.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2500)}
+
+// ── EVENT LISTENERS ──
+document.getElementById('crmSearch').addEventListener('input',function(){searchQuery=this.value.trim();if(searchQuery){activeFilter='all';quickFilter=''}render()});
+document.getElementById('crmSort').addEventListener('change',function(){sortMode=this.value;renderList()});
+document.getElementById('fuModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',function(){
+  loadCrmData();loadExternalData();initClients();render();loadNachsorge();initFirebaseSync();
+  setTimeout(()=>{
+    const reminders=clients.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR}).length;
+    if(reminders)toast('&#128276; '+reminders+' Erinnerung'+(reminders>1?'en':'')+' fuer heute!');
+  },1000);
+});
+</script>
+
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}</script>
+</body>
+</html>

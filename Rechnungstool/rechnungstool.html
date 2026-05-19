@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skinconcept Hagner - Rechnungs- & Gutschein-Tool</title>
+    <script src="jspdf.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #f5f0eb;
+            color: #3a3a3a;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #3a3a3a;
+            color: white;
+            padding: 25px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 6px;
+        }
+
+        .header-logo span {
+            font-weight: 600;
+        }
+
+        .header-sub {
+            font-size: 11px;
+            letter-spacing: 4px;
+            font-weight: 300;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #fff;
+            border-bottom: 2px solid #e8e0d8;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 18px 30px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            color: #999;
+        }
+
+        .tab:hover { color: #3a3a3a; }
+
+        .tab.active {
+            color: #3a3a3a;
+            border-bottom-color: #c4956a;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+        }
+
+        .card-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #3a3a3a;
+            border-bottom: 1px solid #e8e0d8;
+            padding-bottom: 12px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 6px;
+        }
+
+        input, select, textarea {
+            font-family: 'Montserrat', sans-serif;
+            padding: 12px 15px;
+            border: 1px solid #e0d8d0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #3a3a3a;
+            transition: border-color 0.3s;
+            background: #fafafa;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #c4956a;
+            background: #fff;
+        }
+
+        textarea { resize: vertical; min-height: 60px; }
+
+        .positions-header {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr 40px;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 2px solid #e8e0d8;
+            margin-bottom: 10px;
+        }
+
+        .positions-header span {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #888;
+        }
+
+        .position-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr 40px;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .position-row input {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+
+        .position-total {
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 12px;
+            background: #f5f0eb;
+            border-radius: 8px;
+            text-align: right;
+        }
+
+        .btn-remove {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .btn-remove:hover { color: #e74c3c; }
+
+        .btn-add {
+            background: none;
+            border: 1px dashed #c4956a;
+            color: #c4956a;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #c4956a;
+            color: white;
+        }
+
+        .totals {
+            margin-top: 20px;
+            border-top: 2px solid #e8e0d8;
+            padding-top: 15px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 30px;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+
+        .total-row.grand {
+            font-size: 20px;
+            font-weight: 600;
+            color: #c4956a;
+            padding-top: 10px;
+            border-top: 1px solid #e8e0d8;
+            margin-top: 5px;
+        }
+
+        .total-label { color: #888; font-weight: 500; }
+
+        .btn-generate {
+            background: #3a3a3a;
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-generate:hover { background: #c4956a; }
+
+        .gutschein-preview {
+            background: linear-gradient(135deg, #3a3a3a 0%, #555 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gutschein-preview::before {
+            content: '';
+            position: absolute;
+            top: 15px; left: 15px; right: 15px; bottom: 15px;
+            border: 1px solid rgba(196,149,106,0.4);
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .gutschein-preview .brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            margin-bottom: 5px;
+        }
+
+        .gutschein-preview .brand span { font-weight: 600; }
+
+        .gutschein-preview .subtitle {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: #c4956a;
+            margin-bottom: 30px;
+        }
+
+        .gutschein-preview .gutschein-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #c4956a;
+            margin-bottom: 15px;
+        }
+
+        .gutschein-preview .amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 52px;
+            font-weight: 300;
+            margin-bottom: 20px;
+        }
+
+        .gutschein-preview .for-name {
+            font-size: 14px;
+            font-weight: 300;
+            margin-bottom: 8px;
+        }
+
+        .gutschein-preview .details {
+            font-size: 11px;
+            color: #aaa;
+            letter-spacing: 1px;
+        }
+
+        .success-msg {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .info-bar {
+            background: #fff;
+            padding: 12px 20px;
+            margin-bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #888;
+            max-width: 800px;
+            margin: 0 auto 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+        }
+
+        .counter-badge {
+            background: #c4956a;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="header-logo">SKIN<span>CONCEPT</span></div>
+        <div class="header-sub">TAMARA HAGNER</div>
+    </div>
+    <div class="header-right">Rechnungs- & Gutschein-Tool</div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="switchTab('rechnung')">Rechnung erstellen</div>
+    <div class="tab" onclick="switchTab('gutschein')">Gutschein + Rechnung</div>
+</div>
+
+<!-- ========== RECHNUNG TAB ========== -->
+<div id="tab-rechnung" class="tab-content active">
+    <div class="container">
+        <div class="info-bar">
+            <span style="cursor:pointer;" onclick="toggleHistory()" title="Klicken um heutige Rechnungen anzuzeigen">Heutige Rechnungen: <span class="counter-badge" id="invoice-count">0</span> <small style="color:#c4956a;">(anzeigen)</small></span>
+            <span>Naechste Rechnungsnr: <strong id="next-invoice-nr"></strong></span>
+        </div>
+        <div id="invoice-history" class="card" style="display:none; margin-bottom:20px;">
+            <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">Heutige Rechnungen <button onclick="resetHistory()" style="background:none; border:1px solid #e74c3c; color:#e74c3c; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:11px; font-family:'Montserrat',sans-serif;">Zurücksetzen</button></div>
+            <div id="history-list" style="font-size:13px; color:#666;">Noch keine Rechnungen heute erstellt.</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Kundeninformationen</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Kundenname</label>
+                    <input type="text" id="r-kunde" placeholder="z.B. Tanja Mueller">
+                </div>
+                <div class="form-group">
+                    <label>Rechnungsdatum</label>
+                    <input type="date" id="r-datum">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rechnungsnummer</label>
+                    <input type="text" id="r-nummer" placeholder="Wird automatisch generiert">
+                </div>
+                <div class="form-group">
+                    <label>Faelligkeitsdatum</label>
+                    <select id="r-faelligkeit">
+                        <option value="SOFORT">SOFORT</option>
+                        <option value="7 Tage">7 Tage</option>
+                        <option value="14 Tage">14 Tage</option>
+                        <option value="30 Tage">30 Tage</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Positionen</div>
+            <div class="positions-header">
+                <span>Beschreibung</span>
+                <span>Menge</span>
+                <span>Endpreis (brutto)</span>
+                <span>Gesamt</span>
+                <span></span>
+            </div>
+            <div id="positions-container">
+                <div class="position-row">
+                    <input type="text" class="pos-desc" placeholder="Behandlung / Produkt">
+                    <input type="number" class="pos-qty" value="1" min="1" onchange="calcTotals()">
+                    <input type="number" class="pos-price" placeholder="0,00" step="0.01" onchange="calcTotals()" oninput="calcTotals()">
+                    <div class="position-total">0,00 EUR</div>
+                    <button class="btn-remove" onclick="removePosition(this)" title="Entfernen">&times;</button>
+                </div>
+            </div>
+            <button class="btn-add" onclick="addPosition()">+ Position hinzufuegen</button>
+
+            <div class="totals">
+                <div class="total-row">
+                    <span class="total-label">Zwischensumme (netto)</span>
+                    <span id="subtotal">0,00 EUR</span>
+                </div>
+                <div class="total-row">
+                    <span class="total-label">MwSt. 19%</span>
+                    <span id="tax">0,00 EUR</span>
+                </div>
+                <div class="total-row grand">
+                    <span class="total-label">Gesamtbetrag</span>
+                    <span id="total">0,00 EUR</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Anmerkungen (optional)</div>
+            <div class="form-row">
+                <div class="form-group full">
+                    <textarea id="r-anmerkungen" placeholder="Optionale Anmerkungen zur Rechnung..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-generate" onclick="generateInvoicePDF()">Rechnung als PDF erstellen</button>
+        <div class="success-msg" id="success-rechnung">Rechnung wurde erfolgreich erstellt und heruntergeladen!</div>
+    </div>
+</div>
+
+<!-- ========== GUTSCHEIN TAB ========== -->
+<div id="tab-gutschein" class="tab-content">
+    <div class="container">
+        <div class="card">
+            <div class="card-title">Gutschein erstellen</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Gutschein fuer (Name)</label>
+                    <input type="text" id="g-fuer" placeholder="Name des Beschenkten">
+                </div>
+                <div class="form-group">
+                    <label>Gutscheinwert (Brutto in EUR)</label>
+                    <input type="number" id="g-wert" placeholder="z.B. 100" step="0.01" oninput="updateGutscheinPreview()">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rechnungsempfänger</label>
+                    <input type="text" id="g-kaeufer" placeholder="Name für die Rechnung">
+                </div>
+                <div class="form-group">
+                    <label>Datum</label>
+                    <input type="date" id="g-datum" onchange="updateGutscheinPreview()">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Gutschein-Code</label>
+                    <input type="text" id="g-code" placeholder="Wird automatisch generiert">
+                </div>
+                <div class="form-group">
+                    <label>Gueltig bis</label>
+                    <input type="date" id="g-gueltig">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group full">
+                    <label>Beschreibung (optional)</label>
+                    <input type="text" id="g-beschreibung" placeholder="z.B. Verwoehnbehandlung, Produktgutschein...">
+                </div>
+            </div>
+
+            <div class="gutschein-preview" id="gutschein-preview">
+                <div class="brand">SKIN<span>CONCEPT</span></div>
+                <div class="subtitle">TAMARA HAGNER</div>
+                <div class="gutschein-title">- Gutschein -</div>
+                <div class="amount" id="preview-amount">0,00 EUR</div>
+                <div class="for-name" id="preview-name">für ...</div>
+                <div class="details" id="preview-details">Gueltig bis: --</div>
+            </div>
+        </div>
+
+        <button class="btn-generate" onclick="generateGutscheinPDF()">Gutschein + Rechnung als PDF erstellen</button>
+        <div class="success-msg" id="success-gutschein">Gutschein und Rechnung wurden erfolgreich erstellt!</div>
+    </div>
+</div>
+
+<script>
+function getJsPDF() {
+    if (window.jspdf && window.jspdf.jsPDF) {
+        return window.jspdf.jsPDF;
+    }
+    alert('PDF-Bibliothek konnte nicht geladen werden. Bitte stelle sicher, dass du mit dem Internet verbunden bist und lade die Seite neu (F5).');
+    return null;
+}
+
+
+// ===== STATE =====
+let dailyInvoiceCount = parseInt(localStorage.getItem('dailyInvoiceCount_' + getTodayKey()) || '0');
+
+function getTodayKey() {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getFullYear()).slice(-2)}`;
+}
+
+function getNextInvoiceNr() {
+    const count = dailyInvoiceCount + 1;
+    return `${getTodayKey()}-${String(count).padStart(2,'0')}`;
+}
+
+function incrementInvoiceCount() {
+    dailyInvoiceCount++;
+    localStorage.setItem('dailyInvoiceCount_' + getTodayKey(), dailyInvoiceCount);
+    updateCounterDisplay();
+}
+
+// ===== INVOICE HISTORY =====
+function addToInvoiceHistory(nummer, kunde, datum, betrag, typ) {
+    const key = 'invoiceHistory_' + getTodayKey();
+    const history = JSON.parse(localStorage.getItem(key) || '[]');
+    // Keine Duplikate
+    if (history.find(h => h.nummer === nummer)) return;
+    history.push({ nummer, kunde, datum, betrag: betrag.toFixed(2), typ, zeit: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) });
+    localStorage.setItem(key, JSON.stringify(history));
+    renderHistory();
+}
+
+function renderHistory() {
+    const key = 'invoiceHistory_' + getTodayKey();
+    const history = JSON.parse(localStorage.getItem(key) || '[]');
+    const container = document.getElementById('history-list');
+    if (history.length === 0) {
+        container.innerHTML = 'Noch keine Rechnungen heute erstellt.';
+        return;
+    }
+    let html = '<table style="width:100%; border-collapse:collapse;">';
+    html += '<tr style="border-bottom:2px solid #e8e0d8; font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">';
+    html += '<td style="padding:8px 5px;">Nr.</td><td style="padding:8px 5px;">Kunde</td><td style="padding:8px 5px;">Typ</td><td style="padding:8px 5px; text-align:right;">Betrag</td><td style="padding:8px 5px;">Uhrzeit</td></tr>';
+    history.forEach(h => {
+        html += `<tr style="border-bottom:1px solid #f0ebe5;">`;
+        html += `<td style="padding:8px 5px; font-weight:500;">${h.nummer}</td>`;
+        html += `<td style="padding:8px 5px;">${h.kunde}</td>`;
+        html += `<td style="padding:8px 5px;"><span style="background:${h.typ === 'Gutschein' ? '#f3e8ff' : '#e8f0ff'}; color:${h.typ === 'Gutschein' ? '#7c3aed' : '#2563eb'}; padding:2px 8px; border-radius:10px; font-size:11px;">${h.typ}</span></td>`;
+        html += `<td style="padding:8px 5px; text-align:right; font-weight:600;">${parseFloat(h.betrag).toFixed(2).replace('.', ',')} EUR</td>`;
+        html += `<td style="padding:8px 5px; color:#999;">${h.zeit}</td>`;
+        html += `</tr>`;
+    });
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+function resetHistory() {
+    if (!confirm('Zähler und History wirklich zurücksetzen?')) return;
+    dailyInvoiceCount = 0;
+    localStorage.setItem('dailyInvoiceCount_' + getTodayKey(), '0');
+    localStorage.removeItem('invoiceHistory_' + getTodayKey());
+    updateCounterDisplay();
+    renderHistory();
+}
+
+function toggleHistory() {
+    const el = document.getElementById('invoice-history');
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        renderHistory();
+    } else {
+        el.style.display = 'none';
+    }
+}
+
+function updateCounterDisplay() {
+    document.getElementById('invoice-count').textContent = dailyInvoiceCount;
+    document.getElementById('next-invoice-nr').textContent = getNextInvoiceNr();
+    document.getElementById('r-nummer').value = getNextInvoiceNr();
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelectorAll('.tab')[tab === 'rechnung' ? 0 : 1].classList.add('active');
+}
+
+// ===== POSITIONS =====
+function addPosition() {
+    const container = document.getElementById('positions-container');
+    const row = document.createElement('div');
+    row.className = 'position-row';
+    row.innerHTML = `
+        <input type="text" class="pos-desc" placeholder="Behandlung / Produkt">
+        <input type="number" class="pos-qty" value="1" min="1" onchange="calcTotals()">
+        <input type="number" class="pos-price" placeholder="0,00" step="0.01" onchange="calcTotals()" oninput="calcTotals()">
+        <div class="position-total">0,00 EUR</div>
+        <button class="btn-remove" onclick="removePosition(this)" title="Entfernen">&times;</button>
+    `;
+    container.appendChild(row);
+}
+
+function removePosition(btn) {
+    const container = document.getElementById('positions-container');
+    if (container.children.length > 1) {
+        btn.closest('.position-row').remove();
+        calcTotals();
+    }
+}
+
+function calcTotals() {
+    let bruttoTotal = 0;
+    document.querySelectorAll('.position-row').forEach(row => {
+        const qty = parseFloat(row.querySelector('.pos-qty').value) || 0;
+        const brutto = parseFloat(row.querySelector('.pos-price').value) || 0;
+        const total = qty * brutto;
+        row.querySelector('.position-total').textContent = formatEUR(total);
+        bruttoTotal += total;
+    });
+    const netto = bruttoTotal / 1.19;
+    const tax = bruttoTotal - netto;
+    document.getElementById('subtotal').textContent = formatEUR(netto);
+    document.getElementById('tax').textContent = formatEUR(tax);
+    document.getElementById('total').textContent = formatEUR(bruttoTotal);
+}
+
+function formatEUR(val) {
+    return val.toFixed(2).replace('.', ',') + ' \u20AC';
+}
+
+function formatEURpdf(val) {
+    return val.toFixed(2).replace('.', ',') + ' EUR';
+}
+
+// ===== GUTSCHEIN PREVIEW =====
+function updateGutscheinPreview() {
+    const wert = parseFloat(document.getElementById('g-wert').value) || 0;
+    const name = document.getElementById('g-fuer').value || '...';
+    const datum = document.getElementById('g-datum').value;
+
+    document.getElementById('preview-amount').textContent = formatEUR(wert);
+    document.getElementById('preview-name').textContent = `für ${name}`;
+
+    if (datum) {
+        const d = new Date(datum);
+        d.setFullYear(d.getFullYear() + 1);
+        const gueltigBis = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+        document.getElementById('g-gueltig').value = d.toISOString().split('T')[0];
+        document.getElementById('preview-details').textContent = `Gueltig bis: ${gueltigBis}`;
+
+        // Auto-generate code from date
+        const orig = new Date(datum);
+        const code = `SC-${String(orig.getDate()).padStart(2,'0')}${String(orig.getMonth()+1).padStart(2,'0')}${String(orig.getFullYear()).slice(-2)}`;
+        document.getElementById('g-code').value = code;
+    }
+}
+
+// ===== PDF GENERATION - INVOICE =====
+function drawLogo(doc, x, y) {
+    // Brand text only (clean, professional)
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(16);
+    doc.setTextColor(100, 100, 100);
+    doc.text('SKIN', x, y + 10);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    const skinW = doc.getTextWidth('SKIN');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(16);
+    const startX = x;
+    doc.text('SKIN', startX, y + 10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONCEPT', startX + doc.getTextWidth('SKIN'), y + 10);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.text('TAMARA HAGNER', startX, y + 16);
+}
+
+function formatDateDE(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+}
+
+function generateInvoicePDF() {
+    const kunde = document.getElementById('r-kunde').value;
+    const datum = document.getElementById('r-datum').value;
+    const nummer = document.getElementById('r-nummer').value;
+    const faelligkeit = document.getElementById('r-faelligkeit').value;
+    const anmerkungen = document.getElementById('r-anmerkungen').value;
+
+    if (!kunde || !datum) {
+        alert('Bitte Kundenname und Datum ausfuellen!');
+        return;
+    }
+
+    const positions = [];
+    document.querySelectorAll('.position-row').forEach(row => {
+        const desc = row.querySelector('.pos-desc').value;
+        const qty = parseFloat(row.querySelector('.pos-qty').value) || 0;
+        const brutto = parseFloat(row.querySelector('.pos-price').value) || 0;
+        const netto = brutto / 1.19;
+        if (desc && brutto > 0) {
+            positions.push({ desc, qty, price: parseFloat(netto.toFixed(2)), total: parseFloat((qty * netto).toFixed(2)) });
+        }
+    });
+
+    if (positions.length === 0) {
+        alert('Bitte mindestens eine Position hinzufuegen!');
+        return;
+    }
+
+    const JsPDF = getJsPDF();
+    if (!JsPDF) return;
+
+    try {
+        const doc = new JsPDF();
+        buildInvoicePDF(doc, { kunde, datum, nummer, faelligkeit, anmerkungen, positions });
+
+        const filename = `Rechnung_${kunde.replace(/\s+/g, '_')}_${nummer}.pdf`;
+        doc.save(filename);
+
+        // Brutto berechnen
+        let brutto = 0;
+        positions.forEach(p => { brutto += p.total; });
+        brutto = brutto * 1.19;
+        addToInvoiceHistory(nummer, kunde, datum, brutto, 'Rechnung');
+        incrementInvoiceCount();
+        showSuccess('success-rechnung');
+    } catch (e) {
+        alert('Fehler beim Erstellen der PDF: ' + e.message);
+        console.error(e);
+    }
+}
+
+function buildInvoicePDF(doc, data) {
+    const pageW = 210;
+    const marginL = 25;
+    const marginR = 25;
+    const contentW = pageW - marginL - marginR;
+
+    // === Top accent line ===
+    doc.setFillColor(196, 149, 106);
+    doc.rect(0, 0, pageW, 3, 'F');
+
+    // === Header: Company info (left) ===
+    let y = 20;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(58, 58, 58);
+    doc.text('Skinconcept Hagner', marginL, y);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    y += 7;
+    doc.text('Tamara Hagner', marginL, y);
+    y += 5;
+    doc.text('54497 Morbach, Bahnhofstrasse 67a', marginL, y);
+    y += 5;
+    doc.text('(+49) 0176 61742511', marginL, y);
+    y += 5;
+    doc.text('Steuernr. 43/058/411/46', marginL, y);
+    y += 5;
+    doc.text('IBAN: DE87 5875 1230 0032 9300 59', marginL, y);
+
+    // === Logo (right) ===
+    drawLogo(doc, 130, 18);
+
+    // === RECHNUNG title ===
+    y += 18;
+    doc.setFillColor(245, 240, 235);
+    if (doc.roundedRect) {
+        doc.roundedRect(marginL, y - 2, contentW, 14, 2, 2, 'F');
+    } else {
+        doc.rect(marginL, y - 2, contentW, 14, 'F');
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(58, 58, 58);
+    doc.text('Rechnung', marginL + 5, y + 8);
+
+    // === Date ===
+    y += 18;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(196, 149, 106);
+    doc.text(`Rechnungsdatum: ${formatDateDE(data.datum)}`, marginL, y);
+
+    // === Customer & Invoice details ===
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Rechnungsempf\u00e4nger', marginL, y);
+    doc.text('Rechnungsnummer', 120, y);
+
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(58, 58, 58);
+    doc.text(data.kunde, marginL, y);
+    doc.text(data.nummer, 120, y);
+
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('F\u00e4lligkeitsdatum', 120, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(58, 58, 58);
+    doc.text(data.faelligkeit, 120, y);
+
+    // === Separator ===
+    y += 10;
+    doc.setDrawColor(220, 212, 204);
+    doc.setLineWidth(0.5);
+    doc.line(marginL, y, pageW - marginR, y);
+
+    // === Table Header ===
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(196, 149, 106);
+    doc.text('Beschreibung', marginL, y);
+    doc.text('Menge', 110, y, { align: 'center' });
+    doc.text('St\u00fcckpreis', 145, y, { align: 'right' });
+    doc.text('Gesamtpreis', pageW - marginR, y, { align: 'right' });
+
+    y += 3;
+    doc.setDrawColor(196, 149, 106);
+    doc.setLineWidth(0.3);
+    doc.line(marginL, y, pageW - marginR, y);
+
+    // === Table Rows ===
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(58, 58, 58);
+
+    let subtotal = 0;
+    data.positions.forEach(pos => {
+        y += 9;
+        doc.text(pos.desc, marginL, y);
+        doc.text(String(pos.qty), 110, y, { align: 'center' });
+        doc.text(formatEURpdf(pos.price), 145, y, { align: 'right' });
+        doc.text(formatEURpdf(pos.total), pageW - marginR, y, { align: 'right' });
+        subtotal += pos.total;
+    });
+
+    // === Totals ===
+    y += 15;
+    doc.setDrawColor(220, 212, 204);
+    doc.line(100, y, pageW - marginR, y);
+
+    y += 8;
+    if (data.anmerkungen) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Anmerkungen: ' + data.anmerkungen, marginL, y);
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Zwischensumme', 140, y, { align: 'right' });
+    doc.setTextColor(58, 58, 58);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatEURpdf(subtotal), pageW - marginR, y, { align: 'right' });
+
+    const tax = subtotal * 0.19;
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('MwSt. 19%', 140, y, { align: 'right' });
+    doc.setTextColor(58, 58, 58);
+    doc.text(formatEURpdf(tax), pageW - marginR, y, { align: 'right' });
+
+    const total = subtotal + tax;
+    y += 4;
+    doc.setDrawColor(196, 149, 106);
+    doc.setLineWidth(0.5);
+    doc.line(120, y, pageW - marginR, y);
+
+    y += 9;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(196, 149, 106);
+    doc.text(formatEURpdf(total), pageW - marginR, y, { align: 'right' });
+
+    // === Footer ===
+    const footerY = 280;
+    doc.setDrawColor(220, 212, 204);
+    doc.setLineWidth(0.3);
+    doc.line(marginL, footerY - 5, pageW - marginR, footerY - 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(170, 170, 170);
+    doc.text('Skinconcept Hagner | Tamara Hagner | Bahnhofstrasse 67a | 54497 Morbach', pageW / 2, footerY, { align: 'center' });
+    doc.text('Steuernr. 43/058/411/46 | IBAN: DE87 5875 1230 0032 9300 59', pageW / 2, footerY + 4, { align: 'center' });
+}
+
+// ===== PDF GENERATION - GUTSCHEIN =====
+function generateGutscheinPDF() {
+    const fuer = document.getElementById('g-fuer').value;
+    const wert = parseFloat(document.getElementById('g-wert').value) || 0;
+    const kaeufer = document.getElementById('g-kaeufer').value;
+    const datum = document.getElementById('g-datum').value;
+    const code = document.getElementById('g-code').value;
+    const gueltig = document.getElementById('g-gueltig').value;
+    const beschreibung = document.getElementById('g-beschreibung').value;
+
+    if (!fuer || !wert || !kaeufer || !datum) {
+        alert('Bitte alle Pflichtfelder ausfuellen!');
+        return;
+    }
+
+    const JsPDF = getJsPDF();
+    if (!JsPDF) return;
+
+    try {
+    const netto = wert / 1.19;
+    const nummer = getNextInvoiceNr();
+
+    // === Ein PDF mit 2 Teilen: Seite 1 = Gutschein, Seite 2 = Rechnung ===
+    const doc = new JsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+
+    // Seite 1: Gutschein
+    buildGutscheinPDF(doc, { fuer, wert, datum, code, gueltig, beschreibung });
+
+    // Seite 2: Rechnung (A4 Hochformat)
+    doc.addPage('a4', 'portrait');
+    buildInvoicePDF(doc, {
+        kunde: kaeufer,
+        datum: datum,
+        nummer: nummer,
+        faelligkeit: 'SOFORT',
+        anmerkungen: `Gutschein ${code} für ${fuer}`,
+        positions: [{
+            desc: `Gutschein (${beschreibung || 'Wertgutschein'})`,
+            qty: 1,
+            price: parseFloat(netto.toFixed(2)),
+            total: parseFloat(netto.toFixed(2))
+        }]
+    });
+
+    const filename = `Gutschein_und_Rechnung_${fuer.replace(/\s+/g, '_')}_${code}.pdf`;
+    doc.save(filename);
+
+    incrementInvoiceCount();
+    addToInvoiceHistory(nummer, kaeufer, datum, wert, 'Gutschein');
+    showSuccess('success-gutschein');
+    } catch (e) {
+        alert('Fehler beim Erstellen der PDF: ' + e.message);
+        console.error(e);
+    }
+}
+
+function buildGutscheinPDF(doc, data) {
+    const w = doc.internal.pageSize.getWidth();
+    const h = doc.internal.pageSize.getHeight();
+
+    // Dark background
+    doc.setFillColor(58, 58, 58);
+    doc.rect(0, 0, w, h, 'F');
+
+    // Inner border
+    doc.setDrawColor(196, 149, 106);
+    doc.setLineWidth(0.3);
+    if (doc.roundedRect) {
+        doc.roundedRect(8, 8, w - 16, h - 16, 3, 3, 'S');
+    } else {
+        doc.rect(8, 8, w - 16, h - 16, 'S');
+    }
+
+    // Decorative corner elements
+    const cornerSize = 12;
+    doc.setLineWidth(0.5);
+    // Top-left
+    doc.line(12, 12, 12 + cornerSize, 12);
+    doc.line(12, 12, 12, 12 + cornerSize);
+    // Top-right
+    doc.line(w - 12, 12, w - 12 - cornerSize, 12);
+    doc.line(w - 12, 12, w - 12, 12 + cornerSize);
+    // Bottom-left
+    doc.line(12, h - 12, 12 + cornerSize, h - 12);
+    doc.line(12, h - 12, 12, h - 12 - cornerSize);
+    // Bottom-right
+    doc.line(w - 12, h - 12, w - 12 - cornerSize, h - 12);
+    doc.line(w - 12, h - 12, w - 12, h - 12 - cornerSize);
+
+    let y = 30;
+
+    // Brand
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(24);
+    doc.setTextColor(255, 255, 255);
+    const skinW = doc.getTextWidth('SKIN');
+    doc.text('SKIN', w / 2 - skinW / 2 - doc.getTextWidth('CONCEPT') / 2, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONCEPT', w / 2 - skinW / 2 - doc.getTextWidth('CONCEPT') / 2 + skinW, y);
+
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(196, 149, 106);
+    doc.text('TAMARA HAGNER', w / 2, y, { align: 'center' });
+
+    // Gutschein title
+    y += 16;
+    doc.setFontSize(10);
+    doc.setTextColor(196, 149, 106);
+    doc.text('\u2014  G U T S C H E I N  \u2014', w / 2, y, { align: 'center' });
+
+    // Amount
+    y += 18;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(38);
+    doc.setTextColor(255, 255, 255);
+    doc.text(formatEURpdf(data.wert), w / 2, y, { align: 'center' });
+
+    // For whom
+    y += 14;
+    doc.setFontSize(12);
+    doc.setTextColor(220, 220, 220);
+    doc.text(`f\u00fcr ${data.fuer}`, w / 2, y, { align: 'center' });
+
+    // Description
+    if (data.beschreibung) {
+        y += 8;
+        doc.setFontSize(9);
+        doc.setTextColor(180, 180, 180);
+        doc.text(data.beschreibung, w / 2, y, { align: 'center' });
+    }
+
+    // Separator
+    y += 10;
+    doc.setDrawColor(196, 149, 106);
+    doc.setLineWidth(0.2);
+    doc.line(w / 2 - 30, y, w / 2 + 30, y);
+
+    // Details
+    y += 8;
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Code: ${data.code}`, w / 2, y, { align: 'center' });
+    y += 5;
+    doc.text(`G\u00fcltig bis: ${formatDateDE(data.gueltig)}`, w / 2, y, { align: 'center' });
+
+    // Footer
+    doc.setFontSize(6);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Skinconcept Hagner | Bahnhofstrasse 67a | 54497 Morbach | (+49) 0176 61742511', w / 2, h - 14, { align: 'center' });
+}
+
+// ===== HELPERS =====
+function showSuccess(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('r-datum').value = today;
+    document.getElementById('g-datum').value = today;
+    updateCounterDisplay();
+    renderHistory();
+    updateGutscheinPreview();
+
+    // Listen for input changes on gutschein fields
+    document.getElementById('g-fuer').addEventListener('input', updateGutscheinPreview);
+    document.getElementById('g-wert').addEventListener('input', updateGutscheinPreview);
+});
+</script>
+
+</body>
+</html>

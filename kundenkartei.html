@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#b08d57">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -93,12 +96,13 @@ body.client-open .back-btn{display:inline-flex}
 .kh-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-top:4px}
 
 /* KARTEI TABS */
-.ktabs{display:flex;gap:0;padding:0 28px;border-bottom:none}
-.ktab{padding:12px 18px;font-size:12px;font-weight:400;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.5px;display:flex;align-items:center;gap:5px;white-space:nowrap}
-.ktab:hover{color:var(--text2)}
-.ktab.active{color:var(--gold);border-bottom-color:var(--gold)}
-.ktab .cnt{background:var(--bg4);padding:1px 6px;border-radius:8px;font-size:10px}
-.ktab.active .cnt{background:var(--gold-dim);color:var(--gold)}
+.ktabs{display:flex;gap:6px;padding:14px 28px 0;border-bottom:none;flex-wrap:wrap}
+.ktab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:1px solid transparent;border-radius:10px;transition:all .2s;letter-spacing:0;display:flex;align-items:center;gap:8px;white-space:nowrap;background:transparent}
+.ktab:hover{color:var(--text);background:rgba(184,151,99,0.06)}
+.ktab.active{color:#fff;background:#2A2520;border-color:#2A2520}
+.ktab.active:hover{background:#2A2520}
+.ktab .cnt{background:rgba(184,151,99,0.18);color:var(--gold);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;line-height:1.4}
+.ktab.active .cnt{background:rgba(220,199,154,0.25);color:#DCC79A}
 
 /* KARTEI BODY */
 .kbody{flex:1;overflow-y:auto;padding:20px 28px 40px}
@@ -145,7 +149,21 @@ body.client-open .back-btn{display:inline-flex}
 
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:11px;font-weight:500}
-.badge-g{background:var(--green-bg);color:var(--green)}.badge-y{background:var(--yellow-bg);color:var(--yellow)}.badge-o{background:var(--orange-bg);color:var(--orange)}.badge-r{background:var(--red-bg);color:var(--red)}
+.badge-g{background:var(--green-bg);color:var(--green)}.badge-y{background:var(--yellow-bg);color:var(--yellow)}.badge-o{background:var(--orange-bg);color:var(--orange)}.badge-r{background:var(--red-bg);color:var(--red)}.badge-k{background:var(--blue-bg);color:var(--blue)}
+
+/* SAVE BUTTON */
+.save-bar{display:flex;align-items:center;gap:10px;padding:10px 28px;background:var(--bg3);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.save-btn{padding:10px 24px;border-radius:8px;border:none;background:var(--gold);color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;letter-spacing:.3px}
+.save-btn:hover{background:var(--gold2);transform:translateY(-1px)}
+.save-btn:active{transform:translateY(0)}
+.save-btn.saved{background:var(--green);pointer-events:none}
+.save-status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.save-status .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.save-status .dot.ok{background:var(--green)}
+.save-status .dot.unsaved{background:var(--orange);animation:pulse-dot 1.5s infinite}
+.save-status .dot.error{background:var(--red)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+.storage-info{margin-left:auto;font-size:10px;color:var(--muted)}
 .bdot{width:5px;height:5px;border-radius:50%;background:currentColor}
 .seg-badge{display:inline-flex;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
 .seg-vip{background:var(--purple-bg);color:var(--purple)}.seg-stamm{background:var(--blue-bg);color:var(--blue)}.seg-aktiv{background:var(--green-bg);color:var(--green)}.seg-schlafend{background:var(--yellow-bg);color:var(--yellow)}.seg-verloren{background:var(--red-bg);color:var(--red)}.seg-neu{background:rgba(255,255,255,.05);color:var(--muted)}
@@ -175,28 +193,8 @@ body.client-open .back-btn{display:inline-flex}
 .ptable tr:hover td{background:var(--hover)}
 
 /* BEHANDLUNGSPLAN */
-.plan-step{display:flex;gap:14px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;align-items:flex-start}
-.plan-num{width:28px;height:28px;border-radius:8px;background:var(--gold-dim);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
-.plan-done .plan-num{background:var(--green-bg);color:var(--green)}
-.plan-body{flex:1}
-.plan-title{font-size:14px;font-weight:500;margin-bottom:2px}
-.plan-desc{font-size:12px;color:var(--text2);line-height:1.5}
-.plan-done .plan-title{text-decoration:line-through;color:var(--muted)}
-.plan-check{cursor:pointer;padding:4px;color:var(--muted);transition:color .2s}
-.plan-check:hover{color:var(--green)}
 
 /* KONTAKT HISTORY */
-.kh-entry{display:flex;gap:12px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
-.kh-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.kh-icon.wa{background:rgba(37,211,102,.12);color:#25d366}
-.kh-icon.phone{background:var(--blue-bg);color:var(--blue)}
-.kh-icon.email{background:var(--purple-bg);color:var(--purple)}
-.kh-icon.studio{background:var(--gold-dim);color:var(--gold)}
-.kh-icon.sms{background:var(--green-bg);color:var(--green)}
-.kh-body{flex:1}
-.kh-body .date{font-size:11px;color:var(--muted)}
-.kh-body .channel{font-size:12px;font-weight:500}
-.kh-body .note{font-size:12px;color:var(--text2);margin-top:2px}
 
 /* MODAL */
 .modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.3);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
@@ -248,35 +246,6 @@ body.client-open .back-btn{display:inline-flex}
 .note-entry.editing .note-text{display:none}
 .note-entry.editing .note-edit-area{display:block}
 
-/* CRM VIEW */
-.crm-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:150;overflow-y:auto}
-.crm-overlay.open{display:block}
-.crm-header{padding:20px 28px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.crm-header h2{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;letter-spacing:2px}
-.crm-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.crm-controls select,.crm-controls input{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;background:var(--bg2);color:var(--text);outline:none}
-.crm-controls select:focus,.crm-controls input:focus{border-color:var(--gold)}
-.crm-body{padding:20px 28px}
-.crm-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.crm-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center}
-.crm-stat-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1}
-.crm-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:4px}
-.crm-table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-.crm-table th{padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);background:var(--bg3);cursor:pointer;user-select:none;white-space:nowrap}
-.crm-table th:hover{color:var(--gold)}
-.crm-table th.sorted{color:var(--gold)}
-.crm-table td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
-.crm-table tr:last-child td{border-bottom:none}
-.crm-table tr:hover td{background:var(--hover)}
-.crm-table tr.crm-urgent td{background:var(--red-bg)}
-.crm-table tr.crm-warning td{background:var(--yellow-bg)}
-.crm-prio{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.3px}
-.crm-prio.high{background:var(--red-bg);color:var(--red)}
-.crm-prio.medium{background:var(--orange-bg);color:var(--orange)}
-.crm-prio.low{background:var(--yellow-bg);color:var(--yellow)}
-.crm-prio.none{background:var(--green-bg);color:var(--green)}
-.crm-done-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--gold);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s}
-.crm-done-btn:hover{background:var(--gold);color:#fff}
 
 /* TOAST */
 .toast-box{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
@@ -397,12 +366,12 @@ body.client-open .back-btn{display:inline-flex}
 <body>
 
 <!-- DASHBOARD NAV BAR -->
-<div class="dash-nav" style="background: linear-gradient(135deg, #6B5344, #8B6F5C); padding: 8px 14px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 150; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+<div class="dash-nav" style="background: linear-gradient(135deg, #2A2520, #4C463E); padding: 8px 14px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 150; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;">
   <a href="index.html" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 12px; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 4px; flex-shrink:0;">&#8592; Hub</a>
   <span style="color: rgba(255,255,255,0.3); font-size: 12px; flex-shrink:0;">|</span>
   <a href="aufgaben.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Aufgaben</a>
-  <a href="nachsorge.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Nachsorge</a>
-  <a href="bestellungen.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Bestellungen</a>
+  <a href="gutscheine.html" style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Gutscheine</a>
+  <a href="http://localhost:3000" target="_blank" rel="noopener" style="color: rgba(220,199,154,0.9); text-decoration: none; font-size: 11px; font-family: 'Outfit', sans-serif; flex-shrink:0;">Office ↗</a>
 </div>
 
 <!-- HEADER -->
@@ -413,41 +382,9 @@ body.client-open .back-btn{display:inline-flex}
     <span class="sub">Kundenkartei</span>
   </div>
   <div class="hdr-right">
-<button class="btn btn-gold btn-sm" onclick="openCRM()" style="background:var(--blue);color:#fff">&#128203; CRM Uebersicht</button>
     <button class="btn btn-dark btn-sm" onclick="openImportModal()">Treatwell Import</button>
     <button class="btn btn-dark btn-sm" onclick="exportCSV()">CSV Export</button>
     <button class="btn btn-gold btn-sm" onclick="openNewClientModal()">+ Neuer Kunde</button>
-  </div>
-</div>
-
-<!-- CRM OVERLAY -->
-<div class="crm-overlay" id="crmOverlay">
-  <div class="crm-header">
-    <h2>&#128203; CRM Uebersicht</h2>
-    <div class="crm-controls">
-      <select id="crmFilter" onchange="renderCRM()">
-        <option value="all">Alle Kunden</option>
-        <option value="anrufen" selected>Muss angerufen werden</option>
-        <option value="ueberfaellig">Ueberfaellige</option>
-        <option value="verloren">Verloren</option>
-        <option value="kontaktiert">Bereits kontaktiert</option>
-        <option value="geburtstag">Geburtstag bald</option>
-      </select>
-      <select id="crmSort" onchange="renderCRM()">
-        <option value="tage-desc">Tage seit Besuch (laengste zuerst)</option>
-        <option value="tage-asc">Tage seit Besuch (kuerzeste zuerst)</option>
-        <option value="name-asc">Name A-Z</option>
-        <option value="name-desc">Name Z-A</option>
-        <option value="kontakt-asc">Letzter Kontakt (aelteste zuerst)</option>
-        <option value="besuche-desc">Meiste Besuche zuerst</option>
-      </select>
-      <input type="text" id="crmSearch" placeholder="Suche..." oninput="renderCRM()">
-      <button class="btn btn-dark btn-sm" onclick="closeCRM()">&#10005; Schliessen</button>
-    </div>
-  </div>
-  <div class="crm-body">
-    <div class="crm-stats" id="crmStats"></div>
-    <div id="crmTable"></div>
   </div>
 </div>
 
@@ -558,6 +495,15 @@ const ACTIONS_KEY = 'sc_kartei_actions_v2';
 // Alte Loeschliste bereinigen
 try{localStorage.removeItem("sc_kartei_deleted")}catch(e){}
 
+// Eindeutige Geraete-ID um Echo-Loops zu vermeiden (PC/iPad/Handy werden unterschieden)
+const DEVICE_ID = (function(){
+  try{
+    var d=localStorage.getItem('sc_device_id');
+    if(!d){d='dev_'+Math.random().toString(36).substr(2,9);localStorage.setItem('sc_device_id',d)}
+    return d;
+  }catch(e){return 'dev_unknown'}
+})();
+
 // ── TREATWELL KONTAKTE ──
 const TW_CONTACTS=[{"fn":"Tamara","ln":"Hagner","ph":"+49 176 70860252","em":"skinconcept.hagner@gmail.com","bd":"","b":3},{"fn":"Caroline","ln":"Eibes","ph":"","em":"","bd":"","b":0},{"fn":"Roswita","ln":"Jakobs","ph":"+49 176 61742511","em":"","bd":"","b":0},{"fn":"Birgitt","ln":"Becker","ph":"+49 1514 6514280","em":"birgittbecker66@aim.com","bd":"","b":0},{"fn":"Maike","ln":"Rieb","ph":"+49 1575 3677005","em":"Maikesauer@web.de","bd":"","b":1},{"fn":"Andrea","ln":"hensel","ph":"+49 176 23839837","em":"hensel-a@web.de","bd":"","b":3},{"fn":"Nina","ln":"Herresthal","ph":"+49 163 8464478","em":"Herrresthal1989@gmx.de","bd":"","b":0},{"fn":"Petra","ln":"Behnke","ph":"+49 1511 7308319","em":"Petra.behnke68@icloud.com","bd":"","b":3},{"fn":"Jasmine","ln":"Dreher","ph":"+49 177 7522414","em":"jasminedreher@gmx.de","bd":"","b":0},{"fn":"Corina","ln":"Heinze","ph":"+49 162 7853353","em":"Corina.heinze@arcor.de","bd":"","b":0},{"fn":"Irina","ln":"Todorova","ph":"+49 176 82019433","em":"irenetodorova@gmail.com","bd":"","b":0},{"fn":"Lorscheter","ln":"Nadja","ph":"","em":"nadjalorscheter@gmx.de","bd":"","b":0},{"fn":"Natalia","ln":"Schmidt","ph":"+49 160 90622000","em":"natalja@onlinehome.de","bd":"","b":1},{"fn":"Rebecca","ln":"Wolf","ph":"+49 173 6138539","em":"Rebecca.wolf21@yahoo.de","bd":"","b":0},{"fn":"Mechthild","ln":"Binz","ph":"+49 1511 0444493","em":"Mechthild-binz@web.de","bd":"","b":2},{"fn":"Lisa","ln":"Grabendünkel","ph":"+49 178 2888129","em":"lisa.gr@t-online.de","bd":"","b":5},{"fn":"Hanna","ln":"Bortova","ph":"+49 171 2193945","em":"annuta2386@gmail.com","bd":"","b":2},{"fn":"Christa","ln":"Treitz","ph":"+49 162 2191029","em":"Ch-treitz@t-online.de","bd":"","b":4},{"fn":"Mechthild","ln":"Emmelsberger","ph":"+49 170 1856673","em":"","bd":"","b":4},{"fn":"Steffi","ln":"Druve","ph":"+49 162 6383087","em":"Sdruve@web.de","bd":"","b":0},{"fn":"Laura","ln":"Rieb","ph":"+49 1516 7730516","em":"Laura.rieb@gmx.de","bd":"","b":3},{"fn":"Nicole","ln":"Bender-Unglesic","ph":"+49 1525 1682345","em":"Nicolebenderuglesic@gmail.com","bd":"","b":1},{"fn":"Lisa","ln":"Joy Pisharek","ph":"+49 1515 6872736","em":"l.joypisharek@gmail.com","bd":"","b":4},{"fn":"Kira","ln":"Fischer","ph":"+49 174 7943254","em":"","bd":"","b":1},{"fn":"Birgitt","ln":"Blesius","ph":"+49 1575 8853007","em":"bebles63@web.de","bd":"","b":4},{"fn":"Heidrun","ln":"Görgen","ph":"+49 170 3369129","em":"","bd":"","b":0},{"fn":"Tanja","ln":"Bröhling","ph":"+49 1512 3732708","em":"tanjabroehling@gmail.com","bd":"","b":0},{"fn":"Gaby","ln":"Neuls","ph":"+49 171 7487143","em":"","bd":"","b":3},{"fn":"Petra","ln":"Roder-Feilen","ph":"+49 1517 0151268","em":"","bd":"","b":3},{"fn":"Sabine","ln":"Ritter","ph":"+49 1516 8576279","em":"","bd":"","b":6},{"fn":"Karin","ln":"Wünsche","ph":"+49 1523 7743532","em":"Wuensche.thalfang@icloud.de","bd":"","b":0},{"fn":"Hildegard","ln":"Karl","ph":"+49 176 41230609","em":"","bd":"","b":0},{"fn":"Olga","ln":"Gutweiler","ph":"+49 177 4694529","em":"olga.klaus@yahoo.de","bd":"","b":0},{"fn":"Swetlana","ln":"Schulz","ph":"+49 171 7177622","em":"schulzswetlana840@yahoo.com","bd":"","b":0},{"fn":"Roman","ln":"Uglesic","ph":"+49 1525 1682059","em":"","bd":"","b":1},{"fn":"Michael","ln":"Bauer","ph":"+49 1517 3058462","em":"","bd":"","b":4},{"fn":"Judith","ln":"Huber","ph":"","em":"Judith.huber.65@gmail.com","bd":"","b":0},{"fn":"Corinna","ln":"Schweizer","ph":"+49 1514 1965554","em":"Cocorinnana@web.de","bd":"","b":0},{"fn":"Mitschke","ln":"Julia","ph":"+49 170 3855918","em":"Jiliamitschke@googlemail.com","bd":"","b":3},{"fn":"Vera","ln":"Höfner","ph":"+49 1511 6725567","em":"Vera.hoefner@gmx.de","bd":"","b":0},{"fn":"Julia","ln":"Höfner","ph":"+49 1514 1656816","em":"hoefrierjulia@web.de","bd":"","b":0},{"fn":"Alexandra","ln":"Schwarz","ph":"+49 160 96465573","em":"alexandra.schwarz85@gmx.de","bd":"","b":0},{"fn":"Sabrina","ln":"Kirst","ph":"+49 1511 8314672","em":"Skirst86@web.de","bd":"","b":0},{"fn":"Gretchen","ln":"Gravelle","ph":"+49 1511 1709102","em":"Gretchenann74@gmail.com","bd":"","b":1},{"fn":"Gina","ln":"Winkler","ph":"+49 1514 0359671","em":"ginawinkler18@gmail.com","bd":"","b":3},{"fn":"Nina","ln":"Voigt","ph":"+49 178 6147115","em":"ninavoigt@gmx.de","bd":"","b":0},{"fn":"Isabell","ln":"Eckardt","ph":"+49 176 39427632","em":"Isabells84@web.de","bd":"","b":4},{"fn":"Antonella","ln":"Nepi","ph":"","em":"","bd":"","b":4},{"fn":"Jenni","ln":"Braun","ph":"","em":"Jenni.kolz@web.de","bd":"","b":3},{"fn":"Rita","ln":"Kleinbauer","ph":"+49 1522 9062081","em":"ritakleinbauer@web.de","bd":"","b":0},{"fn":"Daniela","ln":"Engel","ph":"+49 176 64193679","em":"daniela-engel80@gmx.de","bd":"","b":4},{"fn":"Florian","ln":"Gizewski","ph":"","em":"F.gizewski@gmx.de","bd":"","b":0},{"fn":"Nele","ln":"Bäcker","ph":"+49 1512 1592141","em":"nele.1998@web.de","bd":"","b":3},{"fn":"Isabel","ln":"Resch","ph":"+49 1520 2921013","em":"Isabel-resch@web.de","bd":"","b":0},{"fn":"Jutta","ln":"Klesius","ph":"+49 6533 4259","em":"","bd":"","b":0},{"fn":"Petra","ln":"Falkenburg","ph":"+49 170 8467207","em":"petrafalkenburg72@gmail.com","bd":"","b":0},{"fn":"Jule","ln":"Lorscheter","ph":"+49 1511 6925550","em":"Julelorscheter@gmx.de","bd":"","b":5},{"fn":"Annete","ln":"Knop","ph":"+49 172 6863082","em":"Hellenbergerhof@t-online.de","bd":"","b":5},{"fn":"Ewa","ln":"Flis","ph":"+49 1514 5912364","em":"","bd":"","b":0},{"fn":"Mara","ln":"Müller","ph":"+49 170 7098101","em":"maramueller1900@gmx.de","bd":"","b":2},{"fn":"Jana","ln":"Schemer","ph":"","em":"Janaschemer@gmail.com","bd":"","b":0},{"fn":"Ilona","ln":"Schuh","ph":"+49 163 7576920","em":"Ilonaschuh7@gmail.com","bd":"","b":4},{"fn":"Maren","ln":"Schumann","ph":"+49 170 8914799","em":"marenschumann2004@gmail.com","bd":"","b":4},{"fn":"Manuela","ln":"Horne","ph":"+49 1573 9316473","em":"Mohrmanuela@t-online.de","bd":"","b":4},{"fn":"Irini","ln":"Strogilaki","ph":"+49 178 6667132","em":"irinistrogilaki@icloud.com","bd":"","b":1},{"fn":"Carina","ln":"Sonne","ph":"+49 175 9136654","em":"Caroknuffi27@gmail.com","bd":"","b":4},{"fn":"Elena","ln":"Machold-Glaß","ph":"+49 171 2789302","em":"Lenawon@gmx.de","bd":"","b":0},{"fn":"Sophia","ln":"Arend","ph":"+49 1513 0731987","em":"Sophia.arend@web.de","bd":"","b":0},{"fn":"Sigrid","ln":"Niewswodek","ph":"+49 6533 5592","em":"","bd":"","b":2},{"fn":"Jennifer","ln":"Thösen","ph":"+49 160 1482011","em":"","bd":"03-02-1980","b":3},{"fn":"Petra","ln":"Zens-Trossen","ph":"+49 173 6686503","em":"P.zensi@icloud.com","bd":"","b":14},{"fn":"Natalia","ln":"Weizel","ph":"+49 174 6981852","em":"","bd":"","b":0},{"fn":"Anja","ln":"Peng","ph":"","em":"","bd":"","b":0},{"fn":"Meier","ln":"Katrin","ph":"+49 1522 9953363","em":"Schehrer.kathrin@web.de","bd":"","b":0},{"fn":"Denise","ln":"Roth","ph":"+49 170 4067784","em":"","bd":"","b":4},{"fn":"Sigrid","ln":"Wagner","ph":"","em":"Les@je.de","bd":"","b":4},{"fn":"Ellen","ln":"Wittmann","ph":"+49 1511 0423801","em":"","bd":"","b":0},{"fn":"Andrea","ln":"Fischer","ph":"+49 162 9881364","em":"andrea.pferd@web.de","bd":"","b":4},{"fn":"Heike","ln":"Ludgen","ph":"+49 6589 618","em":"Ludgenheike@gmail.com","bd":"","b":0},{"fn":"Natascha","ln":"Zurgheisel","ph":"+49 171 7363606","em":"na.zurgeihsel@aol.com","bd":"","b":4},{"fn":"Nathalie","ln":"Offermann","ph":"+49 172 6568015","em":"Nathalie.offermann@gmx.de","bd":"","b":0},{"fn":"Ingrid","ln":"Zender","ph":"+49 176 50987648","em":"Ingrudzender@gmx.de","bd":"","b":0},{"fn":"Martina","ln":"Hoffmann","ph":"+49 171 6291624","em":"Martina_hoffmann84@gmx.de","bd":"","b":4},{"fn":"Anja","ln":"Paul","ph":"+49 176 34957830","em":"Anjapaul05@gmail.com","bd":"","b":0},{"fn":"Natalie","ln":"Ewen","ph":"+49 0175 81608079","em":"Lieni79@yahoo.de","bd":"","b":0},{"fn":"Houaida","ln":"Jamal","ph":"+49 160 8278074","em":"hllal@t-online.de","bd":"","b":4},{"fn":"Emeliy","ln":"Lorenz","ph":"+49 1590 3776838","em":"Emeliymaschalorenz@gmx.de","bd":"","b":1},{"fn":"Ronja","ln":"Ditze","ph":"+49 175 8268805","em":"","bd":"","b":0},{"fn":"Katja","ln":"Alt-Bonneku","ph":"+49 1523 6271621","em":"kati.b@live.de","bd":"","b":4},{"fn":"Silke","ln":"Gutweiler","ph":"+49 170 3561955","em":"","bd":"","b":0},{"fn":"Sosnjak","ln":"Mandy","ph":"+49 1511 4753953","em":"Sossi77@outlokk.com","bd":"","b":0},{"fn":"Helma","ln":"Blatt","ph":"+49 163 7139004","em":"","bd":"","b":1},{"fn":"Rebecca","ln":"Scherer","ph":"+49 1515 3069618","em":"schererrebecca@web.de","bd":"","b":4},{"fn":"Christina","ln":"Klippel","ph":"+49 175 7176375","em":"Christina-klippel@wed.de","bd":"","b":2},{"fn":"Marie","ln":"Laube","ph":"+49 162 3218055","em":"Marielaube96@gmail.com","bd":"","b":3},{"fn":"Aljona","ln":"Fuchs","ph":"+49 176 34551259","em":"Fuchsalena7@gmail.com","bd":"","b":4},{"fn":"Sonja","ln":"Kurz","ph":"+49 171 3737738","em":"Sonja.kurz1@gmx.de","bd":"","b":0},{"fn":"Petra","ln":"Barrere","ph":"+49 179 9744250","em":"Kahren5@t-online.de","bd":"","b":4},{"fn":"Anna-Sophie","ln":"Lehnen","ph":"+49 160 6317889","em":"","bd":"","b":0},{"fn":"Isabella","ln":"Diederich","ph":"+49 175 3703590","em":"Isabella.gorkiewicz@web.de","bd":"","b":2},{"fn":"Sarah","ln":"Conen","ph":"+49 162 2762567","em":"Sconen@conen1.de","bd":"","b":4},{"fn":"Tanja","ln":"Müller","ph":"+49 1512 0223234","em":"","bd":"","b":1},{"fn":"Sandra","ln":"Nösges","ph":"+49 179 4624487","em":"S.noesges@web.de","bd":"","b":0},{"fn":"Steffi","ln":"Mettler-tezlaff","ph":"+49 173 9884584","em":"Stephanie.mettler-tezlaff@gmx.de","bd":"","b":2},{"fn":"Emely","ln":"Root","ph":"+49 179 4636662","em":"Emilyroot19.12.06@gmail.com","bd":"","b":0},{"fn":"Sophie","ln":"Laudes","ph":"+49 170 4140928","em":"Sophielaudes@icloud.com","bd":"","b":0},{"fn":"Allanah","ln":"Naragy","ph":"+49 162 4211856","em":"Allanah.naragy@gmail.com","bd":"","b":7},{"fn":"Andrea","ln":"Steffen","ph":"+49 170 3819400","em":"Andrea1606@web.de","bd":"","b":0},{"fn":"Carina","ln":"Becker","ph":"+49 1512 6639679","em":"Becker-carina@t-online.de","bd":"","b":6},{"fn":"Luisa","ln":"Knop","ph":"+49 1515 6111362","em":"Luisa.knop@icloud.com","bd":"","b":2},{"fn":"Kerstin","ln":"Wagner","ph":"+49 175 2800420","em":"","bd":"","b":3},{"fn":"Tanja","ln":"Laudes","ph":"+49 1514 0757070","em":"Tanja-joahem-laudes@t-online.de","bd":"","b":3},{"fn":"Sophie","ln":"Schwinn","ph":"+49 176 40587334","em":"","bd":"","b":0},{"fn":"Christina","ln":"Becker","ph":"+49 179 7544206","em":"Becker-christina@aol.com","bd":"","b":3},{"fn":"Silke","ln":"Bock","ph":"+49 1514 3266133","em":"Silke.marx@googlemail.com","bd":"","b":11},{"fn":"Patrizia","ln":"Raffrath","ph":"+49 175 5749112","em":"patricia-paffrath76@hotmail.de","bd":"","b":3},{"fn":"Petra","ln":"Merten","ph":"+49 171 6817954","em":"Merten-petra69@gmx.de","bd":"","b":4},{"fn":"Brigitte","ln":"Thomas","ph":"+49 1515 0623680","em":"Brigitte.thomas19@gmail.com","bd":"","b":0},{"fn":"Melanie","ln":"Mailender","ph":"+49 1516 8192129","em":"","bd":"","b":0},{"fn":"Anastasia","ln":"Juhl","ph":"+49 1511 9654000","em":"Reim.nastia@gmail.com","bd":"","b":0},{"fn":"Marina","ln":"Röder","ph":"+49 173 8151191","em":"","bd":"","b":0},{"fn":"Anke","ln":"Schreiner","ph":"+49 160 6405206","em":"Ank.ker.sch@gmail.com","bd":"","b":0},{"fn":"Lorena","ln":"Nepi","ph":"+49 173 6408772","em":"","bd":"","b":8},{"fn":"Sascha","ln":"Weiland","ph":"+49 172 4791216","em":"","bd":"","b":1},{"fn":"Frauke","ln":"Buenting","ph":"+49 170 4434399","em":"Buentingf@gmx.de","bd":"","b":4},{"fn":"Ulrike","ln":"Pälzer","ph":"+49 1522 9337527","em":"","bd":"","b":2},{"fn":"Sara","ln":"Tilmann-Lorenz","ph":"+49 160 1550944","em":"Sarafillmann@gmx.de","bd":"","b":1},{"fn":"Lea","ln":"Daum","ph":"+49 1573 1329194","em":"Leadaume@freneet.de","bd":"","b":4},{"fn":"Denise","ln":"Hissung","ph":"+49 1575 1671002","em":"dhissung@gmail.com","bd":"","b":4},{"fn":"Mira","ln":"Locher","ph":"+49 176 22611456","em":"mira.locher@gmx.de","bd":"","b":1},{"fn":"Anna","ln":"Lea Ritz","ph":"+49 1577 8237484","em":"Anna.lea.ritz@web.de","bd":"","b":0},{"fn":"Philipp","ln":"Hempel","ph":"+49 162 9914100","em":"Philipphempel1@web.de","bd":"","b":0},{"fn":"Sarah","ln":"Paulus-Leyendecker","ph":"+49 176 96825554","em":"Sarahleyendecker@web.de","bd":"","b":0},{"fn":"Tina","ln":"Freudenberger","ph":"","em":"Tinafreudenberger@gmail.de","bd":"","b":0},{"fn":"Bianka","ln":"Christener","ph":"+49 176 39002004","em":"","bd":"","b":0},{"fn":"Jasmin","ln":"Weber-Hauth","ph":"+49 171 2612565","em":"","bd":"","b":0},{"fn":"Carolin","ln":"Arens","ph":"+49 1516 1525024","em":"carolin.arens@freenet.de","bd":"","b":0},{"fn":"Veronica","ln":"Ciulin","ph":"+49 176 64278096","em":"","bd":"","b":0},{"fn":"Christina","ln":"Backes","ph":"+49 1512 3596689","em":"","bd":"","b":2},{"fn":"Irina","ln":"Seltenreich","ph":"+49 1523 2154072","em":"irina.seltenreich@web.de","bd":"","b":3},{"fn":"Katja","ln":"Härtling","ph":"+49 1514 1937837","em":"","bd":"","b":0},{"fn":"Laura","ln":"Schlarb","ph":"+49 1578 5066988","em":"laura.schlarb@web.de","bd":"","b":5},{"fn":"Monika","ln":"Kreutz","ph":"+49 1525 9616456","em":"monikakreutz@gmail.com","bd":"","b":0},{"fn":"Margot","ln":"Kaucher","ph":"+49 1520 8515735","em":"","bd":"","b":0},{"fn":"Claudia","ln":"Leis","ph":"+49 1511 9337803","em":"cleis64@gmail.com","bd":"","b":4},{"fn":"Lena","ln":"Blau","ph":"+49 170 9935601","em":"lenablau2000@gmail.com","bd":"","b":1},{"fn":"Carmen","ln":"Hany","ph":"+49 176 72886854","em":"","bd":"","b":0},{"fn":"Denise","ln":"Porr","ph":"+49 172 1557739","em":"Nisje@web.de","bd":"","b":1},{"fn":"Carla","ln":"Rey","ph":"+49 173 6006731","em":"Rey.carla@yahoo.com","bd":"","b":2},{"fn":"Jennifer","ln":"Sohni","ph":"+49 1522 3307379","em":"","bd":"","b":0},{"fn":"Salome","ln":"pauly","ph":"","em":"Salome-pauly@web.de","bd":"","b":0},{"fn":"Nenja","ln":"Frank","ph":"+49 178 2735757","em":"","bd":"","b":0},{"fn":"Stefanie","ln":"Morlock","ph":"+49 174 9501132","em":"st_1998@web.de","bd":"","b":0},{"fn":"Anna","ln":"Bischoff","ph":"+49 160 2166215","em":"","bd":"","b":0},{"fn":"Michelle","ln":"Müller","ph":"+49 160 94608460","em":"Michellem87@gmx.de","bd":"","b":3},{"fn":"Carmen","ln":"Dietz","ph":"+49 1573 5523190","em":"","bd":"","b":3},{"fn":"Angelina","ln":"Decker","ph":"+49 1573 1661515","em":"","bd":"","b":3},{"fn":"Karl-Peter","ln":"Zimmer","ph":"+49 171 7161720","em":"K.zimmer@holz-zimmer.de","bd":"","b":0},{"fn":"Nicole","ln":"Weich","ph":"+49 172 7594956","em":"nicole.weich@gmx.de","bd":"","b":1},{"fn":"Grazina","ln":"Greweling","ph":"","em":"Grazinag5@gmail.com","bd":"","b":3},{"fn":"Hanna","ln":"Wolter","ph":"+49 173 9137144","em":"","bd":"","b":0},{"fn":"Daniela","ln":"Conradt","ph":"+49 160 99122308","em":"","bd":"","b":3},{"fn":"Nicole","ln":"Schubert","ph":"+49 177 99380899","em":"info@logopaedie-schubert.de","bd":"","b":0},{"fn":"Nicole","ln":"Koster-Rietz","ph":"+49 160 97854436","em":"Koster-rietz@t-online.de","bd":"","b":0},{"fn":"Malin","ln":"Thömmes","ph":"+49 176 43351131","em":"","bd":"","b":0},{"fn":"Hanna","ln":"Nickels","ph":"+49 160 98766343","em":"","bd":"","b":0},{"fn":"Ibthi","ln":"Hauth","ph":"+49 160 7500238","em":"","bd":"","b":0},{"fn":"Theresa","ln":"Strack","ph":"+49 163 5541937","em":"Theresa.strack@yahoo.de","bd":"","b":0},{"fn":"Ann-Katrin","ln":"Motz","ph":"+49 160 6611963","em":"","bd":"","b":0},{"fn":"Alina","ln":"Marti","ph":"+49 160 5768413","em":"","bd":"","b":0},{"fn":"Annika","ln":"Merscher","ph":"+49 1512 3330403","em":"","bd":"","b":3},{"fn":"Lydia","ln":"Mayer","ph":"+49 176 81142823","em":"","bd":"","b":0},{"fn":"Anna","ln":"Altenweg","ph":"+49 175 5006410","em":"Anna.altenweg@gmail.com","bd":"","b":0},{"fn":"Nadiene","ln":"Krämer","ph":"+49 170 2802027","em":"Nadinekraemer83@gmx.de","bd":"","b":5},{"fn":"Laura","ln":"Frank","ph":"+49 1514 0059751","em":"","bd":"","b":1},{"fn":"Bettina","ln":"Lorenz","ph":"+49 1590 1838334","em":"","bd":"","b":1},{"fn":"Sandra","ln":"Elsen","ph":"+49 1512 0111148","em":"walburga7@web.de","bd":"","b":0},{"fn":"Jule","ln":"Morgenthale","ph":"+49 162 9386560","em":"","bd":"","b":3},{"fn":"Maria","ln":"Kurz","ph":"+49 176 97414581","em":"mariakorneyewets@gmail.com","bd":"","b":1},{"fn":"Hannah","ln":"Pohl","ph":"+49 1512 9160552","em":"","bd":"","b":0},{"fn":"Jennifer","ln":"Grünewald","ph":"+49 15560 042407","em":"","bd":"","b":0},{"fn":"Jenny","ln":"KL","ph":"+49 170 2713192","em":"","bd":"","b":0},{"fn":"Verena","ln":"Dumke","ph":"+49 170 3307787","em":"","bd":"","b":0},{"fn":"Katrin","ln":"Schneider","ph":"+49 175 1532969","em":"","bd":"","b":5},{"fn":"Maike","ln":"Dietz","ph":"+49 1514 6315450","em":"Maike@hans-dietz.de","bd":"","b":1},{"fn":"Any","ln":"Klester","ph":"+49 176 56613901","em":"Klesterany@gmail.com","bd":"","b":0},{"fn":"Katja","ln":"Gordner","ph":"+49 1522 1608705","em":"","bd":"","b":0},{"fn":"Bianca","ln":"Kistner","ph":"+49 170 8943201","em":"bianca.kistner@gmx.de","bd":"","b":2},{"fn":"Brigitte","ln":"Barcoue","ph":"+49 6541 2518","em":"","bd":"","b":1},{"fn":"Anja","ln":"Leinen","ph":"+49 162 9164647","em":"a.leinen@gmx.de","bd":"","b":8},{"fn":"Irina","ln":"Resch","ph":"+49 176 47167386","em":"","bd":"","b":3},{"fn":"Bianca","ln":"Boujong","ph":"+49 160 5655852","em":"","bd":"","b":2},{"fn":"Esther","ln":"Jacob","ph":"+49 163 6991586","em":"","bd":"","b":5},{"fn":"Susanne","ln":"Schmittges","ph":"+49 171 2334906","em":"","bd":"","b":3},{"fn":"Andrea","ln":"Rüßmann","ph":"+49 176 62647967","em":"Andrea.garth@gmail.com","bd":"","b":3},{"fn":"Sabrina","ln":"Gabriel","ph":"+49 172 8192631","em":"sabrina.m.gabriel@gmail.com","bd":"","b":4},{"fn":"Jana","ln":"Rau","ph":"+49 163 2884140","em":"","bd":"","b":0},{"fn":"Kristina","ln":"Dite","ph":"+49 1515 0637596","em":"","bd":"","b":0},{"fn":"Angelika","ln":"Gutweiler","ph":"+49 1522 1949400","em":"angelika.gutweiler@web.de","bd":"","b":4},{"fn":"Sandra","ln":"Schneberger-Schwinn","ph":"+49 1520 7340892","em":"sandra.schneberger@freenet.de","bd":"","b":4},{"fn":"Anna-Lena","ln":"Kessler","ph":"+49 1514 0024382","em":"","bd":"","b":0},{"fn":"Lea","ln":"Klippel","ph":"+49 160 98932873","em":"Leakersten@web.de","bd":"","b":3},{"fn":"Christina","ln":"Knop","ph":"+49 176 55128297","em":"","bd":"","b":0},{"fn":"Steffi","ln":"Schneider","ph":"+49 160 7718825","em":"","bd":"","b":0},{"fn":"Eva","ln":"Flis","ph":"+49 1514 5912364","em":"","bd":"","b":0},{"fn":"Sybille","ln":"Penner","ph":"+49 160 94824391","em":"","bd":"","b":1},{"fn":"Linda","ln":"Michels","ph":"+49 174 7792896","em":"","bd":"","b":4},{"fn":"Angelika","ln":"Bujung","ph":"+49 162 5762939","em":"","bd":"","b":0},{"fn":"Stefanie","ln":"Heib","ph":"+49 176 66888049","em":"Stefanie.heib@web.de","bd":"","b":3},{"fn":"Erika","ln":"Schuh","ph":"+49 160 99790751","em":"","bd":"","b":1},{"fn":"Andrea","ln":"Lamberti","ph":"+49 6502 6705","em":"Lamberti.andrea64@gmail.com","bd":"","b":4},{"fn":"Tatjana","ln":"Schulz","ph":"+49 1515 2514628","em":"t.schulz81@web.de","bd":"","b":0},{"fn":"Lisa","ln":"Treinen","ph":"+49 1511 5558222","em":"Lisa-treinen@t-online.de","bd":"","b":3},{"fn":"Katrin","ln":"Klein","ph":"","em":"katrinklein83@gmail.com","bd":"","b":0},{"fn":"Stefanie","ln":"Kirsch","ph":"+49 1511 0696738","em":"stefaniekirsch89@yahoo.com","bd":"","b":4},{"fn":"Lena","ln":"Ludwig","ph":"+49 1515 3793974","em":"Ludwig-lena@web.de","bd":"","b":3},{"fn":"Jan","ln":"Diederichs","ph":"+49 1515 0621209","em":"","bd":"","b":3},{"fn":"Sandra","ln":"Fischer","ph":"+49 1514 2027149","em":"","bd":"","b":1},{"fn":"Christina","ln":"Klein","ph":"+49 162 4134028","em":"klein-c2@t-online.de","bd":"","b":6},{"fn":"Susanne","ln":"Eckstein","ph":"+49 6531 2724","em":"","bd":"","b":2},{"fn":"Jasmin","ln":"Michels","ph":"+49 176 87896171","em":"","bd":"","b":1},{"fn":"Marie","ln":"List","ph":"+49 162 2453648","em":"","bd":"","b":2},{"fn":"Dagmar","ln":"Pyrzewicz","ph":"+49 176 76738620","em":"","bd":"","b":0},{"fn":"Kristina","ln":"Beljakov","ph":"+49 175 5278533","em":"","bd":"","b":0},{"fn":"Genrie","ln":"Löwen","ph":"+49 178 81947790","em":"","bd":"","b":0},{"fn":"Silvia","ln":"Thömmes","ph":"+49 1522 6352553","em":"","bd":"","b":0},{"fn":"Anne","ln":"Stuhlsatz","ph":"+49 176 41592131","em":"","bd":"","b":0},{"fn":"Viktoria","ln":"Heinrichs","ph":"+49 1517 2317690","em":"","bd":"","b":1},{"fn":"Daniel","ln":"Schmidt","ph":"+49 1575 0185278","em":"danielschmidt9812@gmail.com","bd":"","b":2},{"fn":"Ann","ln":"Katrin Finck","ph":"+49 1517 2418825","em":"","bd":"","b":4},{"fn":"Jennifer","ln":"Kraus","ph":"+49 170 8960602","em":"Jenniferkraus.1@web.de","bd":"","b":0},{"fn":"Tanja","ln":"Herges","ph":"+49 1514 0748181","em":"","bd":"","b":3},{"fn":"Tina","ln":"Lentes","ph":"+49 1512 0258115","em":"","bd":"","b":1},{"fn":"Regina","ln":"Schmidt","ph":"+49 1515 2425268","em":"","bd":"","b":0},{"fn":"Leni","ln":"Wolff","ph":"+49 176 70914394","em":"Yvyschmidt@gmx.de","bd":"","b":1},{"fn":"Lena","ln":"Kliem","ph":"+49 173 6724243","em":"","bd":"","b":1},{"fn":"Lara","ln":"Schug","ph":"+49 162 3488759","em":"","bd":"","b":0},{"fn":"Michaela","ln":"Pickard","ph":"+49 172 7844569","em":"M.pickard@web.de","bd":"","b":2},{"fn":"Petra","ln":"Trein","ph":"+49 1514 1858731","em":"","bd":"","b":3},{"fn":"Lisa","ln":"Bastian","ph":"+49 1517 4485891","em":"","bd":"","b":0},{"fn":"Claudia","ln":"Ballat","ph":"+49 6784 900935","em":"Claudiaballat@gmx.de","bd":"","b":3},{"fn":"Jacqueline","ln":"Kusterer","ph":"+49 1523 6307824","em":"Jkustere17@gmail.com","bd":"","b":3},{"fn":"Alexsandra","ln":"Kiejda","ph":"+49 1575 6469311","em":"","bd":"","b":0},{"fn":"Kathie","ln":"Ambruster","ph":"+49 1511 0078932","em":"","bd":"","b":0},{"fn":"Denise","ln":"hartmann","ph":"+49 1516 1249989","em":"","bd":"","b":0},{"fn":"Natascha","ln":"Mensch","ph":"+49 163 1580197","em":"Natascha.Mensch@gmx.com","bd":"","b":4},{"fn":"Deborah","ln":"Blum","ph":"+49 171 4192153","em":"jessina88@t-online.de","bd":"","b":2},{"fn":"Christine","ln":"Weinz","ph":"+49 171 6521876","em":"christine.weinz@t-online.de","bd":"","b":5},{"fn":"Esther","ln":"Bamberg","ph":"+49 1511 9111250","em":"Esther.Bamberg@gmx.de","bd":"","b":5},{"fn":"Linda","ln":"Ferber","ph":"+49 1514 1980095","em":"l.ferber92@googlemail.com","bd":"","b":1},{"fn":"Vanessa","ln":"Thiele","ph":"+49 1511 4347637","em":"Vanessa-Baujahr89@web.de","bd":"","b":4},{"fn":"Junk","ln":"Anne","ph":"+49 1511 7628281","em":"Anne-junk@web.de","bd":"","b":0},{"fn":"Herges-Martini","ln":"Marion","ph":"+49 179 2394876","em":"","bd":"","b":1},{"fn":"Jessica","ln":"schabbach","ph":"+49 176 80803616","em":"jessy-Schabbach@web.de","bd":"","b":4},{"fn":"TREATWELL","ln":"SUPPORT","ph":"+1 212-499-5311","em":"moransamuel@gmail.com","bd":"","b":0},{"fn":"Gianna","ln":"Schieber","ph":"+49 176 34686476","em":"Gianna.schieber@gmx.de","bd":"","b":3},{"fn":"Schweig","ln":"Gabriele","ph":"+49 1520 8604015","em":"","bd":"","b":4},{"fn":"Tanja","ln":"Anocona","ph":"+49 1520 9172491","em":"melonenfee@gmx.de","bd":"","b":5},{"fn":"Annette","ln":"Wenz","ph":"+49 172 9555111","em":"annette-wenz@web.de","bd":"","b":4},{"fn":"Beate","ln":"Mettler","ph":"+49 1517 0877746","em":"","bd":"","b":1},{"fn":"Magrit","ln":"Anton","ph":"+49 175 1133211","em":"Magrit.anton@aol.com","bd":"11-08-1966","b":1},{"fn":"Anne-Kathrin","ln":"Seyfart","ph":"+49 1522 8520450","em":"A.seyfart@web.de","bd":"","b":3},{"fn":"Melanie","ln":"Romer","ph":"+49 160 95487138","em":"Melanieromer@gmx.de","bd":"","b":1},{"fn":"Darja","ln":"Becker","ph":"+49 1516 1443861","em":"darja.becker@gmx.de","bd":"","b":2},{"fn":"Patricia","ln":"Wahl","ph":"+49 1575 2777328","em":"patriciaroenn@yahoo.de","bd":"","b":1},{"fn":"Silven","ln":"Zyulkryanova","ph":"+49 1578 3123408","em":"","bd":"","b":2},{"fn":"Stephanie","ln":"Plymale","ph":"+49 162 3719336","em":"","bd":"","b":2},{"fn":"Martini","ln":"Karina","ph":"+49 1515 6390550","em":"","bd":"","b":1},{"fn":"Jennifer","ln":"Wellems","ph":"+49 1512 9062130","em":"jennifer.wellems@arcor.de","bd":"","b":0},{"fn":"Sabine","ln":"Fortenbacher","ph":"+49 163 5003012","em":"sabinschaefer@web.de","bd":"","b":1},{"fn":"Jessica","ln":"Wenz","ph":"+49 171 3470996","em":"jessica-sauer@web.de","bd":"","b":3},{"fn":"Tatjana","ln":"Beister","ph":"+49 171 9988620","em":"tatjanabeister@web.de","bd":"","b":1},{"fn":"Luisa","ln":"Maas","ph":"+49 160 91330130","em":"L.Maas1@web.de","bd":"","b":1},{"fn":"Corinna","ln":"Rittmann","ph":"+49 1573 0908159","em":"corinna.rittmann@gmail.com","bd":"","b":3},{"fn":"Noel","ln":"Mettler","ph":"+49 1512 0071510","em":"n.mettler@gmx.de","bd":"","b":3},{"fn":"Sandra","ln":"Newen","ph":"+49 170 5866067","em":"sandra.newen@gmx.de","bd":"","b":4},{"fn":"Natalie","ln":"Sommer","ph":"+49 171 6831013","em":"natalia.sommer@web.de","bd":"","b":3},{"fn":"Hildegard","ln":"Schuh","ph":"+49 6531 8617","em":"hildegard-schuh@t-online.de","bd":"","b":1},{"fn":"Alegra","ln":"Blesius","ph":"+49 177 1984472","em":"","bd":"","b":1},{"fn":"Natalie","ln":"Offermann","ph":"+49 172 6568015","em":"","bd":"","b":2},{"fn":"Bettina","ln":"List","ph":"+49 1590 6629981","em":"","bd":"","b":1},{"fn":"Brigitte","ln":"Faller","ph":"+49 6536 9338691","em":"b.faller@t-online.de","bd":"","b":1},{"fn":"Steffes","ln":"Verena","ph":"+49 1511 4361176","em":"Verena230@gmx.de","bd":"","b":3},{"fn":"Jasmin","ln":"Fetzer","ph":"+49 1515 1945072","em":"jasminfetzer@icloud.com","bd":"","b":4},{"fn":"Astrid","ln":"Dahmen","ph":"+49 173 7280543","em":"","bd":"","b":2},{"fn":"Katja","ln":"Felzen","ph":"+49 175 3472839","em":"kplenge@web.de","bd":"","b":3},{"fn":"Carmen","ln":"Fetzer","ph":"+49 160 96858444","em":"Carmen.fetzer@outlook.de","bd":"14-07-1965","b":3},{"fn":"Sophie","ln":"Marx","ph":"+49 1512 0790453","em":"sophiefetzer@hotmail.com","bd":"","b":1},{"fn":"Ellen","ln":"Esseln","ph":"+49 1514 6327042","em":"","bd":"","b":4},{"fn":"Rita","ln":"Marx","ph":"+49 1523 2094262","em":"","bd":"","b":1},{"fn":"Lisa","ln":"Kappel","ph":"+49 176 45699346","em":"lisakappel@t-online.de","bd":"","b":3},{"fn":"Anna","ln":"Hess","ph":"+49 176 60407964","em":"","bd":"","b":4},{"fn":"Kessler","ln":"Madeleine","ph":"+49 1511 7618812","em":"madeleine_kessler@web.de","bd":"","b":2},{"fn":"Anika","ln":"Naik","ph":"+49 178 1531349","em":"naikanika@yahoo.com","bd":"","b":1},{"fn":"Danica","ln":"Faber","ph":"+49 171 7511252","em":"faber-danica@t-online.de","bd":"","b":4},{"fn":"Silas","ln":"Burger","ph":"+49 6533 1383","em":"","bd":"","b":1},{"fn":"Patrizia","ln":"Gruber","ph":"+49 1512 3578600","em":"patrizia.gruber@t-online.de","bd":"","b":2},{"fn":"Edi","ln":"","ph":"+49 170 9330950","em":"","bd":"","b":0},{"fn":"Sabine","ln":"Löh-Schneider","ph":"+49 162 9888651","em":"bine.ingo@web.de","bd":"","b":3},{"fn":"Petra","ln":"Priestersbach","ph":"+49 1515 3866166","em":"priestersbach@outlook.de","bd":"26-07-1967","b":1},{"fn":"Katharina","ln":"Knop","ph":"+49 162 3272178","em":"knop.katharina@gmx.de","bd":"","b":1},{"fn":"Hanna","ln":"Eltges","ph":"+49 160 98766343","em":"","bd":"","b":1},{"fn":"Lena","ln":"Heß","ph":"+49 171 1220283","em":"lena.9701@yahoo.de","bd":"","b":1},{"fn":"Lilith","ln":"Eck","ph":"+49 176 62221521","em":"ecklilith@icloud.com","bd":"","b":1},{"fn":"Sabrina","ln":"Steinmetz","ph":"+49 173 6000490","em":"sabrinabaumgart@gmx.de","bd":"","b":5},{"fn":"Anna","ln":"Thielen","ph":"+49 1515 8807324","em":"annathielen235@outlook.de","bd":"","b":4},{"fn":"Anja","ln":"Gräber","ph":"+49 6533 958697","em":"","bd":"","b":1},{"fn":"Katrin","ln":"Klein","ph":"+49 1517 0859760","em":"","bd":"","b":1},{"fn":"David","ln":"Maria Nikoletta","ph":"+49 1512 4918548","em":"","bd":"","b":0},{"fn":"Anne","ln":"Mettler","ph":"+49 175 1031734","em":"","bd":"","b":1},{"fn":"Maja","ln":"Trierweiler","ph":"+49 1522 9814020","em":"trierweiler-weiperath@t-online.de","bd":"","b":2},{"fn":"Anett","ln":"Rausch","ph":"+49 176 23397822","em":"anettschnell020283@gmail.com","bd":"","b":1},{"fn":"Tanja","ln":"Eiden","ph":"+49 176 72638293","em":"maechtig.telexe-2z@icloud.com","bd":"","b":1},{"fn":"Marion","ln":"Dietz","ph":"+49 1511 2426185","em":"marion@hans-dietz.de","bd":"","b":1},{"fn":"Sabine","ln":"Fortenbacher","ph":"+49 6531 9722869","em":"praxis.fortenbacher@web.de","bd":"","b":1},{"fn":"Christine","ln":"Kaspari","ph":"+49 1511 1132527","em":"christinekaspari@web.de","bd":"","b":1},{"fn":"Lina","ln":"Schabbach","ph":"+49 176 30335547","em":"lina904k@yahoo.de","bd":"","b":0},{"fn":"Elisabeth","ln":"Reuter","ph":"+49 176 41374177","em":"Elisabeth.reuter@web.de","bd":"","b":2},{"fn":"Weber","ln":"Doris","ph":"+49 1525 6380066","em":"","bd":"","b":1},{"fn":"Verena","ln":"Ludwig","ph":"+49 162 9312830","em":"","bd":"","b":2},{"fn":"Nadja","ln":"Belokoz","ph":"+49 171 1826339","em":"","bd":"","b":5},{"fn":"Ludovic","ln":"schaab","ph":"+49 1523 1745258","em":"lukiff003@aol.com","bd":"","b":1},{"fn":"Sara","ln":"Hasanova","ph":"+49 176 68748950","em":"sarahasanova69@gmail.com","bd":"","b":0},{"fn":"Katja","ln":"Thömmes","ph":"+49 160 3389125","em":"","bd":"","b":1},{"fn":"Petra","ln":"Münster","ph":"+49 173 4171439","em":"petrathomasm@t-online.de","bd":"","b":1},{"fn":"Daniela","ln":"Bonert","ph":"+49 160 4373650","em":"danielabonert80@gmail.com","bd":"","b":2},{"fn":"Heidi","ln":"Jochem","ph":"+49 170 9335381","em":"Jochem.Detlef@t-online.de","bd":"","b":1},{"fn":"Elena","ln":"Stoll","ph":"+49 175 1111988","em":"","bd":"","b":2},{"fn":"Julia","ln":"Kaiser","ph":"+49 160 3407110","em":"kaiser.julia1112@gmail.com","bd":"","b":2},{"fn":"Annalena","ln":"Sommer","ph":"+49 160 95371743","em":"annalena.sommer.1@web.de","bd":"","b":1},{"fn":"Iris","ln":"Zimmer","ph":"+49 170 5112055","em":"iris_zimmer@yahoo.de","bd":"","b":1},{"fn":"Roman","ln":"Uglesic","ph":"+49 1525 1682345","em":"romanuglesic@gmail.com","bd":"","b":1},{"fn":"Natalie","ln":"Wall","ph":"+49 170 1140912","em":"nataliehirsch@hotmail.de","bd":"","b":1},{"fn":"Sabrina","ln":"Gemmel","ph":"+49 171 7051448","em":"sgraemmel@gmail.com","bd":"","b":1},{"fn":"Melanie","ln":"Nellen","ph":"+49 1512 2912139","em":"melanienellen@me.com","bd":"","b":1},{"fn":"Jovan","ln":"Runge","ph":"+49 1511 2337397","em":"rungejovan@icloud.com","bd":"","b":1},{"fn":"Viktoria","ln":"Nau","ph":"+49 176 64700012","em":"nau.viktoria7@gmail.com","bd":"","b":2},{"fn":"Angelika","ln":"Henn","ph":"+49 1511 6801638","em":"schmel723@gmx.de","bd":"","b":1},{"fn":"Simon","ln":"Münster","ph":"+49 160 99421101","em":"","bd":"","b":1},{"fn":"Hanna","ln":"Polatynska","ph":"+49 175 3634809","em":"hannapolatynska@web.de","bd":"","b":2},{"fn":"Nicole","ln":"Lorenz","ph":"+49 162 9856316","em":"nicci.l87@gmx.de","bd":"","b":1},{"fn":"Olga","ln":"Resch","ph":"+49 160 95483398","em":"olga.resch@gmx.de","bd":"","b":1}];
 
@@ -635,7 +581,7 @@ function getStatus(days,cid){
   const base=days<=42?{key:'g',label:'Aktiv',color:'green',badge:'badge-g'}:days<=84?{key:'y',label:'Aufmerksamkeit',color:'yellow',badge:'badge-y'}:days<=182?{key:'o',label:'Überfällig',color:'orange',badge:'badge-o'}:{key:'r',label:'Verloren?',color:'red',badge:'badge-r'};
   if(cid&&(base.key==='y'||base.key==='o'||base.key==='r')){
     const kd=loadKartei()[cid];
-    if(kd&&kd.kontaktiert){base.contacted=true;base.kontaktiertDate=kd.kontaktiert}
+    if(kd&&kd.kontaktiert){base.contacted=true;base.kontaktiertDate=kd.kontaktiert;base.origLabel=base.label;base.origColor=base.color;base.origBadge=base.badge;base.label='Kontaktiert';base.color='blue';base.badge='badge-k'}
   }
   return base;
 }
@@ -645,17 +591,594 @@ function getWaUrl(ph,msg){const n=formatPhone(ph);if(!n)return'';return msg?'htt
 function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
 function toast(msg,type){const box=document.getElementById('toastBox');const t=document.createElement('div');t.className='toast '+(type||'ok');t.innerHTML=msg;box.appendChild(t);setTimeout(()=>t.remove(),3000)}
 
-// ── LOCAL STORAGE (Kartei-spezifische Daten) ──
-// ── LOCALSTORAGE MIT CACHE (verhindert staendiges JSON.parse bei jedem Zugriff) ──
+// ══════════════════════════════════════════════════════
+// SPEICHERSYSTEM: localStorage (Stammdaten) + IndexedDB (Bilder)
+// localStorage = max 5 MB → nur Texte/Zahlen
+// IndexedDB = unbegrenzt → Fotos, Hautberichte, Signaturen
+// ══════════════════════════════════════════════════════
+
 let _karteiCache=null;
 let _karteiDirty=false;
 let _karteiSaveTimer=null;
-function loadKartei(){if(_karteiCache)return _karteiCache;try{_karteiCache=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return _karteiCache}catch{_karteiCache={};return _karteiCache}}
-function saveKartei(data){_karteiCache=data;_karteiDirty=true;if(_karteiSaveTimer)clearTimeout(_karteiSaveTimer);_karteiSaveTimer=setTimeout(function(){flushKartei()},300)}
-function flushKartei(){if(_karteiDirty){try{localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));_karteiDirty=false}catch(e){console.error('Speicherfehler:',e.message);toast('Speicher voll! Bericht zu gross.')}}}
-window.addEventListener('beforeunload',flushKartei);
+let _fbSyncTimer=null;
+let _fbSyncing=false;
+const FB_VAULT='v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
+const FB_KARTEI_REF=fbDb.ref(FB_VAULT+'/kartei_data');
+const FB_MEDIA_REF=fbDb.ref(FB_VAULT+'/kartei_media');
+const FB_DELETED_REF=fbDb.ref(FB_VAULT+'/kartei_deleted');
+const DELETED_KEY='sc_kartei_deleted_v3';
+const _deletedIds=new Set(JSON.parse(localStorage.getItem(DELETED_KEY)||'[]'));
+function isDeleted(id){return _deletedIds.has(id)}
+function markDeleted(id){_deletedIds.add(id);try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}}
+FB_DELETED_REF.on('child_added',function(snap){_deletedIds.add(snap.key);try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}});
+
+// ── IndexedDB fuer grosse Daten ──
+let _idb=null;
+const IDB_NAME='skinconcept_media';
+const IDB_VERSION=1;
+const IDB_STORE='blobs';
+
+function openIDB(){
+  return new Promise(function(resolve,reject){
+    if(_idb){resolve(_idb);return}
+    var req=indexedDB.open(IDB_NAME,IDB_VERSION);
+    req.onupgradeneeded=function(e){
+      var db=e.target.result;
+      if(!db.objectStoreNames.contains(IDB_STORE)){
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess=function(e){_idb=e.target.result;resolve(_idb)};
+    req.onerror=function(){console.error('IndexedDB Fehler');resolve(null)};
+  });
+}
+
+// Speichere Blob in IndexedDB: key = "clientId/photos/0" oder "clientId/hautberichte/2"
+function idbPut(key,data){
+  return openIDB().then(function(db){
+    if(!db)return false;
+    return new Promise(function(resolve){
+      try{
+        var tx=db.transaction(IDB_STORE,'readwrite');
+        tx.objectStore(IDB_STORE).put(data,key);
+        tx.oncomplete=function(){resolve(true)};
+        tx.onerror=function(){console.warn('IDB put onerror:',key);resolve(false)};
+        tx.onabort=function(){console.warn('IDB put abort:',key,tx.error&&tx.error.message);resolve(false)};
+      }catch(e){console.warn('IDB put exception:',e.message);resolve(false)}
+    });
+  }).catch(function(e){console.warn('IDB open fehlgeschlagen:',e&&e.message);return false});
+}
+
+function idbGet(key){
+  return openIDB().then(function(db){
+    if(!db)return null;
+    return new Promise(function(resolve){
+      try{
+        var tx=db.transaction(IDB_STORE,'readonly');
+        var req=tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess=function(){resolve(req.result||null)};
+        req.onerror=function(){resolve(null)};
+      }catch(e){resolve(null)}
+    });
+  });
+}
+
+function idbDelete(key){
+  return openIDB().then(function(db){
+    if(!db)return;
+    try{
+      var tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).delete(key);
+    }catch(e){}
+  });
+}
+
+// ── Migration: alte Daten (base64/idbKey) → Firebase Cloud ──
+let _migrationDone=false;
+function migrateToCloud(){
+  if(_migrationDone)return Promise.resolve();
+  _migrationDone=true;
+  var data=loadKartei();
+  var uploads=[];
+  var changed=false;
+
+  Object.keys(data).forEach(function(id){
+    if(id.startsWith('_'))return;
+    var kd=data[id];
+
+    // Fotos: alte base64 oder idbKey → Firebase
+    (kd.photos||[]).forEach(function(p){
+      if(p._mediaId)return;
+      if(p.data&&p.data.length>500){
+        uploads.push(saveMedia(p.data).then(function(mid){p._mediaId=mid;delete p.data;changed=true}));
+      }else if(p._idbKey){
+        uploads.push(idbGet(p._idbKey).then(function(d){
+          if(!d)return;
+          return saveMedia(d).then(function(mid){p._mediaId=mid;delete p._idbKey;changed=true});
+        }));
+      }
+    });
+
+    // Hautberichte
+    (kd.hautberichte||[]).forEach(function(b){
+      if(b._mediaId)return;
+      if(b.data&&b.data.length>500){
+        uploads.push(saveMedia(b.data).then(function(mid){b._mediaId=mid;delete b.data;changed=true}));
+      }else if(b._idbKey){
+        uploads.push(idbGet(b._idbKey).then(function(d){
+          if(!d)return;
+          return saveMedia(d).then(function(mid){b._mediaId=mid;delete b._idbKey;changed=true});
+        }));
+      }
+    });
+
+    // Signaturen
+    (kd.consents||[]).forEach(function(c){
+      if(c._mediaId)return;
+      if(c.signature&&c.signature.length>500){
+        uploads.push(saveMedia(c.signature).then(function(mid){c._mediaId=mid;delete c.signature;changed=true}));
+      }else if(c._idbKey){
+        uploads.push(idbGet(c._idbKey).then(function(d){
+          if(!d)return;
+          return saveMedia(d).then(function(mid){c._mediaId=mid;delete c._idbKey;changed=true});
+        }));
+      }
+    });
+  });
+
+  if(!uploads.length)return Promise.resolve();
+  return Promise.all(uploads).then(function(){
+    if(changed){
+      _karteiCache=data;_karteiDirty=true;flushKartei();
+      console.log('Cloud-Migration: '+uploads.length+' Dateien hochgeladen');
+      toast('Bilder in Cloud hochgeladen — auf allen Geraeten verfuegbar!');
+    }
+  }).catch(function(e){console.error('Migration-Fehler:',e)});
+}
+
+// Lade Bild: erst inline-data, dann IndexedDB-Cache, dann Firebase Cloud
+function loadMediaData(item){
+  if(item.data&&item.data.length>100)return Promise.resolve(item.data);
+  var mid=item._mediaId||item._idbKey;
+  if(!mid)return Promise.resolve(null);
+  // Erst lokalen Cache pruefen (schnell)
+  return idbGet(mid).then(function(cached){
+    if(cached)return cached;
+    // Nicht im Cache → aus Firebase laden
+    return new Promise(function(resolve){
+      FB_MEDIA_REF.child(mid).once('value').then(function(snap){
+        var data=snap.val();
+        if(data){idbPut(mid,data);resolve(data)}
+        else{resolve(null)}
+      }).catch(function(){resolve(null)});
+    });
+  });
+}
+
+// Media in lokalen IDB-Cache (primaer) + Firebase (im Hintergrund) speichern.
+// Wichtig: IDB muss zuerst durch, SOFORT resolven — sonst blockiert ein langsamer/haengender
+// Firebase-Write den ganzen Upload und der Eintrag kommt nie in die Kartei.
+function generateMediaId(){return 'm_'+Date.now()+'_'+Math.random().toString(36).substr(2,6)}
+function saveMedia(dataUrl){
+  var mid=generateMediaId();
+  return new Promise(function(resolve){
+    idbPut(mid,dataUrl).then(function(ok){
+      if(ok){
+        resolve(mid);
+        // Firebase-Upload nebenher — darf hangen/scheitern ohne UX zu blockieren
+        try{
+          FB_MEDIA_REF.child(mid).set(dataUrl).catch(function(err){
+            console.warn('Firebase Media Upload fehlgeschlagen (Datei liegt lokal):',err&&err.message||err);
+          });
+        }catch(e){console.warn('Firebase Ref Fehler:',e.message)}
+        return;
+      }
+      // IDB fehlgeschlagen — Firebase als einziger Speicher mit 20s-Timeout
+      var done=false;
+      var timer=setTimeout(function(){if(!done){done=true;resolve(null)}},20000);
+      FB_MEDIA_REF.child(mid).set(dataUrl).then(function(){
+        if(done)return;done=true;clearTimeout(timer);resolve(mid);
+      }).catch(function(err){
+        if(done)return;done=true;clearTimeout(timer);
+        console.error('Firebase Media Fehler:',err&&err.message);
+        resolve(null);
+      });
+    });
+  });
+}
+function deleteMedia(item){
+  var mid=item._mediaId||item._idbKey;
+  if(!mid)return;
+  try{FB_MEDIA_REF.child(mid).remove()}catch(e){}
+  idbDelete(mid);
+}
+
+// ── localStorage: nur Stammdaten (ohne base64) ──
+function loadKartei(){
+  if(_karteiCache)return _karteiCache;
+  try{_karteiCache=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return _karteiCache}
+  catch(e){_karteiCache={};return _karteiCache}
+}
+
+function saveKartei(data,changedId){
+  _karteiCache=data;
+  _karteiDirty=true;
+  // Timestamp auf geaendertem Kunden setzen (fuer Konfliktaufloesung)
+  if(changedId&&data[changedId]&&!String(changedId).startsWith('_')){
+    data[changedId]._modified=new Date().toISOString();
+  }
+  flushKartei();
+  // Sofortiger Cloud-Sync (kein 2s-Delay mehr)
+  if(changedId)syncClientToFirebase(changedId);
+  else{
+    if(_fbSyncTimer)clearTimeout(_fbSyncTimer);
+    _fbSyncTimer=setTimeout(syncToFirebase,300);
+  }
+}
+
+function flushKartei(){
+  if(!_karteiDirty)return;
+  // Alle inline-data nach IDB/Firebase verschieben (Alt-Bestand) — auch wenn _mediaId schon da ist
+  var data=_karteiCache;
+  Object.keys(data).forEach(function(id){
+    if(id.startsWith('_'))return;
+    var kd=data[id];
+    var moveData=function(item,keyName){
+      var payload=item[keyName||'data'];
+      if(!payload||payload.length<=500)return;
+      if(!item._mediaId){
+        var mid=generateMediaId();
+        item._mediaId=mid;
+        idbPut(mid,payload);
+        try{FB_MEDIA_REF.child(mid).set(payload).catch(function(){})}catch(e){}
+      }
+      delete item[keyName||'data'];
+    };
+    if(kd.photos)kd.photos.forEach(function(p){moveData(p)});
+    if(kd.hautberichte)kd.hautberichte.forEach(function(b){moveData(b)});
+    if(kd.hautanalysen)kd.hautanalysen.forEach(function(h){moveData(h)});
+    if(kd.consents)kd.consents.forEach(function(c){moveData(c,'signature')});
+  });
+  var serialize=function(){return JSON.stringify(_karteiCache)};
+  try{
+    localStorage.setItem(STORE_KEY,serialize());
+    _karteiDirty=false;
+    updateSaveStatus('ok');
+  }catch(e){
+    // Quota voll? Alle grossen inline-data aggressiv entfernen und retry
+    console.warn('localStorage voll — Cleanup & Retry:',e.message);
+    try{
+      Object.keys(data).forEach(function(id){
+        if(id.startsWith('_'))return;
+        var kd=data[id];
+        ['photos','hautberichte','hautanalysen'].forEach(function(k){
+          if(!kd[k])return;
+          kd[k].forEach(function(it){if(it.data){delete it.data}});
+        });
+        if(kd.consents)kd.consents.forEach(function(c){if(c.signature&&c.signature.length>500)delete c.signature});
+      });
+      localStorage.setItem(STORE_KEY,serialize());
+      _karteiDirty=false;
+      updateSaveStatus('ok');
+      console.log('Retry nach Cleanup erfolgreich');
+    }catch(e2){
+      console.error('Speicherfehler auch nach Cleanup:',e2.message);
+      updateSaveStatus('error');
+      toast('localStorage voll — Daten sind in Cloud, aber lokaler Cache defekt. Bitte Seite neu laden.','warn');
+    }
+  }
+}
+
+// ── SAVE STATUS UI ──
+function updateSaveStatus(status){
+  var el=document.getElementById('saveStatus');
+  var btn=document.getElementById('saveBtn');
+  if(!el)return;
+  if(status==='ok'){
+    el.innerHTML='<span class="dot ok"></span> Gespeichert & synchronisiert';
+    if(btn){btn.classList.add('saved');btn.innerHTML='&#10003; Gespeichert';setTimeout(function(){btn.classList.remove('saved');btn.innerHTML='&#128190; Speichern'},2000)}
+  }else if(status==='unsaved'){
+    el.innerHTML='<span class="dot unsaved"></span> Nicht gespeichert';
+    if(btn){btn.classList.remove('saved');btn.innerHTML='&#128190; Speichern'}
+  }else if(status==='error'){
+    el.innerHTML='<span class="dot error"></span> Speicherfehler!';
+    if(btn){btn.classList.remove('saved');btn.innerHTML='&#9888; Erneut speichern'}
+  }
+  updateStorageInfo();
+}
+
+function updateStorageInfo(){
+  var el=document.getElementById('storageInfo');
+  if(!el)return;
+  try{
+    var total=0;
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);total+=localStorage.getItem(k).length}
+    var mb=(total/(1024*1024)).toFixed(1);
+    var maxMb=5;
+    var pct=Math.round((total/(maxMb*1024*1024))*100);
+    el.innerHTML='Lokal: '+mb+' MB &middot; Bilder in Cloud';
+    el.style.color='var(--muted)';
+  }catch(e){}
+}
+
+function manualSave(){
+  if(!selectedClient)return;
+  collectOpenFields();
+  _karteiDirty=true;
+  flushKartei();
+  syncToFirebase();
+  toast('Alle Daten gespeichert & in Cloud synchronisiert');
+}
+
+function collectOpenFields(){
+  if(!selectedClient)return;
+  var kd=getClientKartei(selectedClient.id);
+  var fields=[
+    {sel:'input[onchange*="adresse"]',key:'adresse'},
+    {sel:'input[onchange*="allergien"]',key:'allergien'},
+    {sel:'select[onchange*="hauttyp"]',key:'hauttyp'}
+  ];
+  fields.forEach(function(f){
+    var el=document.querySelector(f.sel);
+    if(el&&el.value!==undefined)kd[f.key]=el.value;
+  });
+  var notizEl=document.getElementById('notizText');
+  if(notizEl&&notizEl.value)kd.notes=notizEl.value;
+  saveClientKartei(selectedClient.id,kd);
+}
+
+// ── FIREBASE SYNC: Lokal → Cloud (pro Kunde) ──
+function clientSyncPayload(kd){
+  // Medien-Metadaten mitschicken (OHNE grosse data-URLs — die liegen schon in FB_MEDIA_REF)
+  var mediaMeta=function(item){
+    var out={};
+    if(item._mediaId)out._mediaId=item._mediaId;
+    if(item._idbKey)out._idbKey=item._idbKey;
+    if(item.date)out.date=item.date;
+    if(item.label)out.label=item.label;
+    if(item.type)out.type=item.type;
+    if(item.filename)out.filename=item.filename;
+    return out;
+  };
+  return {
+    treatments:kd.treatments||[],
+    plan:kd.plan||[],
+    products:kd.products||[],
+    contacts:kd.contacts||[],
+    notesList:kd.notesList||[],
+    consents:(kd.consents||[]).map(c=>{
+      var o={treatmentId:c.treatmentId,date:c.date,signedBy:c.signedBy};
+      if(c._mediaId)o._mediaId=c._mediaId;
+      if(c._idbKey)o._idbKey=c._idbKey;
+      return o;
+    }),
+    photos:(kd.photos||[]).map(mediaMeta),
+    hautberichte:(kd.hautberichte||[]).map(mediaMeta),
+    hautanalysen:(kd.hautanalysen||[]).map(mediaMeta),
+    notes:kd.notes||'',
+    hauttyp:kd.hauttyp||'',
+    allergien:kd.allergien||'',
+    adresse:kd.adresse||'',
+    stamm:kd.stamm||null,
+    zuletztKontaktiert:kd.zuletztKontaktiert||'',
+    _modified:kd._modified||new Date().toISOString(),
+    _device:DEVICE_ID
+  };
+}
+
+// Schreibt EINEN Kunden nach Firebase — andere Kunden bleiben unberuehrt
+function syncClientToFirebase(id){
+  if(!id||String(id).startsWith('_'))return;
+  const data=loadKartei();
+  const kd=data[id];
+  if(!kd)return;
+  FB_KARTEI_REF.child(id).set(clientSyncPayload(kd)).then(()=>{
+    updateSaveStatus('ok');
+  }).catch(err=>{
+    console.error('Firebase Sync Fehler fuer',id,err&&err.message);
+    updateSaveStatus('error');
+  });
+}
+
+// Bulk-Sync (nur noch als Sicherheitsnetz beim Seiten-Schliessen)
+function syncToFirebase(){
+  const data=loadKartei();
+  Object.keys(data).forEach(function(id){syncClientToFirebase(id)});
+}
+
+// ── FIREBASE LIVE-SYNC: Cloud → Lokal (sofort bei Aenderungen) ──
+let _fbListenerActive=false;
+let _fbInitialHydration=true; // true waehrend der ersten grossen Ladung beim Seiten-Start
+let _fbSaveTimer=null;
+let _fbChangedSelected=false;
+
+function scheduleBatchedSave(changedSelected){
+  if(changedSelected)_fbChangedSelected=true;
+  if(_fbSaveTimer)return;
+  _fbSaveTimer=setTimeout(function(){
+    _fbSaveTimer=null;
+    try{localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache||{}))}catch(e){console.warn('Batch-Save Fehler:',e.message)}
+    if(_fbChangedSelected&&typeof selectedClient!=='undefined'&&selectedClient){
+      try{renderKartei(selectedClient)}catch(e){}
+    }
+    try{debouncedRenderSidebar&&debouncedRenderSidebar()}catch(e){}
+    _fbChangedSelected=false;
+  },300);
+}
+
+function setupFirebaseLiveSync(){
+  if(_fbListenerActive)return;
+  _fbListenerActive=true;
+  console.log('Firebase Live-Sync: starte Listener (Geraet:',DEVICE_ID,')');
+  FB_KARTEI_REF.on('child_added',function(snap){mergeCloudClient(snap.key,snap.val(),false)});
+  FB_KARTEI_REF.on('child_changed',function(snap){mergeCloudClient(snap.key,snap.val(),true)});
+  // Nach 3 Sek. ist die initiale Hydration vorbei — danach sind Events echte Live-Updates
+  setTimeout(function(){_fbInitialHydration=false;console.log('Firebase Live-Sync: initial hydration fertig')},3000);
+}
+
+// Merge eines Kunden aus der Cloud in die lokale Kartei
+function mergeCloudClient(id,cloud,isUpdate){
+  if(!cloud||!id||String(id).startsWith('_'))return;
+  if(isDeleted(id))return; // permanent gelöschte Kunden nie mehr aufnehmen
+  // Echo-Schutz: Wenn wir selbst das gerade geschrieben haben, nicht reagieren
+  if(cloud._device===DEVICE_ID){
+    const t=Date.parse(cloud._modified||'')||0;
+    if(Date.now()-t<4000)return;
+  }
+  const data=_karteiCache||loadKartei();
+  const loc=data[id];
+  let changed=false;
+
+  if(!loc){
+    data[id]=cloud;
+    changed=true;
+  }else{
+    const cloudTs=Date.parse(cloud._modified||cloud._lastSync||'')||0;
+    const localTs=Date.parse(loc._modified||loc._lastSync||'')||0;
+
+    // Arrays: immer zusammenfuehren (nichts geht verloren)
+    const locTreat=loc.treatments||[];
+    const locCont=loc.contacts||[];
+    const locNotes=loc.notesList||[];
+    const locProd=loc.products||[];
+    const t1=mergeArrayByDate(locTreat,cloud.treatments||[]);
+    const c1=mergeArrayByDate(locCont,cloud.contacts||[]);
+    const n1=mergeArrayByDate(locNotes,cloud.notesList||[]);
+    const p1=mergeArrayByDate(locProd,cloud.products||[]);
+    if(t1.length!==locTreat.length){loc.treatments=t1;changed=true}
+    if(c1.length!==locCont.length){loc.contacts=c1;changed=true}
+    if(n1.length!==locNotes.length){loc.notesList=n1;changed=true}
+    if(p1.length!==locProd.length){loc.products=p1;changed=true}
+
+    if(cloud.consents){
+      cloud.consents.forEach(function(cc){
+        const exists=(loc.consents||[]).find(function(lc){return lc.treatmentId===cc.treatmentId&&lc.date===cc.date});
+        if(!exists){if(!loc.consents)loc.consents=[];loc.consents.push(cc);changed=true}
+        else if(cc._mediaId&&!exists._mediaId){exists._mediaId=cc._mediaId;changed=true}
+      });
+    }
+
+    // Medien-Listen zusammenfuehren (Fotos, Hautberichte, Hautanalysen)
+    // Union ueber _mediaId — nichts geht verloren, neue kommen dazu
+    ['photos','hautberichte','hautanalysen'].forEach(function(key){
+      if(!cloud[key]||!cloud[key].length)return;
+      var locList=loc[key]||[];
+      var merged=locList.slice();
+      var addedAny=false;
+      cloud[key].forEach(function(item){
+        var mid=item._mediaId||item._idbKey;
+        if(!mid)return; // ohne Media-ID nicht syncbar
+        var exists=merged.some(function(m){return (m._mediaId||m._idbKey)===mid});
+        if(!exists){merged.push(item);addedAny=true}
+      });
+      if(addedAny){
+        merged.sort(function(a,b){return (b.date||'').localeCompare(a.date||'')});
+        loc[key]=merged;
+        changed=true;
+      }
+    });
+
+    if(cloudTs>localTs){
+      if(cloud.notes!==undefined&&cloud.notes!==loc.notes){loc.notes=cloud.notes;changed=true}
+      if(cloud.hauttyp!==undefined&&cloud.hauttyp!==loc.hauttyp){loc.hauttyp=cloud.hauttyp;changed=true}
+      if(cloud.allergien!==undefined&&cloud.allergien!==loc.allergien){loc.allergien=cloud.allergien;changed=true}
+      if(cloud.adresse!==undefined&&cloud.adresse!==loc.adresse){loc.adresse=cloud.adresse;changed=true}
+      if(cloud.stamm){loc.stamm=Object.assign({},loc.stamm||{},cloud.stamm);changed=true}
+      if(cloud.plan&&cloud.plan.length){loc.plan=cloud.plan;changed=true}
+      if(cloud.zuletztKontaktiert&&cloud.zuletztKontaktiert>(loc.zuletztKontaktiert||'')){loc.zuletztKontaktiert=cloud.zuletztKontaktiert;changed=true}
+      loc._modified=cloud._modified||loc._modified;
+    }
+  }
+
+  if(changed){
+    _karteiCache=data;
+    const isSelected=(typeof selectedClient!=='undefined'&&selectedClient&&selectedClient.id===id);
+    // Gebuendelt speichern + rendern (verhindert Freeze bei vielen gleichzeitigen Events)
+    scheduleBatchedSave(isSelected);
+    if(isUpdate&&!_fbInitialHydration){
+      try{toast('Aenderung von anderem Geraet uebernommen')}catch(e){}
+    }
+  }
+}
+
+function syncFromFirebase(){setupFirebaseLiveSync()}
+
+// ── MEDIEN-MIGRATION: einmaliger Push aller Medien-Listen nach Firebase ──
+// Behebt Alt-Datenbestand wo photos/hautberichte/hautanalysen nur lokal lagen
+const MEDIA_MIGRATION_KEY='media_lists_migrated_v1';
+function migrateMediaListsToCloud(){
+  if(localStorage.getItem(MEDIA_MIGRATION_KEY)==='done')return Promise.resolve(0);
+  return new Promise(function(resolve){
+    // Erst sicherstellen, dass base64 → Firebase Cloud gemacht wurde
+    migrateToCloud().then(function(){
+      var data=loadKartei();
+      var pushed=0;
+      var pending=[];
+      Object.keys(data).forEach(function(id){
+        if(String(id).startsWith('_'))return;
+        var kd=data[id];
+        if(!kd)return;
+        var hasMedia=(kd.photos&&kd.photos.length)||(kd.hautberichte&&kd.hautberichte.length)||(kd.hautanalysen&&kd.hautanalysen.length)||(kd.consents&&kd.consents.some(function(c){return c._mediaId||c.signature}));
+        if(!hasMedia)return;
+        // _modified bumpen, damit andere Geraete den Update als neuer erkennen
+        kd._modified=new Date().toISOString();
+        pending.push(new Promise(function(res){
+          FB_KARTEI_REF.child(id).set(clientSyncPayload(kd)).then(function(){pushed++;res()}).catch(function(){res()});
+        }));
+      });
+      if(!pending.length){
+        localStorage.setItem(MEDIA_MIGRATION_KEY,'done');
+        resolve(0);return;
+      }
+      Promise.all(pending).then(function(){
+        localStorage.setItem(MEDIA_MIGRATION_KEY,'done');
+        try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){}
+        if(pushed>0){
+          console.log('Medien-Migration: '+pushed+' Kunden mit Medien-Listen nach Cloud gepusht');
+          try{toast(pushed+' Kartei'+(pushed>1?'en':'')+' mit Fotos/Berichten in Cloud synchronisiert — jetzt auf allen Geraeten verfuegbar!')}catch(e){}
+        }
+        resolve(pushed);
+      });
+    });
+  });
+}
+
+function mergeArrayByDate(local,cloud){
+  if(!cloud||!cloud.length)return local||[];
+  if(!local||!local.length)return cloud;
+  const merged=[...local];
+  cloud.forEach(item=>{
+    const isDuplicate=merged.some(m=>m.date===item.date&&(m.type===item.type||m.text===item.text||m.channel===item.channel||m.name===item.name));
+    if(!isDuplicate)merged.push(item);
+  });
+  merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  return merged;
+}
+
+// Mobile-sichere Save-Events (beforeunload feuert auf iOS/Android oft NICHT)
+window.addEventListener('beforeunload',function(e){
+  collectOpenFields();
+  flushKartei();
+  syncToFirebase();
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){
+    collectOpenFields();
+    flushKartei();
+    syncToFirebase();
+  }
+});
+window.addEventListener('pagehide',function(){
+  collectOpenFields();
+  flushKartei();
+});
+// Alle 30 Sekunden automatisch speichern (Sicherheitsnetz)
+setInterval(function(){
+  if(_karteiDirty){flushKartei();syncToFirebase()}
+},30000);
+
 function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notesList:[],consents:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
-function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all)}
+function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all,id)}
 
 // ── DEBOUNCE ──
 let _sbTimer=null;
@@ -758,7 +1281,9 @@ function initClients(){
     const key=normalize(tw.fn+' '+tw.ln);
     const keyRev=normalize(tw.ln+' '+tw.fn);
     if(key.length<3||clientKeys.has(key)||clientKeys.has(keyRev))return;
-    const nc={id:'tw_'+key.replace(/\s/g,'_'),name:tw.fn+' '+tw.ln,fn:tw.fn,ln:tw.ln,ph:tw.ph||'',em:tw.em||'',bd:'',gebDate:null,lv:'',visits:tw.b||0,notizen:'',missing:[],visitDates:[]};
+    const tw_id='tw_'+key.replace(/\s/g,'_');
+    if(isDeleted(tw_id))return; // permanent gelöschten Trello-Kunden nicht wieder anlegen
+    const nc={id:tw_id,name:tw.fn+' '+tw.ln,fn:tw.fn,ln:tw.ln,ph:tw.ph||'',em:tw.em||'',bd:'',gebDate:null,lv:'',visits:tw.b||0,notizen:'',missing:[],visitDates:[]};
     if(tw.bd){const parts=tw.bd.split('-');if(parts.length===3){nc.bd=parts[0]+'.'+parts[1]+'.'+parts[2];nc.gebDate=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]))}}
     nc.days=diffDays(nc.lv);
     if(!nc.ph)nc.missing.push('telefon');if(!nc.em)nc.missing.push('email');if(!nc.bd)nc.missing.push('geburtsdatum');
@@ -772,9 +1297,16 @@ function initClients(){
   const kartei=loadKartei();
   if(kartei.__newClients){
     kartei.__newClients.forEach(nc=>{
+      if(isDeleted(nc.id))return;
       if(!clients.find(c=>c.id===nc.id))clients.push(nc);
     });
   }
+
+  // Bereits geladene clients ebenfalls filtern (z.B. aus mergeCloudClient)
+  clients=clients.filter(c=>!isDeleted(c.id));
+
+  // Stammdaten-Overrides aus Kartei (von updateClient gespeicherte Aenderungen) ueberlagern
+  clients.forEach(c=>{if(typeof applyStammOverrides==='function')applyStammOverrides(c)});
 
   clients.sort((a,b)=>a.days-b.days);
 }
@@ -980,6 +1512,7 @@ function renderSidebar(){
 function selectClient(id){
   const c=clients.find(x=>x.id===id);
   if(!c)return;
+  applyStammOverrides(c);
   selectedClient=c;
   document.body.classList.add('client-open');
   renderSidebar();
@@ -997,26 +1530,86 @@ function goBackToList(){
 function deleteClient(id){
   const c=clients.find(x=>x.id===id);
   if(!c||!confirm('Kunde "'+c.name+'" wirklich loeschen? Alle Karteidaten gehen verloren.'))return;
+
+  // 1) Aus dem Memory-Array entfernen
   clients=clients.filter(x=>x.id!==id);
-  const d=loadKartei();if(d[id]){delete d[id];localStorage.setItem(STORE_KEY,JSON.stringify(d))}
+
+  // 2) Aus dem localStorage komplett aufräumen:
+  //    a) Kartei-Daten (d[id])
+  //    b) __newClients-Liste (manuell angelegte Kunden — DIESER Eintrag war der eigentliche Bug!)
+  const d=loadKartei();
+  if(d[id])delete d[id];
+  if(Array.isArray(d.__newClients)){
+    d.__newClients=d.__newClients.filter(nc=>nc&&nc.id!==id);
+  }
+  localStorage.setItem(STORE_KEY,JSON.stringify(d));
+  if(typeof _karteiCache!=='undefined')_karteiCache=d;
+
+  // 3) Schwarze Liste sofort markieren — damit auch Trello-Re-Imports und
+  //    Cloud-Syncs (z.B. von iPad aus) den Kunden NICHT wieder hochspielen
+  markDeleted(id);
+
+  // 4) In Firebase löschen (Realtime DB kartei_data + schwarze Liste)
+  Promise.allSettled([
+    FB_KARTEI_REF.child(id).remove(),
+    FB_DELETED_REF.child(id).set({
+      deletedAt:Date.now(),
+      deletedBy:(typeof currentUser!=='undefined'?currentUser:'')||'unknown',
+      name:c.name||''
+    })
+  ]).then(function(results){
+    var failed=results.filter(r=>r.status==='rejected');
+    if(failed.length){
+      console.error('Firebase-Delete: '+failed.length+' Operation(en) fehlgeschlagen',failed);
+      toast('Cloud-Sync fehlgeschlagen — Kunde nur lokal geloescht','warn');
+    }
+  });
+
   goBackToList();
   renderSidebar();
-  toast('Kunde geloescht');
+  toast('Kunde "'+c.name+'" geloescht');
 }
 
 // ── RENDER HAUTBERICHT CARDS (helper to avoid nested template literals) ──
 function renderHautberichtCards(kd){
   return (kd.hautberichte||[]).map(function(b,i){
     var icon=b.type==='pdf'?'&#128196;':'&#128203;';
-    var preview=b.type!=='pdf'&&b.data?'<img src="'+b.data+'" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover">':'<div style="padding:20px;text-align:center;background:var(--bg4);border-radius:8px;color:var(--muted)">&#128196; PDF-Dokument</div>';
-    return '<div class="scard" style="margin:0;cursor:pointer;position:relative" onclick="viewHautbericht('+i+')">'
-      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
+    // Vorschau: Platzhalter mit ID, wird asynchron befuellt
+    var previewId='hb-preview-'+i;
+    var preview=b.type==='pdf'
+      ?'<div style="padding:20px;text-align:center;background:var(--bg4);border-radius:8px;color:var(--muted)">&#128196; PDF-Dokument</div>'
+      :'<div id="'+previewId+'" style="width:100%;min-height:80px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Bild wird geladen...</div>';
+    return '<div class="scard" style="margin:0;position:relative">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer" onclick="viewHautbericht('+i+')">'
       +'<div style="width:44px;height:44px;border-radius:10px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+icon+'</div>'
       +'<div style="flex:1;min-width:0">'
       +'<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(b.label||'Hautanalysebericht')+'</div>'
       +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+fmtDate(b.date)+(b.type==='pdf'?' &middot; PDF':'')+'</div>'
-      +'</div></div>'+preview+'</div>';
+      +'</div></div>'+preview
+      +'<div style="display:flex;gap:6px;margin-top:10px">'
+      +'<button class="btn btn-dark btn-sm" onclick="event.stopPropagation();viewHautbericht('+i+')" style="flex:1;justify-content:center">&#128065; Ansehen</button>'
+      +'<button class="btn btn-sm" onclick="event.stopPropagation();shareHautberichtWhatsApp('+i+')" style="flex:1;justify-content:center;background:#25d366;color:#fff">&#128172; WhatsApp</button>'
+      +'<button class="btn btn-sm" onclick="event.stopPropagation();downloadHautbericht('+i+')" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)">&#11015;</button>'
+      +'</div></div>';
   }).join('');
+}
+
+// Vorschaubilder asynchron laden nachdem DOM gerendert ist
+function loadHautberichtPreviews(){
+  if(!selectedClient)return;
+  var kd=getClientKartei(selectedClient.id);
+  (kd.hautberichte||[]).forEach(function(b,i){
+    if(b.type==='pdf')return;
+    var el=document.getElementById('hb-preview-'+i);
+    if(!el)return;
+    loadMediaData(b).then(function(dataUrl){
+      if(dataUrl&&el){
+        el.outerHTML='<img src="'+dataUrl+'" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;cursor:pointer" onclick="event.stopPropagation();openFullscreen(this.src)">';
+      }else if(el){
+        el.textContent='Bild nicht verfuegbar';
+      }
+    });
+  });
 }
 
 // ── RENDER KARTEIKARTE ──
@@ -1034,10 +1627,8 @@ function renderKartei(c){
 
   // Count items for tabs
   const treatCount=kd.treatments?kd.treatments.length:0;
-  const planCount=kd.plan?kd.plan.length:0;
   const prodCount=kd.products?kd.products.length:0;
   const photoCount=kd.photos?kd.photos.length:0;
-  const contactCount=kd.contacts?kd.contacts.length:0;
   const hautanalyseCount=kd.hautanalysen?kd.hautanalysen.length:0;
   const berichtCount=kd.hautberichte?kd.hautberichte.length:0;
 
@@ -1048,8 +1639,7 @@ function renderKartei(c){
           <div class="kh-name">${esc(c.fn||c.name)} ${esc(c.ln||'')}</div>
           <div class="kh-badges">
             <span class="seg-badge ${sg.cls}">${sg.label}</span>
-            <span class="badge ${s.badge}"><span class="bdot"></span>${s.label}</span>
-            ${s.contacted?'<span class="badge" style="background:var(--blue-bg);color:var(--blue)">&#10003; Kontaktiert am '+fmtDate(s.kontaktiertDate)+'</span>':''}
+            <span class="badge ${s.badge}"><span class="bdot"></span>${s.label}${s.contacted?' am '+fmtDate(s.kontaktiertDate):''}</span>
             ${c.bdSoon?'<span class="badge" style="background:var(--purple-bg);color:var(--purple)">&#127874; Geburtstag!</span>':''}
             ${anam?'<span class="badge" style="background:var(--green-bg);color:var(--green)">Anamnese vorhanden</span>':''}
           </div>
@@ -1061,33 +1651,34 @@ function renderKartei(c){
         </div>
         <div class="kh-actions">
           ${waUrl?'<button class="btn btn-sm" style="background:#25d366;color:#fff" onclick="window.open(\''+waUrl+'\',\'_blank\')">WhatsApp</button>':''}
-          <button class="btn btn-dark btn-sm" onclick="logContact()">Kontakt loggen</button>
-          ${s.key!=='g'?(s.contacted?'<button class="btn btn-sm" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue)" onclick="unmarkContacted()">Kontaktiert &#10003;</button>':'<button class="btn btn-sm" style="background:var(--blue);color:#fff" onclick="markContacted()">Als kontaktiert markieren</button>'):''}
+          ${s.contacted
+            ?'<button class="btn btn-sm" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue)" onclick="unmarkContacted()">&#10003; Kontaktiert</button>'
+            :'<button class="btn btn-sm" style="background:var(--blue);color:#fff" onclick="markContacted()">Als kontaktiert markieren</button>'
+          }
           <button class="btn btn-dark btn-sm" onclick="window.print()">Drucken</button>
           <button class="btn btn-red btn-sm" onclick="deleteClient('${c.id}')">Kunde loeschen</button>
         </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" id="saveBtn" onclick="manualSave()">&#128190; Speichern</button>
+        <div class="save-status" id="saveStatus"><span class="dot ok"></span> Gespeichert</div>
+        <div class="storage-info" id="storageInfo"></div>
       </div>
       <div class="kh-metrics">
         <div class="kh-metric"><div class="kh-metric-val" style="color:var(--${s.color})">${c.days<9999?c.days:'–'}</div><div class="kh-metric-label">Tage her</div></div>
         <div class="kh-metric"><div class="kh-metric-val">${c.visits||0}</div><div class="kh-metric-label">Besuche</div></div>
         <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${fmtDate(c.lv)}</div><div class="kh-metric-label">Letzter Besuch</div></div>
-        <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px">${contactCount>0?fmtDate(kd.contacts[0].date):'–'}</div><div class="kh-metric-label">Letzter Kontakt</div></div>
         <div class="kh-metric"><div class="kh-metric-val">${treatCount}</div><div class="kh-metric-label">Behandlungen</div></div>
         <div class="kh-metric"><div class="kh-metric-val" style="font-size:14px;color:${kd.zuletztKontaktiert?'var(--green)':'var(--muted)'}">${kd.zuletztKontaktiert?fmtDate(kd.zuletztKontaktiert):'–'}</div><div class="kh-metric-label">Zuletzt kontaktiert</div></div>
         <div class="kh-metric"><div class="kh-metric-val">${prodCount}</div><div class="kh-metric-label">Produkte</div></div>
       </div>
       <div class="ktabs">
         <div class="ktab${currentKTab==='stamm'?' active':''}" onclick="switchKTab('stamm')">Stammdaten</div>
-        <div class="ktab${currentKTab==='anamnese'?' active':''}" onclick="switchKTab('anamnese')">Anamnese ${anam?'<span class="cnt">&#10003;</span>':''}</div>
-        <div class="ktab${currentKTab==='behandlungen'?' active':''}" onclick="switchKTab('behandlungen')">Behandlungen <span class="cnt">${treatCount}</span></div>
-        <div class="ktab${currentKTab==='plan'?' active':''}" onclick="switchKTab('plan')">Behandlungsplan <span class="cnt">${planCount}</span></div>
+        <div class="ktab${currentKTab==='anamnese'?' active':''}" onclick="switchKTab('anamnese')">Anamnese &amp; Einwilligung ${anam?'<span class="cnt">&#10003;</span>':''}${getConsentWarningCount(kd)?'<span class="cnt" style="background:var(--red-bg);color:var(--red)">'+getConsentWarningCount(kd)+'</span>':''}</div>
+        <div class="ktab${currentKTab==='behandlungen'?' active':''}" onclick="switchKTab('behandlungen')">Behandlungen &amp; Termine <span class="cnt">${treatCount}</span></div>
+        <div class="ktab${currentKTab==='fotos'?' active':''}" onclick="switchKTab('fotos')">Fotos &amp; Berichte <span class="cnt">${photoCount + (berichtCount||0) + (hautanalyseCount||0)}</span></div>
         <div class="ktab${currentKTab==='produkte'?' active':''}" onclick="switchKTab('produkte')">Produkte <span class="cnt">${prodCount}</span></div>
-        <div class="ktab${currentKTab==='fotos'?' active':''}" onclick="switchKTab('fotos')">Fotos <span class="cnt">${photoCount}</span></div>
-        <div class="ktab${currentKTab==='hautbericht'?' active':''}" onclick="switchKTab('hautbericht')">Hautanalysebericht ${berichtCount||hautanalyseCount?'<span class="cnt">'+(berichtCount+hautanalyseCount)+'</span>':''}</div>
-        <div class="ktab${currentKTab==='termine'?' active':''}" onclick="switchKTab('termine')">Termine</div>
-        <div class="ktab${currentKTab==='einwilligung'?' active':''}" onclick="switchKTab('einwilligung')">Einwilligungen ${getConsentWarningCount(kd)?'<span class="cnt" style="background:var(--red-bg);color:var(--red)">'+getConsentWarningCount(kd)+'</span>':renderConsentBadge(kd)}</div>
         <div class="ktab${currentKTab==='notizen'?' active':''}" onclick="switchKTab('notizen')">Notizen <span class="cnt">${(kd.notesList||[]).length}</span></div>
-        <div class="ktab${currentKTab==='kontakt'?' active':''}" onclick="switchKTab('kontakt')">Kontakthistorie <span class="cnt">${contactCount}</span></div>
       </div>
     </div>
     <div class="kbody">
@@ -1101,14 +1692,14 @@ function renderKartei(c){
             <div class="fg"><label>Telefon</label><input value="${esc(c.ph)}" onchange="updateClient('ph',this.value)"></div>
             <div class="fg"><label>E-Mail</label><input value="${esc(c.em)}" onchange="updateClient('em',this.value)"></div>
             <div class="fg"><label>Geburtsdatum</label><input value="${esc(c.bd)}" onchange="updateClient('bd',this.value)"></div>
-            <div class="fg"><label>Adresse</label><input value="${esc(kd.adresse||'')}" onchange="updateKarteiField('adresse',this.value)"></div>
+            <div class="fg"><label>Adresse</label><input value="${esc(kd.adresse||'')}" oninput="updateSaveStatus('unsaved')" onchange="updateKarteiField('adresse',this.value)"></div>
           </div>
         </div>
         <div class="scard">
           <h3>Hautprofil</h3>
           <div class="form-grid">
             <div class="fg"><label>Hauttyp</label>
-              <select onchange="updateKarteiField('hauttyp',this.value)">
+              <select onchange="updateKarteiField('hauttyp',this.value);updateSaveStatus('ok')">
                 <option value="">Bitte waehlen...</option>
                 <option ${kd.hauttyp==='Normal'?'selected':''}>Normal</option>
                 <option ${kd.hauttyp==='Trocken'?'selected':''}>Trocken</option>
@@ -1118,13 +1709,13 @@ function renderKartei(c){
                 <option ${kd.hauttyp==='Reif'?'selected':''}>Reif</option>
               </select>
             </div>
-            <div class="fg"><label>Allergien / Unvertraeglichkeiten</label><input value="${esc(kd.allergien||'')}" onchange="updateKarteiField('allergien',this.value)"></div>
+            <div class="fg"><label>Allergien / Unvertraeglichkeiten</label><input value="${esc(kd.allergien||'')}" oninput="updateSaveStatus('unsaved')" onchange="updateKarteiField('allergien',this.value)"></div>
           </div>
         </div>
         <div class="scard">
           <h3>Notizen</h3>
           <div class="fg">
-            <textarea rows="4" placeholder="Allgemeine Notizen zum Kunden..." onchange="updateKarteiField('notes',this.value)">${esc(kd.notes||c.notizen||'')}</textarea>
+            <textarea rows="4" placeholder="Allgemeine Notizen zum Kunden..." oninput="updateSaveStatus('unsaved')" onchange="updateKarteiField('notes',this.value)">${esc(kd.notes||c.notizen||'')}</textarea>
           </div>
         </div>
       </div>
@@ -1164,22 +1755,6 @@ function renderKartei(c){
         </div>`:''}
       </div>
 
-      <!-- BEHANDLUNGSPLAN -->
-      <div class="kpage${currentKTab==='plan'?' active':''}" id="kp-plan">
-        <div class="scard">
-          <h3>Behandlungsplan <button class="add-btn" onclick="openAddPlan()">+ Schritt</button></h3>
-          ${planCount>0?kd.plan.map((p,i)=>`
-            <div class="plan-step ${p.done?'plan-done':''}">
-              <div class="plan-num">${i+1}</div>
-              <div class="plan-body">
-                <div class="plan-title">${esc(p.title)}</div>
-                <div class="plan-desc">${esc(p.desc)}${p.date?' &#183; Geplant: '+fmtDate(p.date):''}</div>
-              </div>
-              <div class="plan-check" onclick="togglePlan(${i})" title="${p.done?'Rueckgaengig':'Als erledigt markieren'}">${p.done?'&#10003;':'&#9675;'}</div>
-            </div>
-          `).join(''):'<p style="color:var(--muted);text-align:center;padding:20px">Noch kein Behandlungsplan erstellt.</p>'}
-        </div>
-      </div>
 
       <!-- PRODUKTE -->
       <div class="kpage${currentKTab==='produkte'?' active':''}" id="kp-produkte">
@@ -1208,7 +1783,7 @@ function renderKartei(c){
           <div class="photo-grid">
             ${(kd.photos||[]).map((p,i)=>`
               <div class="photo-card" onclick="viewPhoto(${i})">
-                <img src="${p.data}" alt="Foto">
+                <div id="photo-prev-${i}" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px">${p.data?'<img src="'+p.data+'" alt="Foto">':'Laden...'}</div>
                 <div class="ph-date">${fmtDate(p.date)} ${p.label?'&#183; '+esc(p.label):''}</div>
               </div>
             `).join('')}
@@ -1221,9 +1796,14 @@ function renderKartei(c){
       </div>
 
       <!-- HAUTANALYSEBERICHT -->
-      <div class="kpage${currentKTab==='hautbericht'?' active':''}" id="kp-hautbericht">
+      <div class="kpage${currentKTab==='fotos'?' active':''}" id="kp-hautbericht">
         <div class="scard">
           <h3>Hautanalyseberichte <button class="add-btn" onclick="document.getElementById('hautberichtUpload').click()">+ Bericht hinterlegen</button></h3>
+          <div id="hautberichtStatus" style="background:var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="background:var(--gold);color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600">v7</span>
+            <span id="hbStatusText">${(kd.hautberichte||[]).length} Bericht(e) gespeichert &#183; Klick Upload oben rechts um neuen hinzuzufuegen</span>
+            <button onclick="diagnoseHautbericht()" style="margin-left:auto;background:var(--bg4);border:1px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">&#9881; Status pruefen</button>
+          </div>
           <input type="file" id="hautberichtUpload" accept="image/*,.pdf" style="display:none" onchange="handleHautberichtUpload(this.files)" multiple>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
             ${renderHautberichtCards(kd)}
@@ -1237,7 +1817,7 @@ function renderKartei(c){
       </div>
 
       <!-- TERMINE -->
-      <div class="kpage${currentKTab==='termine'?' active':''}" id="kp-termine">
+      <div class="kpage${currentKTab==='behandlungen'?' active':''}" id="kp-termine">
         <div class="scard">
           <h3>Terminübersicht</h3>
           <div class="kh-metrics" style="margin:0 0 16px">
@@ -1255,7 +1835,7 @@ function renderKartei(c){
       </div>
 
       <!-- EINWILLIGUNGEN -->
-      <div class="kpage${currentKTab==='einwilligung'?' active':''}" id="kp-einwilligung">
+      <div class="kpage${currentKTab==='anamnese'?' active':''}" id="kp-einwilligung">
         ${renderConsentWarnings(kd)}
         ${renderConsentCards(kd)}
       </div>
@@ -1287,28 +1867,10 @@ function renderKartei(c){
         </div>
       </div>
 
-      <!-- KONTAKTHISTORIE -->
-      <div class="kpage${currentKTab==='kontakt'?' active':''}" id="kp-kontakt">
-        ${renderNachsorgeBox(c)}
-        <div class="scard">
-          <h3>Kontakthistorie <button class="add-btn" onclick="logContact()">+ Kontakt</button></h3>
-          ${contactCount>0?kd.contacts.map((k,i)=>`
-            <div class="kh-entry">
-              <div class="kh-icon ${k.channel==='WhatsApp'?'wa':k.channel==='Telefon'?'phone':k.channel==='E-Mail'?'email':k.channel==='SMS'?'sms':'studio'}">
-                ${k.channel==='WhatsApp'?'&#9742;':k.channel==='Telefon'?'&#128222;':k.channel==='E-Mail'?'&#9993;':k.channel==='Im Studio'?'&#127968;':'&#128172;'}
-              </div>
-              <div class="kh-body">
-                <div class="date">${fmtDate(k.date)}</div>
-                <div class="channel">${esc(k.channel)} ${k.reason?' &#183; '+esc(k.reason):''}</div>
-                ${k.note?'<div class="note">'+esc(k.note)+'</div>':''}
-              </div>
-              <button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:var(--red-bg);color:var(--red);border:none;flex-shrink:0" onclick="deleteContact(${i})">&#10005;</button>
-            </div>
-          `).join(''):'<p style="color:var(--muted);text-align:center;padding:20px">Noch keine Kontakte erfasst.</p>'}
-        </div>
-      </div>
     </div>
   `;
+  // Asynchron Bilder laden nach Render
+  setTimeout(function(){loadHautberichtPreviews();loadPhotoPreviews()},50);
 }
 
 function switchKTab(tab){
@@ -1611,8 +2173,37 @@ function updateClient(field,value){
   if(!selectedClient.ph)selectedClient.missing.push('telefon');
   if(!selectedClient.em)selectedClient.missing.push('email');
   if(!selectedClient.bd)selectedClient.missing.push('geburtsdatum');
+  // PERSISTENZ: Stammdaten-Aenderungen in kartei.stamm merken, sonst sind sie nach Reload weg
+  const kd=getClientKartei(selectedClient.id);
+  kd.stamm=kd.stamm||{};
+  kd.stamm[field]=value;
+  if(field==='fn'||field==='ln')kd.stamm.name=selectedClient.name;
+  saveClientKartei(selectedClient.id,kd);
   debouncedRenderSidebar();
+  updateSaveStatus('ok');
   toast('Gespeichert');
+}
+
+// Stammdaten-Overrides aus kartei.stamm auf den Client legen
+function applyStammOverrides(c){
+  if(!c||!c.id)return;
+  const kd=(_karteiCache||loadKartei())[c.id];
+  const s=kd&&kd.stamm;
+  if(!s)return;
+  if(s.fn)c.fn=s.fn;
+  if(s.ln)c.ln=s.ln;
+  c.name=(s.name||(c.fn+' '+c.ln)).trim();
+  if(s.ph!==undefined)c.ph=s.ph;
+  if(s.em!==undefined)c.em=s.em;
+  if(s.bd){
+    c.bd=s.bd;
+    const m=s.bd.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
+    if(m)c.gebDate=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));
+  }
+  c.missing=[];
+  if(!c.ph)c.missing.push('telefon');
+  if(!c.em)c.missing.push('email');
+  if(!c.bd)c.missing.push('geburtsdatum');
 }
 
 function updateKarteiField(field,value){
@@ -1620,7 +2211,7 @@ function updateKarteiField(field,value){
   const kd=getClientKartei(selectedClient.id);
   kd[field]=value;
   saveClientKartei(selectedClient.id,kd);
-  toast('Gespeichert');
+  updateSaveStatus('ok');
 }
 
 // ── ADD TREATMENT ──
@@ -1685,29 +2276,50 @@ function pickTreatment(id){
 }
 
 function saveTreatment(){
-  if(!selectedClient||!selectedTreatmentId)return;
+  console.log('saveTreatment gestartet');
+  if(!selectedClient){toast('Kein Kunde ausgewaehlt','warn');console.warn('saveTreatment: selectedClient ist null');return}
+  if(!selectedTreatmentId){toast('Bitte Behandlungsart auswaehlen','warn');console.warn('saveTreatment: selectedTreatmentId ist null');return}
+
+  // Elemente defensiv holen
+  const dateEl=document.getElementById('atDate');
+  const timeEl=document.getElementById('atTime');
+  const prodEl=document.getElementById('atProducts');
+  const notesEl=document.getElementById('atNotes');
+  const missing=[];
+  if(!dateEl)missing.push('atDate');
+  if(!timeEl)missing.push('atTime');
+  if(!prodEl)missing.push('atProducts');
+  if(!notesEl)missing.push('atNotes');
+  if(missing.length){toast('Formular-Feld fehlt: '+missing.join(', '),'warn');console.error('Fehlende Eingabefelder:',missing);return}
+
   const t=SC_TREATMENTS.find(x=>x.id===selectedTreatmentId);
   const kd=getClientKartei(selectedClient.id);
+  if(!kd.treatments)kd.treatments=[];
   kd.treatments.unshift({
-    date:document.getElementById('atDate').value,
-    time:document.getElementById('atTime').value,
+    date:dateEl.value,
+    time:timeEl.value,
     type:t?t.name:selectedTreatmentId,
     typeId:selectedTreatmentId,
-    products:document.getElementById('atProducts').value,
-    notes:document.getElementById('atNotes').value
+    products:prodEl.value,
+    notes:notesEl.value
   });
-  saveClientKartei(selectedClient.id,kd);
-  // Letzten Besuch aktualisieren → Status wird sofort auf Aktiv gesetzt
-  const treatDate=document.getElementById('atDate').value||TODAY_STR;
+
+  try{
+    saveClientKartei(selectedClient.id,kd);
+  }catch(e){console.error('saveClientKartei Fehler:',e);toast('Speicher-Fehler: '+(e&&e.message||e),'warn');return}
+
+  const treatDate=dateEl.value||TODAY_STR;
   if(!selectedClient.lv||treatDate>selectedClient.lv){
     selectedClient.lv=treatDate;
-    selectedClient.days=diffDays(treatDate);
+    try{selectedClient.days=(typeof diffDays==='function')?diffDays(treatDate):0}catch(e){console.warn('diffDays Fehler:',e)}
   }
   selectedClient.visits=(selectedClient.visits||0)+1;
-  closeModal('addModal');
-  renderKartei(selectedClient);
-  renderSidebar();
+
+  try{closeModal('addModal')}catch(e){console.error('closeModal Fehler:',e)}
+  try{renderKartei(selectedClient)}catch(e){console.error('renderKartei Fehler:',e)}
+  try{renderSidebar()}catch(e){console.error('renderSidebar Fehler:',e)}
   toast('Behandlung gespeichert');
+  console.log('saveTreatment fertig');
 }
 
 function deleteTreatment(idx){
@@ -1720,55 +2332,6 @@ function deleteTreatment(idx){
 }
 
 // ── ADD PLAN STEP ──
-function openAddPlan(){
-  document.getElementById('addModalContent').innerHTML=`
-    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-    <h2>Behandlungsschritt planen</h2>
-    <div class="form-grid" style="margin-bottom:16px">
-      <div class="fg form-full"><label>Behandlung / Massnahme</label>
-        <select id="apTitle">
-          <option value="">-- Behandlung waehlen --</option>
-          ${SC_TREATMENTS.map(t=>'<option value="'+t.name+'">'+t.icon+' '+t.name+'</option>').join('')}
-          <option value="">Sonstige (unten eingeben)</option>
-        </select>
-      </div>
-      <div class="fg form-full"><label>Oder eigene Bezeichnung</label><input id="apTitleCustom" placeholder="z.B. Nachbehandlung, Kontrolle..."></div>
-      <div class="fg"><label>Geplantes Datum</label><input type="date" id="apDate"></div>
-      <div class="fg"><label>Intervall</label>
-        <select id="apInterval">
-          <option value="">Einmalig</option><option>Alle 2 Wochen</option><option>Alle 4 Wochen</option><option>Alle 6 Wochen</option><option>Alle 8 Wochen</option>
-        </select>
-      </div>
-      <div class="fg form-full"><label>Beschreibung / Ziel</label><textarea id="apDesc" rows="3" placeholder="Was soll erreicht werden?"></textarea></div>
-    </div>
-    <button class="btn btn-gold" onclick="savePlanStep()">Schritt hinzufuegen</button>
-  `;
-  openModal('addModal');
-}
-
-function savePlanStep(){
-  if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  kd.plan.push({
-    title:document.getElementById('apTitle').value||document.getElementById('apTitleCustom').value,
-    date:document.getElementById('apDate').value,
-    interval:document.getElementById('apInterval').value,
-    desc:document.getElementById('apDesc').value,
-    done:false
-  });
-  saveClientKartei(selectedClient.id,kd);
-  closeModal('addModal');
-  renderKartei(selectedClient);
-  toast('Behandlungsschritt geplant');
-}
-
-function togglePlan(idx){
-  if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  kd.plan[idx].done=!kd.plan[idx].done;
-  saveClientKartei(selectedClient.id,kd);
-  renderKartei(selectedClient);
-}
 
 // ── ADD PRODUCT ──
 let scannerActive=false;
@@ -2173,6 +2736,8 @@ function saveProduct(){
     ean:ean
   });
   saveClientKartei(selectedClient.id,kd);
+  try{flushKartei()}catch(e){}
+  try{syncClientToFirebase(selectedClient.id)}catch(e){}
 
   // Save to product DB if EAN
   if(ean){
@@ -2183,7 +2748,7 @@ function saveProduct(){
 
   closeModal('addModal');
   renderKartei(selectedClient);
-  toast('Produkt gespeichert');
+  toast('Produkt gespeichert & synchronisiert');
 }
 
 function deleteProduct(idx){
@@ -2191,42 +2756,79 @@ function deleteProduct(idx){
   const kd=getClientKartei(selectedClient.id);
   kd.products.splice(idx,1);
   saveClientKartei(selectedClient.id,kd);
+  try{flushKartei()}catch(e){}
+  try{syncClientToFirebase(selectedClient.id)}catch(e){}
   renderKartei(selectedClient);
 }
 
 // ── PHOTOS ──
+// Direkt nach Firebase pushen, damit grosse Fotos nicht die localStorage-Quota sprengen
 function handlePhotoUpload(file){
   if(!file||!selectedClient)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const kd=getClientKartei(selectedClient.id);
-    const label=prompt('Foto-Beschreibung (optional):','');
-    kd.photos.unshift({data:e.target.result,date:TODAY_STR,label:label||''});
-    saveClientKartei(selectedClient.id,kd);
-    renderKartei(selectedClient);
-    toast('Foto gespeichert');
+  const kd=getClientKartei(selectedClient.id);
+  const label=prompt('Foto-Beschreibung (optional):','');
+  try{toast('Foto wird hochgeladen...')}catch(e){}
+  const img=new Image();
+  img.onerror=function(){toast('Foto konnte nicht gelesen werden','warn')};
+  img.onload=function(){
+    const canvas=document.createElement('canvas');
+    const maxW=1600;
+    let w=img.width,h=img.height;
+    if(w>maxW){h=Math.round(h*(maxW/w));w=maxW}
+    canvas.width=w;canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    const compressed=canvas.toDataURL('image/jpeg',0.85);
+    URL.revokeObjectURL(img.src);
+    saveMedia(compressed).then(function(mid){
+      if(!mid){toast('Foto-Upload fehlgeschlagen','warn');return}
+      kd.photos.unshift({_mediaId:mid,date:TODAY_STR,label:label||''});
+      saveClientKartei(selectedClient.id,kd);
+      flushKartei();
+      renderKartei(selectedClient);
+      toast('Foto gespeichert');
+    });
   };
-  reader.readAsDataURL(file);
+  img.src=URL.createObjectURL(file);
 }
 
 function viewPhoto(idx){
   if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  const p=kd.photos[idx];
-  document.getElementById('addModalContent').innerHTML=`
-    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-    <img src="${p.data}" style="width:100%;border-radius:10px;margin-bottom:12px" alt="Foto">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <span style="color:var(--muted);font-size:13px">${fmtDate(p.date)} ${p.label?'&#183; '+esc(p.label):''}</span>
-      <button class="btn btn-red btn-sm" onclick="deletePhoto(${idx})">Loeschen</button>
-    </div>
-  `;
+  var kd=getClientKartei(selectedClient.id);
+  var p=kd.photos[idx];
+  document.getElementById('addModalContent').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Lade Foto...</div>';
   openModal('addModal');
+  loadMediaData(p).then(function(dataUrl){
+    if(!dataUrl){document.getElementById('addModalContent').innerHTML='<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button><p style="color:var(--red);padding:20px">Foto nicht verfuegbar.</p>';return}
+    document.getElementById('addModalContent').innerHTML=
+      '<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button>'
+      +'<img src="'+dataUrl+'" style="width:100%;border-radius:10px;margin-bottom:12px;cursor:pointer" alt="Foto" onclick="openFullscreen(this.src)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="color:var(--muted);font-size:13px">'+fmtDate(p.date)+(p.label?' &#183; '+esc(p.label):'')+'</span>'
+      +'<button class="btn btn-red btn-sm" onclick="deletePhoto('+idx+')">Loeschen</button>'
+      +'</div>';
+  });
+}
+
+// Foto-Vorschauen asynchron laden
+function loadPhotoPreviews(){
+  if(!selectedClient)return;
+  var kd=getClientKartei(selectedClient.id);
+  (kd.photos||[]).forEach(function(p,i){
+    if(p.data)return; // Bereits inline
+    var el=document.getElementById('photo-prev-'+i);
+    if(!el)return;
+    loadMediaData(p).then(function(dataUrl){
+      if(dataUrl&&el){el.innerHTML='<img src="'+dataUrl+'" alt="Foto">'}
+      else if(el){el.textContent='Nicht verfuegbar'}
+    });
+  });
 }
 
 function deletePhoto(idx){
   if(!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
+  const p=kd.photos[idx];
+  if(p)deleteMedia(p);
   kd.photos.splice(idx,1);
   saveClientKartei(selectedClient.id,kd);
   closeModal('addModal');
@@ -2234,23 +2836,35 @@ function deletePhoto(idx){
 }
 
 // ── HAUTANALYSE ──
+// Direkt nach Firebase pushen (saveMedia) — nur _mediaId im Kartei-Eintrag
 function handleHautanalyseUpload(files){
   if(!files||!files.length||!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
   if(!kd.hautanalysen)kd.hautanalysen=[];
-  let loaded=0;
+  const total=files.length;
+  let loaded=0;let failed=0;
+  try{toast('Lade '+total+' Datei'+(total>1?'en':'')+' hoch...')}catch(e){}
+  const finish=function(){
+    if(loaded+failed<total)return;
+    if(loaded>0){
+      saveClientKartei(selectedClient.id,kd);
+      flushKartei();
+      renderKartei(selectedClient);
+      toast(loaded+' Hautanalyse-Bericht'+(loaded>1?'e':'')+' gespeichert');
+    }
+    if(failed>0)toast(failed+' Datei'+(failed>1?'en':'')+' fehlgeschlagen','warn');
+  };
   Array.from(files).forEach(file=>{
     const isPdf=file.type==='application/pdf';
     const label=prompt('Bezeichnung fuer "'+file.name+'" (z.B. Erstanalyse, Kontrolle):',file.name.replace(/\.[^.]+$/,''));
     const reader=new FileReader();
+    reader.onerror=function(){failed++;finish()};
     reader.onload=function(e){
-      kd.hautanalysen.unshift({data:e.target.result,date:TODAY_STR,label:label||file.name,type:isPdf?'pdf':'image',filename:file.name});
-      loaded++;
-      if(loaded===files.length){
-        saveClientKartei(selectedClient.id,kd);
-        renderKartei(selectedClient);
-        toast(loaded+' Hautanalyse-Bericht'+(loaded>1?'e':'')+' gespeichert');
-      }
+      saveMedia(e.target.result).then(function(mid){
+        if(!mid){failed++;finish();return}
+        kd.hautanalysen.unshift({_mediaId:mid,date:TODAY_STR,label:label||file.name,type:isPdf?'pdf':'image',filename:file.name});
+        loaded++;finish();
+      }).catch(function(){failed++;finish()});
     };
     reader.readAsDataURL(file);
   });
@@ -2329,7 +2943,7 @@ function checkNachsorgeFaellig(){
     const visits=getNachsorgeForClient(c);
     visits.forEach(v=>{
       const daysAgo=Math.floor((TODAY-new Date(v.date+'T00:00:00'))/(864e5));
-      if(daysAgo>=3&&daysAgo<=10&&!v.contacted){
+      if(daysAgo>=7&&daysAgo<=21&&!v.contacted){
         faellig.push({client:c,visit:v,daysAgo:daysAgo});
       }
     });
@@ -2376,11 +2990,6 @@ function markNachsorgeKontaktiert(visitId,clientId){
     const c=clients.find(x=>x.id===clientId);
     if(c){
       const kd=getClientKartei(clientId);
-      if(!kd.contacts)kd.contacts=[];
-      const v=nachsorgeVisits.find(x=>x._id===visitId);
-      // Kontakthistorie eintragen
-      kd.contacts.unshift({date:TODAY_STR,type:'nachsorge',channel:'WhatsApp',reason:'Nachsorge',note:'Nachsorge-Kontakt nach '+(v?v.treatment:'Behandlung')+' ('+(v?v.date:'')+')' });
-      // Zuletzt kontaktiert speichern
       kd.zuletztKontaktiert=TODAY_STR;
       saveClientKartei(clientId,kd);
       flushKartei();
@@ -2414,66 +3023,243 @@ function syncNachsorgeBesuche(){
 }
 
 // ── HAUTANALYSEBERICHTE (Upload & Ablage) ──
+// Wichtig: PDF/Bild geht DIREKT nach Firebase (saveMedia) — nur _mediaId im Kartei-Eintrag.
+// Sonst sprengt ein grosses PDF die localStorage-Quota und der Eintrag geht nach Reload verloren.
 function handleHautberichtUpload(files){
   if(!files||!files.length||!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
   if(!kd.hautberichte)kd.hautberichte=[];
-  let loaded=0;
+  const clientId=selectedClient.id;
   const total=files.length;
+  let loaded=0;let failed=0;
+  try{toast('Lade '+total+' Datei'+(total>1?'en':'')+' hoch...')}catch(e){}
   Array.from(files).forEach(file=>{
     const isPdf=file.type==='application/pdf';
     const label=prompt('Bezeichnung fuer "'+file.name+'" (z.B. Erstanalyse April, Kontrolle):',file.name.replace(/\.[^.]+$/,''));
+    const onDone=function(){if(loaded+failed===total){saveAndRenderBericht(kd,loaded,failed)}};
+    const storeEntry=function(dataUrl,type){
+      console.log('[Hautbericht-Upload] Start:',file.name,type,Math.round(dataUrl.length/1024)+' KB');
+      saveMedia(dataUrl).then(function(mid){
+        if(!mid){console.error('[Hautbericht-Upload] saveMedia lieferte KEINE mid zurueck fuer',file.name);failed++;onDone();return}
+        console.log('[Hautbericht-Upload] saveMedia ok:',mid,'fuer',file.name);
+        kd.hautberichte.unshift({_mediaId:mid,date:TODAY_STR,label:label||file.name,type:type,filename:file.name});
+        loaded++;onDone();
+      }).catch(function(err){console.error('[Hautbericht-Upload] Fehler:',err);failed++;onDone()});
+    };
     if(isPdf){
       const reader=new FileReader();
-      reader.onload=function(e){
-        kd.hautberichte.unshift({data:e.target.result,date:TODAY_STR,label:label||file.name,type:'pdf',filename:file.name});
-        loaded++;
-        if(loaded===total){saveAndRenderBericht(kd,loaded)}
-      };
+      reader.onerror=function(){failed++;onDone()};
+      reader.onload=function(e){storeEntry(e.target.result,'pdf')};
       reader.readAsDataURL(file);
     }else{
-      // Bilder komprimieren um localStorage-Limit nicht zu sprengen
+      // Bilder komprimieren damit Firebase-Upload schnell ist
       const img=new Image();
+      img.onerror=function(){failed++;onDone()};
       img.onload=function(){
         const canvas=document.createElement('canvas');
-        const maxW=1200;
+        const maxW=1600;
         let w=img.width,h=img.height;
         if(w>maxW){h=Math.round(h*(maxW/w));w=maxW}
         canvas.width=w;canvas.height=h;
         canvas.getContext('2d').drawImage(img,0,0,w,h);
-        const compressed=canvas.toDataURL('image/jpeg',0.8);
-        kd.hautberichte.unshift({data:compressed,date:TODAY_STR,label:label||file.name,type:'image',filename:file.name});
-        loaded++;
-        if(loaded===total){saveAndRenderBericht(kd,loaded)}
+        const compressed=canvas.toDataURL('image/jpeg',0.85);
+        URL.revokeObjectURL(img.src);
+        storeEntry(compressed,'image');
       };
       img.src=URL.createObjectURL(file);
     }
   });
 }
-function saveAndRenderBericht(kd,count){
+function saveAndRenderBericht(kd,count,failed){
+  console.log('[Hautbericht-Upload] saveClientKartei fuer',selectedClient.id,'-',count,'ok,',failed||0,'fehler');
   saveClientKartei(selectedClient.id,kd);
   flushKartei();
+  // Verify: ist der Eintrag wirklich im localStorage gelandet?
+  try{
+    var stored=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
+    var savedCount=(stored[selectedClient.id]&&stored[selectedClient.id].hautberichte||[]).length;
+    console.log('[Hautbericht-Upload] Nach Save: localStorage hat',savedCount,'Berichte fuer',selectedClient.id);
+  }catch(e){console.warn('Verify fehlgeschlagen:',e.message)}
   renderKartei(selectedClient);
-  toast(count+' Hautanalysebericht'+(count>1?'e':'')+' hinterlegt');
+  if(count>0)toast(count+' Hautanalysebericht'+(count>1?'e':'')+' hinterlegt');
+  if(failed&&failed>0)toast(failed+' Datei'+(failed>1?'en':'')+' konnte'+(failed>1?'n':'')+' nicht hochgeladen werden','warn');
+}
+
+function dataURLtoBlob(dataURL){
+  const parts=dataURL.split(',');
+  const mime=parts[0].match(/:(.*?);/)[1];
+  const raw=atob(parts[1]);
+  const arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+
+function downloadHautbericht(idx){
+  if(!selectedClient)return;
+  var kd=getClientKartei(selectedClient.id);
+  var b=kd.hautberichte[idx];if(!b)return;
+  loadMediaData(b).then(function(dataUrl){
+    if(!dataUrl){toast('Bericht nicht gefunden','warn');return}
+    var blob=dataURLtoBlob(dataUrl);
+    var ext=b.type==='pdf'?'.pdf':'.jpg';
+    var filename=(b.label||'Hautanalysebericht').replace(/[^a-zA-Z0-9äöüÄÖÜß _-]/g,'')+ext;
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},1000);
+    toast('Bericht heruntergeladen');
+  });
+}
+
+function shareHautberichtWhatsApp(idx){
+  if(!selectedClient)return;
+  var kd=getClientKartei(selectedClient.id);
+  var b=kd.hautberichte[idx];if(!b)return;
+  var c=selectedClient;
+  loadMediaData(b).then(function(dataUrl){
+    if(!dataUrl){toast('Bericht nicht gefunden','warn');return}
+    var blob=dataURLtoBlob(dataUrl);
+    var ext=b.type==='pdf'?'.pdf':'.jpg';
+    var mime=b.type==='pdf'?'application/pdf':'image/jpeg';
+    var filename=(b.label||'Hautanalysebericht').replace(/[^a-zA-Z0-9äöüÄÖÜß _-]/g,'')+ext;
+    var file=new File([blob],filename,{type:mime});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({
+        title:'Hautanalysebericht - '+(c.fn||c.name),
+        text:'Hallo '+(c.fn||'')+', hier ist dein Hautanalysebericht von Skinconcept Hagner.',
+        files:[file]
+      }).then(function(){toast('Bericht geteilt')}).catch(function(){});
+    }else{
+      downloadHautbericht(idx);
+      var waUrl=c.ph?getWaUrl(c.ph,'Hallo '+(c.fn||'')+', hier ist dein Hautanalysebericht von Skinconcept Hagner. Ich habe dir die Datei gerade auch geschickt. Liebe Gruesse, Tamara'):'';
+      if(waUrl){
+        setTimeout(function(){window.open(waUrl,'_blank')},500);
+        toast('Bericht heruntergeladen — WhatsApp wird geoeffnet');
+      }else{
+        toast('Bericht heruntergeladen — kein WhatsApp (keine Telefonnr.)');
+      }
+    }
+  });
 }
 
 function viewHautbericht(idx){
   if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  const b=kd.hautberichte[idx];
+  var kd=getClientKartei(selectedClient.id);
+  var b=kd.hautberichte[idx];
   if(!b)return;
-  const isPdf=b.type==='pdf';
-  document.getElementById('addModalContent').innerHTML=`
-    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-    <h2 style="margin-bottom:4px">${esc(b.label||'Hautanalysebericht')}</h2>
-    <p style="color:var(--muted);font-size:12px;margin-bottom:16px">${fmtDate(b.date)}${b.filename?' &middot; '+esc(b.filename):''}</p>
-    ${isPdf?'<iframe src="'+b.data+'" style="width:100%;height:500px;border:none;border-radius:10px;background:#fff"></iframe>':'<img src="'+b.data+'" style="width:100%;border-radius:10px;margin-bottom:12px" alt="Hautanalysebericht">'}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
-      <button class="btn btn-dark btn-sm" onclick="renameHautbericht(${idx})">Umbenennen</button>
-      <button class="btn btn-red btn-sm" onclick="deleteHautbericht(${idx})">Loeschen</button>
-    </div>
-  `;
+  // Lade Bilddaten (aus data oder IndexedDB)
+  document.getElementById('addModalContent').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Lade Bericht...</div>';
   openModal('addModal');
+  loadMediaData(b).then(function(dataUrl){
+    if(!dataUrl){document.getElementById('addModalContent').innerHTML='<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button><p style="color:var(--red);padding:20px">Bericht konnte nicht geladen werden.</p>';return}
+    var isPdf=b.type==='pdf';
+    document.getElementById('addModalContent').innerHTML=
+      '<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button>'
+      +'<h2 style="margin-bottom:4px">'+esc(b.label||'Hautanalysebericht')+'</h2>'
+      +'<p style="color:var(--muted);font-size:12px;margin-bottom:16px">'+fmtDate(b.date)+(b.filename?' &middot; '+esc(b.filename):'')+'</p>'
+      +(isPdf
+        ?'<iframe src="'+dataUrl+'#toolbar=1&view=FitH" style="width:100%;height:65vh;border:none;border-radius:10px;margin-bottom:14px;background:#fff" title="Hautanalysebericht"></iframe>'
+        :'<img src="'+dataUrl+'" style="width:100%;border-radius:10px;margin-bottom:14px;max-height:60vh;object-fit:contain;background:var(--bg3)" alt="Hautanalysebericht" onclick="openFullscreen(this.src)">')
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+      +(isPdf?'<button class="btn btn-dark btn-sm" onclick="openHautberichtTab('+idx+')" style="flex:1">&#128194; In neuem Tab</button>':'')
+      +'<button class="btn btn-gold btn-sm" onclick="downloadHautbericht('+idx+')" style="flex:1">&#11015; Herunterladen</button>'
+      +'<button class="btn btn-sm" onclick="shareHautberichtWhatsApp('+idx+')" style="flex:1;background:#25d366;color:#fff">&#128172; Per WhatsApp senden</button>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<button class="btn btn-dark btn-sm" onclick="renameHautbericht('+idx+')">Umbenennen</button>'
+      +'<button class="btn btn-red btn-sm" onclick="deleteHautbericht('+idx+')">Loeschen</button>'
+      +'</div>';
+  });
+}
+
+// Diagnose: zeigt in einem Popup was mit den Berichten los ist
+function diagnoseHautbericht(){
+  if(!selectedClient){alert('Bitte zuerst eine Kundin auswaehlen.');return}
+  var id=selectedClient.id;
+  var kd=getClientKartei(id);
+  var lines=[];
+  lines.push('KUNDE: '+(selectedClient.name||id));
+  lines.push('');
+  lines.push('--- LOKAL (dieser PC) ---');
+  var localList=kd.hautberichte||[];
+  lines.push('Berichte in Kartei: '+localList.length);
+  localList.forEach(function(b,i){
+    lines.push('  '+(i+1)+'. '+(b.label||b.filename||'?')+'  ['+((b._mediaId||b._idbKey)?'ID: '+(b._mediaId||b._idbKey):'nur local data, noch nicht hochgeladen')+']');
+  });
+  lines.push('');
+  lines.push('--- localStorage ---');
+  try{
+    var all=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
+    var kdStored=all[id]||{};
+    var storedList=kdStored.hautberichte||[];
+    lines.push('Berichte in localStorage: '+storedList.length);
+    var size=Math.round((localStorage.getItem(STORE_KEY)||'').length/1024);
+    lines.push('localStorage-Groesse: '+size+' KB (Limit ca. 5000 KB)');
+  }catch(e){lines.push('Fehler beim Lesen: '+e.message)}
+  lines.push('');
+  lines.push('--- CLOUD (Firebase) ---');
+  lines.push('Pruefe Cloud... bitte warten');
+  var msg=lines.join('\n');
+  var pre=document.createElement('pre');
+  pre.textContent=msg;
+  pre.style.cssText='white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:12px;padding:20px;background:#fff;border-radius:12px;max-width:90vw;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)';
+  var ovl=document.createElement('div');
+  ovl.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ovl.onclick=function(e){if(e.target===ovl)document.body.removeChild(ovl)};
+  var btn=document.createElement('button');
+  btn.textContent='Schliessen';
+  btn.style.cssText='display:block;margin:12px auto 0;padding:8px 20px;background:var(--gold,#b68);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px';
+  btn.onclick=function(){document.body.removeChild(ovl)};
+  var box=document.createElement('div');box.appendChild(pre);box.appendChild(btn);
+  ovl.appendChild(box);
+  document.body.appendChild(ovl);
+  // Cloud-Check
+  FB_KARTEI_REF.child(id).once('value').then(function(snap){
+    var cloud=snap.val()||{};
+    var cloudList=cloud.hautberichte||[];
+    var append='\nBerichte in Cloud: '+cloudList.length;
+    cloudList.forEach(function(b,i){
+      append+='\n  '+(i+1)+'. '+(b.label||b.filename||'?')+'  [ID: '+(b._mediaId||b._idbKey||'?')+']';
+    });
+    append+='\n\nService-Worker-Version: v7-diag';
+    append+='\nOnline: '+(navigator.onLine?'ja':'nein');
+    pre.textContent=msg.replace('Pruefe Cloud... bitte warten','').trim()+append;
+  }).catch(function(err){
+    pre.textContent=msg+'\nCloud-Fehler: '+(err&&err.message||err);
+  });
+}
+
+function openFullscreen(src){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out;-webkit-overflow-scrolling:touch;overflow:auto';
+  overlay.innerHTML='<img src="'+src+'" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;user-select:none;-webkit-user-select:none">';
+  overlay.onclick=function(){document.body.removeChild(overlay)};
+  document.body.appendChild(overlay);
+}
+
+// PDF-Bericht in neuem Tab oeffnen (data-URL -> Blob-URL, da Browser data: oft blockieren)
+function openHautberichtTab(idx){
+  if(!selectedClient)return;
+  var kd=getClientKartei(selectedClient.id);
+  var b=kd.hautberichte[idx];
+  if(!b)return;
+  loadMediaData(b).then(function(dataUrl){
+    if(!dataUrl){toast('Bericht konnte nicht geladen werden');return}
+    try{
+      var parts=dataUrl.split(',');
+      var meta=parts[0]||'';
+      var mime=(meta.match(/data:([^;]+)/)||[])[1]||'application/pdf';
+      var bin=atob(parts[1]||'');
+      var len=bin.length;var arr=new Uint8Array(len);
+      for(var i=0;i<len;i++)arr[i]=bin.charCodeAt(i);
+      var blob=new Blob([arr],{type:mime});
+      var url=URL.createObjectURL(blob);
+      var w=window.open(url,'_blank');
+      if(!w)toast('Popup blockiert — bitte Popups erlauben');
+      setTimeout(function(){URL.revokeObjectURL(url)},60000);
+    }catch(e){
+      toast('Bericht konnte nicht geoeffnet werden');
+    }
+  });
 }
 
 function renameHautbericht(idx){
@@ -2491,6 +3277,8 @@ function renameHautbericht(idx){
 function deleteHautbericht(idx){
   if(!selectedClient||!confirm('Hautanalysebericht wirklich loeschen?'))return;
   const kd=getClientKartei(selectedClient.id);
+  const b=kd.hautberichte[idx];
+  if(b)deleteMedia(b);
   kd.hautberichte.splice(idx,1);
   saveClientKartei(selectedClient.id,kd);
   closeModal('addModal');
@@ -2498,53 +3286,12 @@ function deleteHautbericht(idx){
   toast('Bericht geloescht');
 }
 
-// ── CONTACT LOG ──
-function logContact(){
-  if(!selectedClient)return;
-  document.getElementById('addModalContent').innerHTML=`
-    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-    <h2>Kontakt dokumentieren</h2>
-    <div class="form-grid" style="margin-bottom:16px">
-      <div class="fg"><label>Datum</label><input type="date" id="kcDate" value="${TODAY_STR}"></div>
-      <div class="fg"><label>Kanal</label>
-        <select id="kcChannel">
-          <option>WhatsApp</option><option>Telefon</option><option>E-Mail</option><option>SMS</option><option>Im Studio</option><option>Instagram</option>
-        </select>
-      </div>
-      <div class="fg form-full"><label>Grund</label>
-        <select id="kcReason">
-          <option>Terminvereinbarung</option><option>Terminerinnerung</option><option>Nachfrage Hautbild</option><option>Produktberatung</option><option>Rueckgewinnung</option><option>Geburtstagswuensche</option><option>Allgemeine Nachfrage</option><option>Sonstiges</option>
-        </select>
-      </div>
-      <div class="fg form-full"><label>Notiz</label><textarea id="kcNote" rows="3" placeholder="Was wurde besprochen?"></textarea></div>
-    </div>
-    <button class="btn btn-gold" onclick="saveContact()">Kontakt speichern</button>
-  `;
-  openModal('addModal');
-}
-
-function saveContact(){
-  if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  kd.contacts.unshift({
-    date:document.getElementById('kcDate').value,
-    channel:document.getElementById('kcChannel').value,
-    reason:document.getElementById('kcReason').value,
-    note:document.getElementById('kcNote').value
-  });
-  const s=getStatus(selectedClient.days,selectedClient.id);
-  if(s.key!=='g')kd.kontaktiert=document.getElementById('kcDate').value;
-  saveClientKartei(selectedClient.id,kd);
-  closeModal('addModal');
-  renderKartei(selectedClient);
-  renderSidebar();
-  toast('Kontakt gespeichert'+(s.key!=='g'?' &middot; Als kontaktiert markiert':''));
-}
-
+// ── KONTAKTIERT ──
 function markContacted(){
   if(!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
   kd.kontaktiert=TODAY_STR;
+  kd.zuletztKontaktiert=TODAY_STR;
   saveClientKartei(selectedClient.id,kd);
   renderKartei(selectedClient);
   renderSidebar();
@@ -2559,14 +3306,6 @@ function unmarkContacted(){
   renderKartei(selectedClient);
   renderSidebar();
   toast('Kontaktiert-Status entfernt');
-}
-
-function deleteContact(idx){
-  if(!selectedClient)return;
-  const kd=getClientKartei(selectedClient.id);
-  kd.contacts.splice(idx,1);
-  saveClientKartei(selectedClient.id,kd);
-  renderKartei(selectedClient);
 }
 
 // ── NEW CLIENT ──
@@ -3300,122 +4039,85 @@ function deleteNote(i){
   toast('Notiz geloescht');
 }
 
-// ── CRM FUNKTIONEN ──
-function openCRM(){
-  document.getElementById('crmOverlay').classList.add('open');
-  renderCRM();
-}
-function closeCRM(){
-  document.getElementById('crmOverlay').classList.remove('open');
-}
-function getCRMPriority(c){
-  const s=getStatus(c.days,c.id);
-  const kd=getClientKartei(c.id);
-  if(s.contacted)return{level:'none',label:'Erledigt',sort:4};
-  if(s.key==='r')return{level:'high',label:'Dringend',sort:1};
-  if(s.key==='o')return{level:'medium',label:'Bald anrufen',sort:2};
-  if(s.key==='y')return{level:'low',label:'Beobachten',sort:3};
-  return{level:'none',label:'OK',sort:4};
-}
-function renderCRM(){
-  const filter=document.getElementById('crmFilter').value;
-  const sort=document.getElementById('crmSort').value;
-  const q=(document.getElementById('crmSearch').value||'').toLowerCase().trim();
-
-  let list=clients.slice();
-
-  // Search
-  if(q)list=list.filter(c=>(c.fn+' '+c.ln+' '+c.name+' '+c.ph+' '+c.em).toLowerCase().includes(q));
-
-  // Filter
-  if(filter==='anrufen')list=list.filter(c=>{const s=getStatus(c.days,c.id);return !s.contacted&&(s.key==='y'||s.key==='o'||s.key==='r')});
-  else if(filter==='ueberfaellig')list=list.filter(c=>getStatus(c.days,c.id).key==='o');
-  else if(filter==='verloren')list=list.filter(c=>getStatus(c.days,c.id).key==='r');
-  else if(filter==='kontaktiert')list=list.filter(c=>getStatus(c.days,c.id).contacted);
-  else if(filter==='geburtstag')list=list.filter(c=>c.bdSoon);
-
-  // Sort
-  if(sort==='tage-desc')list.sort((a,b)=>(b.days<9999?b.days:0)-(a.days<9999?a.days:0));
-  else if(sort==='tage-asc')list.sort((a,b)=>(a.days<9999?a.days:99999)-(b.days<9999?b.days:99999));
-  else if(sort==='name-asc')list.sort((a,b)=>(a.ln||a.name||'').localeCompare(b.ln||b.name||''));
-  else if(sort==='name-desc')list.sort((a,b)=>(b.ln||b.name||'').localeCompare(a.ln||a.name||''));
-  else if(sort==='kontakt-asc')list.sort((a,b)=>{const ka=getClientKartei(a.id),kb=getClientKartei(b.id);const da=ka.zuletztKontaktiert||'0',db=kb.zuletztKontaktiert||'0';return da.localeCompare(db)});
-  else if(sort==='besuche-desc')list.sort((a,b)=>(b.visits||0)-(a.visits||0));
-
-  // Stats
-  const anrufen=clients.filter(c=>{const s=getStatus(c.days,c.id);return !s.contacted&&(s.key==='y'||s.key==='o'||s.key==='r')}).length;
-  const dringend=clients.filter(c=>{const s=getStatus(c.days,c.id);return !s.contacted&&s.key==='r'}).length;
-  const kontaktiert=clients.filter(c=>getStatus(c.days,c.id).contacted).length;
-  const bdSoon=clients.filter(c=>c.bdSoon).length;
-
-  document.getElementById('crmStats').innerHTML=`
-    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--red)">${dringend}</div><div class="crm-stat-label">Dringend anrufen</div></div>
-    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--orange)">${anrufen}</div><div class="crm-stat-label">Muss kontaktiert werden</div></div>
-    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--blue)">${kontaktiert}</div><div class="crm-stat-label">Bereits kontaktiert</div></div>
-    <div class="crm-stat"><div class="crm-stat-val" style="color:var(--gold)">${bdSoon}</div><div class="crm-stat-label">Geburtstag bald</div></div>
-    <div class="crm-stat"><div class="crm-stat-val">${list.length}</div><div class="crm-stat-label">Gefilterte Kunden</div></div>
-  `;
-
-  // Table
-  let html='<table class="crm-table"><thead><tr>';
-  html+='<th>Kunde</th><th>Telefon</th><th>Tage seit Besuch</th><th>Status</th><th>Prioritaet</th><th>Letzter Kontakt</th><th>Besuche</th><th>Aktion</th>';
-  html+='</tr></thead><tbody>';
-
-  list.forEach(c=>{
-    const s=getStatus(c.days,c.id);
-    const kd=getClientKartei(c.id);
-    const prio=getCRMPriority(c);
-    const rowClass=prio.level==='high'?'crm-urgent':(prio.level==='medium'?'crm-warning':'');
-    const letzterKontakt=kd.zuletztKontaktiert?fmtDate(kd.zuletztKontaktiert):(kd.contacts&&kd.contacts.length?fmtDate(kd.contacts[0].date):'–');
-    const waUrl=c.ph?getWaUrl(c.ph,'Hallo '+(c.fn||'')+', hier ist Tamara von Skinconcept Hagner! Ich wollte mich kurz erkundigen, wie es dir geht und ob du einen neuen Termin moechtest. Liebe Gruesse!'):'';
-
-    html+=`<tr class="${rowClass}">
-      <td style="font-weight:500;cursor:pointer" onclick="closeCRM();selectClient('${c.id}')">${esc(c.fn||c.name)} ${esc(c.ln||'')}</td>
-      <td>${c.ph?'<a href="tel:'+esc(c.ph)+'" style="color:var(--gold);text-decoration:none">'+esc(c.ph)+'</a>':'–'}</td>
-      <td style="color:var(--${s.color});font-weight:500">${c.days<9999?c.days+' Tage':'–'}</td>
-      <td><span class="badge badge-${s.key}">${s.label}</span></td>
-      <td><span class="crm-prio ${prio.level}">${prio.label}</span></td>
-      <td>${letzterKontakt}</td>
-      <td>${c.visits||0}</td>
-      <td style="white-space:nowrap;display:flex;gap:4px">
-        ${c.ph?'<a href="tel:'+esc(c.ph)+'" class="crm-done-btn" title="Anrufen">&#128222;</a>':''}
-        ${waUrl?'<a href="'+waUrl+'" target="_blank" class="crm-done-btn" title="WhatsApp" style="color:#25d366;border-color:#25d366">&#9742;</a>':''}
-        ${!s.contacted?'<button class="crm-done-btn" onclick="crmMarkContacted(\''+c.id+'\')" title="Als kontaktiert markieren">&#10003;</button>':'<span style="color:var(--green)">&#10003;</span>'}
-      </td>
-    </tr>`;
-  });
-
-  html+='</tbody></table>';
-  if(!list.length)html='<div style="text-align:center;padding:40px;color:var(--muted)">Keine Kunden in dieser Ansicht.</div>';
-  document.getElementById('crmTable').innerHTML=html;
-}
-
-function crmMarkContacted(clientId){
-  const c=clients.find(x=>x.id===clientId);
-  if(!c)return;
-  const kd=getClientKartei(clientId);
-  if(!kd.contacts)kd.contacts=[];
-  kd.contacts.unshift({date:TODAY_STR,type:'crm',channel:'Telefon',reason:'CRM Kontakt',note:'Ueber CRM-Uebersicht kontaktiert'});
-  kd.zuletztKontaktiert=TODAY_STR;
-  const s=getStatus(c.days,clientId);
-  const all=loadKartei();
-  if(!all._contacted)all._contacted={};
-  all._contacted[clientId]={date:TODAY_STR};
-  saveClientKartei(clientId,kd);
-  renderCRM();
-  renderSidebar();
-  toast(esc(c.fn||c.name)+' als kontaktiert markiert');
-}
-
 // ── INIT ──
 initClients();
 renderSidebar();
 loadAnamnese();
 loadNachsorge();
 
-console.log('Kundenkartei geladen:',clients.length,'Kunden');
+// Firebase LIVE-Sync: Listener auf Kartei-Baum, Aenderungen von allen Geraeten sofort sichtbar
+setupFirebaseLiveSync();
+
+// Migration: alte Bilder → Firebase Cloud (laeuft einmal, danach auf allen Geraeten)
+// Schritt 2: Medien-Listen (photos/hautberichte/hautanalysen) nach Cloud pushen,
+// damit Handy & PC dieselbe Kartei sehen
+openIDB().then(function(){
+  migrateMediaListsToCloud().then(function(){
+    updateStorageInfo();
+  });
+});
+
+// ── EINMALIGER REPARATUR-PUSH (2026-04-23) ──
+// Vor dem Fix der Firebase-Rules wurden Cloud-Writes still abgelehnt → lokal gespeicherte
+// Behandlungen/Notizen/Adressen sind nie in der Cloud angekommen. Wir schieben einmalig alle
+// lokalen Kunden in die Cloud, danach laeuft der normale Sync.
+(function oneTimeFullPushAfterRulesFix(){
+  var FIX_KEY='sc_kartei_rules_fix_push_2026_04_23';
+  if(localStorage.getItem(FIX_KEY)==='done')return;
+  // Live-Sync erst initial hydrieren lassen, dann pushen (sonst ueberschreiben wir evtl. juengere Cloud-Daten)
+  setTimeout(function(){
+    try{
+      var data=loadKartei();
+      var ids=Object.keys(data).filter(function(id){return !String(id).startsWith('_')&&data[id]});
+      if(!ids.length){localStorage.setItem(FIX_KEY,'done');return}
+      var pushed=0,failed=0,pending=ids.length;
+      ids.forEach(function(id){
+        try{
+          FB_KARTEI_REF.child(id).set(clientSyncPayload(data[id]))
+            .then(function(){pushed++})
+            .catch(function(){failed++})
+            .finally(function(){
+              pending--;
+              if(pending<=0){
+                localStorage.setItem(FIX_KEY,'done');
+                console.log('[Rules-Fix Push] '+pushed+' Kunden in Cloud, '+failed+' Fehler');
+                if(pushed>0){try{toast(pushed+' Kartei'+(pushed>1?'en':'')+' in Cloud hochgeladen — jetzt auf allen Geraeten verfuegbar')}catch(e){}}
+              }
+            });
+        }catch(e){failed++;pending--}
+      });
+    }catch(e){console.warn('Rules-Fix Push Fehler:',e&&e.message)}
+  },4000);
+})();
+
+console.log('%c[Kundenkartei v7-cloud-sync-fix] geladen:','color:#b68;font-weight:bold',clients.length,'Kunden');
 </script>
 
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}</script>
+<script>
+// Service Worker: registrieren + AKTIV auf Updates pruefen + automatisch neu laden
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(function(reg){
+    // Bei jedem Seitenaufruf zwingend neue Version suchen
+    try{reg.update()}catch(e){}
+    reg.addEventListener('updatefound',function(){
+      var sw=reg.installing;
+      if(!sw)return;
+      sw.addEventListener('statechange',function(){
+        if(sw.state==='installed'&&navigator.serviceWorker.controller){
+          // Neue Version fertig installiert — einmal reloaden, damit neuer Code laeuft
+          console.log('[SW] Neue Version installiert — lade Seite neu');
+          try{sw.postMessage({type:'SKIP_WAITING'})}catch(e){}
+          setTimeout(function(){window.location.reload()},500);
+        }
+      });
+    });
+  });
+  // Wenn der aktive SW wechselt: einmal hart neu laden
+  var _swReloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(_swReloaded)return;_swReloaded=true;window.location.reload();
+  });
+}
+</script>
 </body>
 </html>
