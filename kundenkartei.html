@@ -621,10 +621,32 @@ const FB_KARTEI_REF=fbDb.ref(FB_VAULT+'/kartei_data');
 const FB_MEDIA_REF=fbDb.ref(FB_VAULT+'/kartei_media');
 const FB_DELETED_REF=fbDb.ref(FB_VAULT+'/kartei_deleted');
 const DELETED_KEY='sc_kartei_deleted_v3';
+// Zusätzliche Name-Schwarze-Liste: verhindert, dass gelöschte Kunden
+// über Anamnese/Trello/Treatwell-Re-Import mit neuer ID wiederkommen.
+// Edge-Case: zwei echte Personen mit identischem Namen — dann muss die
+// Schwarze Liste manuell bereinigt werden (Reset-Seite oder Console).
+const DELETED_NAMES_KEY='sc_kartei_deleted_names_v1';
 const _deletedIds=new Set(JSON.parse(localStorage.getItem(DELETED_KEY)||'[]'));
+const _deletedNames=new Set(JSON.parse(localStorage.getItem(DELETED_NAMES_KEY)||'[]'));
 function isDeleted(id){return _deletedIds.has(id)}
-function markDeleted(id){_deletedIds.add(id);try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}}
-FB_DELETED_REF.on('child_added',function(snap){_deletedIds.add(snap.key);try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}});
+function isDeletedName(name){if(!name)return false;return _deletedNames.has(normalize(name))}
+function markDeleted(id,name){
+  _deletedIds.add(id);
+  try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}
+  if(name){
+    _deletedNames.add(normalize(name));
+    try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}
+  }
+}
+FB_DELETED_REF.on('child_added',function(snap){
+  _deletedIds.add(snap.key);
+  try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}
+  const v=snap.val();
+  if(v&&v.name){
+    _deletedNames.add(normalize(v.name));
+    try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}
+  }
+});
 
 // ── IndexedDB fuer grosse Daten ──
 let _idb=null;
@@ -1034,6 +1056,7 @@ function setupFirebaseLiveSync(){
 function mergeCloudClient(id,cloud,isUpdate){
   if(!cloud||!id||String(id).startsWith('_'))return;
   if(isDeleted(id))return; // permanent gelöschte Kunden nie mehr aufnehmen
+  if(cloud.name&&isDeletedName(cloud.name))return; // Re-Sync mit neuer ID auch blocken
   // Echo-Schutz: Wenn wir selbst das gerade geschrieben haben, nicht reagieren
   if(cloud._device===DEVICE_ID){
     const t=Date.parse(cloud._modified||'')||0;
@@ -1316,8 +1339,9 @@ function initClients(){
     });
   }
 
-  // Bereits geladene clients ebenfalls filtern (z.B. aus mergeCloudClient)
-  clients=clients.filter(c=>!isDeleted(c.id));
+  // Bereits geladene clients ebenfalls filtern (z.B. aus mergeCloudClient).
+  // Auch Name-basiert filtern: deckt Re-Imports mit neuer ID ab.
+  clients=clients.filter(c=>!isDeleted(c.id)&&!isDeletedName(c.name));
 
   // Stammdaten-Overrides aus Kartei (von updateClient gespeicherte Aenderungen) ueberlagern
   clients.forEach(c=>{if(typeof applyStammOverrides==='function')applyStammOverrides(c)});
@@ -1344,6 +1368,9 @@ function processAnamEntry(entry){
   });
 
   if(!exists&&fn){
+    // Schwarze Liste auf Name-Basis: verhindert Re-Import von gelöschten Kunden,
+    // da uid() jedes Mal eine neue ID erzeugt und ID-basiertes isDeleted nicht greift.
+    if(isDeletedName(fn+' '+ln))return null;
     const nc={
       id:uid(),
       name:fn+' '+ln,fn,ln,
@@ -1560,8 +1587,9 @@ function deleteClient(id){
   if(typeof _karteiCache!=='undefined')_karteiCache=d;
 
   // 3) Schwarze Liste sofort markieren — damit auch Trello-Re-Imports und
-  //    Cloud-Syncs (z.B. von iPad aus) den Kunden NICHT wieder hochspielen
-  markDeleted(id);
+  //    Cloud-Syncs (z.B. von iPad aus) den Kunden NICHT wieder hochspielen.
+  //    Name mit speichern, weil Anamnese-Re-Imports jedes Mal neue uid() erzeugen.
+  markDeleted(id,c.name);
 
   // 4) In Firebase löschen (Realtime DB kartei_data + schwarze Liste)
   Promise.allSettled([
