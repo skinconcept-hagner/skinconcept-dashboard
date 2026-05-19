@@ -836,6 +836,9 @@ let currentFilter = 'recent';
 let extractedNames = [];
 let ocrDetectedDate = null;
 
+// HTML-Escape für dynamische Strings aus der DB (verhindert XSS bei innerHTML).
+function escHtml(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 // ============ TABS ============
 function switchKTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -964,7 +967,7 @@ function renderOverview() {
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div style="width:10px; height:10px; border-radius:50%; background:${statusColor}; flex-shrink:0;"></div>
                         <div>
-                            <div class="name">${c.name}</div>
+                            <div class="name">${escHtml(c.name)}</div>
                             <div class="details">
                                 ${timeLabel} ${c.lastVisit ? ' &middot; Letzter Besuch: ' + formatDate(c.lastVisit) : ''}
                                 ${c.phone ? ' &middot; ' + c.phone : ''}
@@ -1076,9 +1079,9 @@ function renderBirthdays() {
             html += `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid rgba(201,168,124,0.3);">
                     <div>
-                        <strong>${c.name}</strong>
+                        <strong>${escHtml(c.name)}</strong>
                         ${age ? `<span style="color:var(--text-light); font-size:13px;"> — wird ${age} Jahre</span>` : ''}
-                        ${c.phone ? `<div style="font-size:12px; color:var(--text-light);">${c.phone}</div>` : ''}
+                        ${c.phone ? `<div style="font-size:12px; color:var(--text-light);">${escHtml(c.phone)}</div>` : ''}
                     </div>
                     <button class="btn btn-primary btn-sm" onclick="sendBirthdayMessage('${c.id}')">Glueckwuensche kopieren</button>
                 </div>`;
@@ -1098,7 +1101,7 @@ function renderBirthdays() {
             html += `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid rgba(91,123,168,0.2);">
                     <div>
-                        <strong>${c.name}</strong>
+                        <strong>${escHtml(c.name)}</strong>
                         ${age ? `<span style="color:var(--text-light); font-size:13px;"> — wird ${age}</span>` : ''}
                         <div style="font-size:12px; color:var(--text-light);">
                             ${dayName}, ${bdayDate.toLocaleDateString('de-DE')} (in ${c.daysUntil} Tag${c.daysUntil !== 1 ? 'en' : ''})
@@ -1147,7 +1150,7 @@ function renderBirthdayMonth(clientsWithBday) {
                             ${c.bday.day}.
                         </div>
                         <div>
-                            <div class="name">${isToday ? '&#127874; ' : ''}${c.name}</div>
+                            <div class="name">${isToday ? '&#127874; ' : ''}${escHtml(c.name)}</div>
                             <div class="details">
                                 ${c.bday.day}. ${monthNames[c.bday.month - 1]}${age ? ' &middot; wird ' + age + ' Jahre' : ''}
                                 ${c.phone ? ' &middot; ' + c.phone : ''}
@@ -1277,7 +1280,7 @@ function renderNachsorge() {
             <div class="nachsorge-card ${c._isDone ? 'done' : ''}">
                 <div class="nc-head">
                     <div>
-                        <strong style="font-size:15px;">${c.name}</strong>
+                        <strong style="font-size:15px;">${escHtml(c.name)}</strong>
                         <div style="font-size:13px; color:var(--text-light); margin-top:3px;">
                             Besuch am ${formatDate(c.lastVisit)}
                             ${c.phone ? ' &middot; ' + c.phone : ''}
@@ -1787,8 +1790,8 @@ function renderTemplates() {
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
                 <div>
                     <span class="badge badge-geplant">${typeLabels[t.type] || t.type}</span>
-                    <strong style="margin-left:8px;">${t.title}</strong>
-                    ${t.treatment ? `<small style="color:var(--text-light);"> - ${t.treatment}</small>` : ''}
+                    <strong style="margin-left:8px;">${escHtml(t.title)}</strong>
+                    ${t.treatment ? `<small style="color:var(--text-light);"> - ${escHtml(t.treatment)}</small>` : ''}
                 </div>
                 <div style="display:flex; gap:6px;">
                     <button class="btn btn-secondary btn-sm" onclick="copyTemplate('${t.id}')">Kopieren</button>
@@ -1796,8 +1799,8 @@ function renderTemplates() {
                     <button class="btn btn-sm" style="color:var(--danger);background:none;" onclick="deleteTemplate('${t.id}')">&#10005;</button>
                 </div>
             </div>
-            ${t.subject ? `<div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Betreff: ${t.subject}</div>` : ''}
-            <div style="font-size:13px; white-space:pre-wrap; color:var(--text); line-height:1.5; max-height:100px; overflow:hidden;">${t.body || ''}</div>
+            ${t.subject ? `<div style="font-size:13px; color:var(--text-light); margin-bottom:6px;">Betreff: ${escHtml(t.subject)}</div>` : ''}
+            <div style="font-size:13px; white-space:pre-wrap; color:var(--text); line-height:1.5; max-height:100px; overflow:hidden;">${escHtml(t.body || '')}</div>
         </div>
     `).join('');
 }
@@ -1913,8 +1916,8 @@ function renderClients(filter = '') {
         const contact = getContactStatus(c);
         return `
             <tr>
-                <td><strong>${c.name}</strong>${c.notes ? `<br><small style="color:var(--text-light)">${c.notes.substring(0,40)}</small>` : ''}</td>
-                <td>${c.email || '-'}</td>
+                <td><strong>${escHtml(c.name)}</strong>${c.notes ? `<br><small style="color:var(--text-light)">${escHtml(c.notes.substring(0,40))}</small>` : ''}</td>
+                <td>${escHtml(c.email || '-')}</td>
                 <td>${c.phone || '-'}</td>
                 <td>${formatDate(c.lastVisit)}</td>
                 <td>
@@ -2048,14 +2051,14 @@ function renderRecall() {
         return `
             <div class="card" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                 <div>
-                    <strong>${c.name}</strong>
+                    <strong>${escHtml(c.name)}</strong>
                     <span class="contact-badge ${contact.status}" style="font-size:11px; margin-left:8px;">
                         ${contact.status === 'contacted' ? '&#10003;' : '&#9679;'} ${contact.label}
                     </span>
                     <div style="font-size:13px; color:var(--text-light);">
                         Letzter Besuch: ${formatDate(c.lastVisit)} | Recall faellig seit ${daysSince} Tag${daysSince !== 1 ? 'en' : ''}
                     </div>
-                    ${c.phone ? `<div style="font-size:13px; color:var(--text-light);">Tel: ${c.phone}</div>` : ''}
+                    ${c.phone ? `<div style="font-size:13px; color:var(--text-light);">Tel: ${escHtml(c.phone)}</div>` : ''}
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn btn-primary btn-sm" onclick="sendRecall('${c.id}')">Nachricht kopieren</button>

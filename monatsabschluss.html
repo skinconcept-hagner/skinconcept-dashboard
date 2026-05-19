@@ -461,6 +461,9 @@ let cachedSales = [];
 let unsubDeviations = null;
 let unsubSales = null;
 
+// HTML-Escape für dynamische Strings aus der DB (verhindert XSS bei innerHTML).
+function escHtml(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 function loadDeviations(callback) {
     if (unsubDeviations) unsubDeviations();
     unsubDeviations = db.collection('deviations').where('month', '==', currentMonth).onSnapshot(snapshot => {
@@ -625,7 +628,7 @@ function renderDeviations() {
         let p, a;
         if (d.isHours) { p = formatDate(d.date); a = (d.type === 'Plusstunden' ? '+' : '-') + hrs(Math.abs(d.hours)) + ' Std.'; }
         else { p = formatDate(d.from) + ' – ' + formatDate(d.to); a = countWorkdays(d.from, d.to) + ' Tage'; }
-        return '<tr><td>' + d.type + '</td><td>' + p + '</td><td>' + a + '</td><td>' + (d.note || '\u2013') + '</td><td><button class="btn btn-danger" onclick="deleteDeviation(\'' + d._id + '\')">Löschen</button></td></tr>';
+        return '<tr><td>' + escHtml(d.type) + '</td><td>' + p + '</td><td>' + a + '</td><td>' + escHtml(d.note || '\u2013') + '</td><td><button class="btn btn-danger" onclick="deleteDeviation(\'' + escHtml(d._id) + '\')">Löschen</button></td></tr>';
     }).join('');
 }
 
@@ -661,7 +664,7 @@ function renderSales() {
     let totalS = 0;
     tbody.innerHTML = cachedSales.map(s => {
         const g = s.qty * s.price; totalS += g;
-        return '<tr><td>' + formatDate(s.date) + '</td><td>' + s.product + '</td><td>' + s.qty + '</td><td>' + eur(s.price) + '</td><td><strong>' + eur(g) + '</strong></td><td><button class="btn btn-danger" onclick="deleteSale(\'' + s._id + '\')">Löschen</button></td></tr>';
+        return '<tr><td>' + formatDate(s.date) + '</td><td>' + escHtml(s.product) + '</td><td>' + s.qty + '</td><td>' + eur(s.price) + '</td><td><strong>' + eur(g) + '</strong></td><td><button class="btn btn-danger" onclick="deleteSale(\'' + escHtml(s._id) + '\')">Löschen</button></td></tr>';
     }).join('');
     const netto = totalS / 1.19, prov = netto * CONFIG.commissionRate / 100;
     total.textContent = 'Gesamtumsatz: ' + eur(totalS) + ' | Provision (' + CONFIG.commissionRate + '%): ' + eur(prov);

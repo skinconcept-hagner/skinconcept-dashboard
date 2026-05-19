@@ -589,7 +589,7 @@ function getSegment(c){const d=c.days;const v=c.visits||0;if(d>182)return{seg:'v
 function formatPhone(ph){if(!ph)return'';return ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'')}
 function getWaUrl(ph,msg){const n=formatPhone(ph);if(!n)return'';return msg?'https://wa.me/'+n+'?text='+encodeURIComponent(msg):'https://wa.me/'+n}
 function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
-function toast(msg,type){const box=document.getElementById('toastBox');const t=document.createElement('div');t.className='toast '+(type||'ok');t.innerHTML=msg;box.appendChild(t);setTimeout(()=>t.remove(),3000)}
+function toast(msg,type){const box=document.getElementById('toastBox');const t=document.createElement('div');t.className='toast '+(type||'ok');t.textContent=msg;box.appendChild(t);setTimeout(()=>t.remove(),3000)}
 
 // ══════════════════════════════════════════════════════
 // SPEICHERSYSTEM: localStorage (Stammdaten) + IndexedDB (Bilder)

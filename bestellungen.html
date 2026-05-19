@@ -525,8 +525,8 @@ function renderOrders() {
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                            <strong style="font-size:16px;">${o.supplier || 'Unbekannt'}</strong>
-                            <span class="badge ${statusClass}">${o.status}</span>
+                            <strong style="font-size:16px;">${escHtml(o.supplier || 'Unbekannt')}</strong>
+                            <span class="badge ${statusClass}">${escHtml(o.status)}</span>
                         </div>
                         <div style="font-size:13px; color:var(--text-light);">
                             Bestellt: ${formatDate(o.orderDate)}
@@ -553,7 +553,7 @@ function renderOrders() {
                             </tr>
                             ${items.map(it => `
                                 <tr>
-                                    <td style="padding:2px 12px 2px 0;">${it.name}</td>
+                                    <td style="padding:2px 12px 2px 0;">${escHtml(it.name)}</td>
                                     <td style="padding:2px 12px;">${it.quantity}x</td>
                                     <td style="padding:2px 12px; text-align:right;">${formatCurrency(it.unitPrice * it.quantity)}</td>
                                 </tr>
@@ -561,7 +561,7 @@ function renderOrders() {
                         </table>
                     </div>
                 ` : ''}
-                ${o.notes ? `<div style="margin-top:8px; font-size:13px; color:var(--text-light);">${o.notes}</div>` : ''}
+                ${o.notes ? `<div style="margin-top:8px; font-size:13px; color:var(--text-light);">${escHtml(o.notes)}</div>` : ''}
             </div>
         `;
     }).join('');
