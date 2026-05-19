@@ -21,13 +21,43 @@ exports.sendMail = onCall(
   {
     region: "europe-west1",
     secrets: [SMTP_USER, SMTP_PASS],
-    cors: true,
+    // Nur Aufrufe von der eigenen Domain (und lokaler Dev) erlauben.
+    // Wenn das Dashboard später Firebase Auth bekommt, zusätzlich oben in der Funktion
+    // `if (!request.auth) throw new HttpsError("unauthenticated", ...)` einbauen.
+    cors: [
+      "https://skinconcept-hagner.web.app",
+      "https://skinconcept-hagner.firebaseapp.com",
+      /^http:\/\/localhost:\d+$/,
+      /^http:\/\/127\.0\.0\.1:\d+$/,
+    ],
   },
   async (request) => {
     const { to, subject, body, attachments } = request.data || {};
 
     if (!to || !subject || !body) {
       throw new HttpsError("invalid-argument", "to, subject und body sind Pflichtfelder");
+    }
+
+    // Empfänger-Limit + Format-Validierung (verhindert Mass-Mailing-Missbrauch)
+    const recipients = Array.isArray(to) ? to : [to];
+    if (recipients.length === 0 || recipients.length > 5) {
+      throw new HttpsError("invalid-argument", "Maximal 5 Empfänger pro Mail.");
+    }
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    for (const r of recipients) {
+      if (typeof r !== "string" || !emailRe.test(r)) {
+        throw new HttpsError("invalid-argument", `Ungültige Empfänger-Adresse: ${r}`);
+      }
+    }
+
+    // Anhänge: max 10 MB Gesamtgröße (base64 ist ~33 % größer als binär)
+    if (Array.isArray(attachments)) {
+      const totalBase64Bytes = attachments
+        .filter((a) => a && typeof a.base64 === "string")
+        .reduce((sum, a) => sum + a.base64.length, 0);
+      if (totalBase64Bytes > 14_000_000) {
+        throw new HttpsError("invalid-argument", "Anhänge dürfen insgesamt max. 10 MB groß sein.");
+      }
     }
 
     const user = SMTP_USER.value();

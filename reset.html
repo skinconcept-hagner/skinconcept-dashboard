@@ -20,18 +20,25 @@
 <body>
 <div class="box">
   <h1>Cache zuruecksetzen</h1>
-  <p>Einen Moment — ich raeume alte Daten weg, damit die neueste Version laedt. Deine Kundendaten bleiben sicher.</p>
-  <div class="log" id="log"><span class="spinner"></span> Starte...</div>
+  <p>Diese Seite raeumt veraltete Web-Daten (Service Worker, Cache) weg, damit die neueste Version laedt. <strong>Kundendaten (localStorage + IndexedDB) bleiben unangetastet.</strong></p>
+  <div class="log" id="log" style="display:none"></div>
+  <div id="actions">
+    <button class="btn" id="startBtn" type="button">Cache jetzt zuruecksetzen</button>
+    <a class="btn" href="./kundenkartei.html" style="background:#888;margin-left:8px">Abbrechen</a>
+  </div>
   <a class="btn" href="./kundenkartei.html" id="back" style="display:none">&#8592; Zurueck zur Kundenkartei</a>
 </div>
 <script>
 var log=document.getElementById('log');
 var back=document.getElementById('back');
+var startBtn=document.getElementById('startBtn');
+var actions=document.getElementById('actions');
 function add(cls,msg){var d=document.createElement('div');d.className=cls;d.textContent=msg;log.appendChild(d);log.scrollTop=log.scrollHeight}
-function done(){log.innerHTML='';add('ok','Fertig. Cache ist frisch.');back.style.display='inline-block';setTimeout(function(){window.location.href='./kundenkartei.html'},1500)}
+function done(){add('ok','Fertig. Cache ist frisch.');back.style.display='inline-block';setTimeout(function(){window.location.href='./kundenkartei.html'},1500)}
 
 async function reset(){
-  log.innerHTML='';
+  log.style.display='block';
+  log.innerHTML='<span class="spinner"></span> Starte...';
   // 1. Service Worker deregistrieren
   try{
     if('serviceWorker' in navigator){
@@ -55,7 +62,12 @@ async function reset(){
   add('ok','Kundendaten (localStorage + IndexedDB) bleiben erhalten');
   done();
 }
-reset();
+
+startBtn.addEventListener('click',function(){
+  if(!confirm('Cache wirklich zuruecksetzen?\n\nDer Service Worker und alle Web-Caches werden geloescht. Kundendaten bleiben erhalten.')) return;
+  actions.style.display='none';
+  reset();
+});
 </script>
 </body>
 </html>
