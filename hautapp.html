@@ -195,6 +195,14 @@
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.5; transform: scale(1.2); }
         }
+
+        /* TOUCH/iPad-OPTIMIERUNG */
+        @media (hover: none) and (pointer: coarse) {
+            button, .btn, [class*="btn-"]:not(input), a.btn { min-height: 44px; touch-action: manipulation; }
+            button:active, .btn:active, a.btn:active { opacity: 0.7; }
+            /* Modals nicht von iPad-Tastatur verdecken lassen */
+            .modal-content, [class*="modal"] > div { max-height: 80vh; overflow-y: auto; }
+        }
     </style>
 </head>
 <body>

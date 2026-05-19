@@ -361,6 +361,20 @@ body.client-open .back-btn{display:inline-flex}
 
 /* PRINT */
 @media print{.sidebar,.hdr,.back-btn{display:none}.main-content{padding:20px}*{color:#000!important;background:#fff!important;border-color:#ddd!important}}
+
+/* ── TOUCH/iPad-OPTIMIERUNG ── */
+/* Auf Touch-Geräten Buttons + Tabs etwas größer (≥44px), schnelleres Tap-Handling */
+@media (hover: none) and (pointer: coarse){
+  .btn{padding:12px 20px;min-height:44px}
+  .btn-sm{padding:10px 16px;min-height:40px}
+  .sf{padding:8px 14px;min-height:36px}
+  .ktab{padding:12px 20px;min-height:44px}
+  .scard h3 .add-btn{padding:8px 14px;min-height:36px}
+  /* Schnelles Tap-Feedback: aktive Elemente kurz aufleuchten */
+  .btn:active,.sf:active,.ktab:active,.add-btn:active,.sb-item:active{opacity:.7}
+  /* 300ms Tap-Delay vermeiden */
+  button,.btn,.sf,.ktab,.sb-item,.scan-history-item,a{touch-action:manipulation}
+}
 </style>
 </head>
 <body>
@@ -1807,7 +1821,7 @@ function renderKartei(c){
           <input type="file" id="hautberichtUpload" accept="image/*,.pdf" style="display:none" onchange="handleHautberichtUpload(this.files)" multiple>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
             ${renderHautberichtCards(kd)}
-            <div style="border:2px dashed var(--border);border-radius:var(--r);padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--muted);transition:all .2s" onclick="document.getElementById('hautberichtUpload').click()" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            <div style="border:2px dashed var(--border);border-radius:var(--r);padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--muted);transition:all .2s;touch-action:manipulation" onclick="document.getElementById('hautberichtUpload').click()" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" ontouchstart="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" ontouchend="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
               <span style="font-size:28px">&#128203;</span>
               <span style="font-size:12px;letter-spacing:.5px">Hautanalysebericht hinterlegen</span>
               <span style="font-size:10px">PDF oder Bild</span>
@@ -2235,7 +2249,7 @@ function openAddTreatment(){
     <p style="color:var(--muted);font-size:12px;margin-bottom:16px">Behandlung auswaehlen:</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px" id="treatmentPicker">
       ${SC_TREATMENTS.map(t=>`
-        <div id="tp-${t.id}" onclick="pickTreatment('${t.id}')" style="padding:14px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;background:var(--bg2)" onmouseover="this.style.borderColor='${t.color}'" onmouseout="if(selectedTreatmentId!=='${t.id}')this.style.borderColor='var(--border)'">
+        <div id="tp-${t.id}" onclick="pickTreatment('${t.id}')" style="padding:14px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;background:var(--bg2);touch-action:manipulation" onmouseover="this.style.borderColor='${t.color}'" onmouseout="if(selectedTreatmentId!=='${t.id}')this.style.borderColor='var(--border)'" ontouchstart="this.style.borderColor='${t.color}'">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
             <span style="font-size:20px">${t.icon}</span>
             <span style="font-size:14px;font-weight:500">${t.name}</span>

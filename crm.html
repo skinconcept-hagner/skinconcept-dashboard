@@ -239,6 +239,13 @@
   .crm-row td:first-child::before{display:none}
   .crm-row .actions-cell{width:100%;margin-top:6px}
 }
+
+/* TOUCH/iPad-OPTIMIERUNG */
+@media (hover: none) and (pointer: coarse) {
+  button, .btn, [class*="btn-"]:not(input), a.btn { min-height: 44px; touch-action: manipulation; }
+  .btn-sm, button.btn-sm { min-height: 40px; padding: 8px 14px; }
+  button:active, .btn:active, a.btn:active, .qf:active, .crm-row:active { opacity: 0.7; }
+}
     </style>
 </head>
 <body>
