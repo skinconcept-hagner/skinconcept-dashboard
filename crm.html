@@ -347,6 +347,15 @@ const CRM_KEY='sc_crm_data';
 // ── HELPERS ──
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 function normalize(s){return s.toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/-/g,' ').trim()}
+
+// ── KUNDEN-SCHWARZE-LISTE (gleicher localStorage-Key wie kundenkartei.html) ──
+// Verhindert, dass gelöschte Kunden über Anamnese/Trello-Re-Import wiederkommen.
+const DELETED_NAMES_KEY='sc_kartei_deleted_names_v1';
+const _deletedNames=new Set(JSON.parse(localStorage.getItem(DELETED_NAMES_KEY)||'[]'));
+function isDeletedName(name){if(!name)return false;return _deletedNames.has(normalize(name))}
+function markDeletedName(name){if(!name)return;_deletedNames.add(normalize(name));try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}}
+const FB_DELETED_REF=fbDb.ref(FB_VAULT+'/kartei_deleted');
+FB_DELETED_REF.on('child_added',function(snap){const v=snap.val();if(v&&v.name){markDeletedName(v.name)}});
 function diffDays(dateStr){if(!dateStr)return 9999;return Math.max(0,Math.floor((TODAY-new Date(dateStr))/(864e5)))}
 function fmtDate(d){if(!d)return'–';if(d.includes('-')){const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}return d}
 function formatDays(d){if(d===0)return'Heute';if(d===1)return'Gestern';if(d<7)return d+' Tage';if(d<30){const w=Math.floor(d/7);return w+' Woche'+(w>1?'n':'');}if(d<365){const m=Math.floor(d/30);return m+' Monat'+(m>1?'e':'');}const y=Math.floor(d/365),m=Math.floor((d%365)/30);return y+' Jahr'+(y>1?'e':'')+(m>0?', '+m+' Mon.':'')}
@@ -932,6 +941,10 @@ function copyToClipboard(text){
 function deleteClientCRM(id){
   const c=clients.find(x=>x.id===id);
   if(!c||!confirm('Kunde "'+c.fn+' '+c.ln+'" wirklich loeschen?\n\nAlle Karteidaten gehen verloren.'))return;
+  // Schwarze Liste (verhindert Re-Import via Anamnese mit neuer ID)
+  const fullName=(c.fn+' '+c.ln).trim();
+  markDeletedName(fullName);
+  try{FB_DELETED_REF.child(id).set({deletedAt:Date.now(),deletedBy:'crm',name:fullName})}catch(e){}
   // Aus Client-Liste entfernen
   clients=clients.filter(x=>x.id!==id);
   // Aus Kartei-localStorage entfernen + nur diesen EINEN Kunden aus der Cloud entfernen

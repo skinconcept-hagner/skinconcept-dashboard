@@ -846,6 +846,31 @@ let ocrDetectedDate = null;
 
 // HTML-Escape für dynamische Strings aus der DB (verhindert XSS bei innerHTML).
 function escHtml(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function normalize(s){return (s||'').toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/-/g,' ').trim()}
+
+// ── KUNDEN-SCHWARZE-LISTE (gleicher localStorage-Key wie kundenkartei.html) ──
+const DELETED_NAMES_KEY='sc_kartei_deleted_names_v1';
+const _deletedNames=new Set(JSON.parse(localStorage.getItem(DELETED_NAMES_KEY)||'[]'));
+function isDeletedName(name){if(!name)return false;return _deletedNames.has(normalize(name))}
+function markDeletedName(name){if(!name)return;_deletedNames.add(normalize(name));try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}}
+
+// ── ZWEITE FIREBASE-APP für Realtime DB (parallel zu shared.js Firestore-Init) ──
+// Notwendig, weil das Hauptsystem (kundenkartei.html) in der RDB lebt.
+// kunden.html löschte vorher nur in Firestore — der Kunde lebte in der RDB weiter.
+const _rdbApp=firebase.initializeApp({
+  apiKey:"AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+  authDomain:"skinconcept-hagner.firebaseapp.com",
+  databaseURL:"https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"skinconcept-hagner",
+  storageBucket:"skinconcept-hagner.firebasestorage.app",
+  messagingSenderId:"101205413833",
+  appId:"1:101205413833:web:9734e0906dd71d1a9d2218"
+},'kunden-rdb');
+const _rdbDb=_rdbApp.database();
+const FB_VAULT='v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
+const FB_KARTEI_REF=_rdbDb.ref(FB_VAULT+'/kartei_data');
+const FB_DELETED_REF=_rdbDb.ref(FB_VAULT+'/kartei_deleted');
+FB_DELETED_REF.on('child_added',function(snap){const v=snap.val();if(v&&v.name){markDeletedName(v.name)}});
 
 // ============ TABS ============
 function switchKTab(tab) {
@@ -2021,13 +2046,31 @@ async function saveClient() {
 }
 
 async function deleteClient(id) {
-    if (!confirm('Kunde wirklich loeschen?')) return;
+    const c = allClients.find(x => x.id === id);
+    const name = c && c.name ? c.name : '';
+    if (!confirm('Kunde "' + (name || id) + '" wirklich loeschen?\n\nAlle Karteidaten gehen verloren.')) return;
     try {
-        await db.collection('clients').doc(id).delete();
-        showToast('Kunde geloescht', 'success');
+        // Schwarze Liste: verhindert Re-Import via Anamnese mit neuer ID
+        if (name) {
+            markDeletedName(name);
+            try { await FB_DELETED_REF.child(id).set({ deletedAt: Date.now(), deletedBy: 'kunden', name: name }); } catch (e) { console.warn('FB_DELETED_REF set:', e); }
+        }
+        // Parallel in beiden DBs löschen (Firestore + Realtime DB)
+        const results = await Promise.allSettled([
+            db.collection('clients').doc(id).delete(),
+            FB_KARTEI_REF.child(id).remove()
+        ]);
+        const failed = results.filter(r => r.status === 'rejected');
+        if (failed.length) {
+            console.error('Delete-Fehler:', failed);
+            showToast('Cloud-Sync teilweise fehlgeschlagen', 'error');
+        } else {
+            showToast('Kunde geloescht', 'success');
+        }
         loadClients();
     } catch (err) {
-        showToast('Fehler', 'error');
+        console.error(err);
+        showToast('Fehler beim Loeschen', 'error');
     }
 }
 
