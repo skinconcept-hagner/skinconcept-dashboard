@@ -279,7 +279,7 @@
                 <div>
                     <div class="rg-section-title" style="border:none;">Vorschau</div>
                     <div class="gs-preview" id="voucher-preview">
-                        <div class="gs-brand">SKINCONCEPT</div>
+                        <div class="gs-brand">Skinconcept</div>
                         <div class="gs-sub">TAMARA HAGNER</div>
                         <div class="gs-label">&mdash; GUTSCHEIN &mdash;</div>
                         <div class="gs-amount" id="pv-amount">0,00 €</div>
@@ -325,7 +325,7 @@
 <script src="shared.js"></script>
 <script>
 // ============================================================
-// SKINCONCEPT — Gutscheine
+// Skinconcept — Gutscheine
 // ============================================================
 
 const STUDIO = {
@@ -623,7 +623,7 @@ function buildVoucherPDF(doc, d) {
     doc.setFont('times', 'normal');
     doc.setFontSize(22);
     doc.setTextColor(255, 255, 255);
-    doc.text('SKINCONCEPT', w / 2, y, { align: 'center' });
+    doc.text('Skinconcept', w / 2, y, { align: 'center' });
     y += 5;
     doc.setFontSize(7);
     doc.setTextColor(...accent);
@@ -715,7 +715,7 @@ function buildInvoicePDF(doc, inv) {
     doc.setFont('times', 'normal');
     doc.setFontSize(13);
     doc.setTextColor(...dark);
-    doc.text('SKINCONCEPT', pageW - mr, 22, { align: 'right', charSpace: 1.2 });
+    doc.text('Skinconcept', pageW - mr, 22, { align: 'right', charSpace: 1.2 });
     doc.setFontSize(7);
     doc.setTextColor(...accent);
     doc.text('TAMARA HAGNER', pageW - mr, 27, { align: 'right', charSpace: 1.5 });

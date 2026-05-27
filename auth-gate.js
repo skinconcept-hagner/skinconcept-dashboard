@@ -1,5 +1,5 @@
 // ============================================
-// SKINCONCEPT - Login-Gate (Client-seitig)
+// Skinconcept - Login-Gate (Client-seitig)
 // ============================================
 // Verlangt Login bevor irgendwas gerendert wird.
 // PIN wird client-seitig geprueft (SHA-256).
@@ -83,7 +83,7 @@
     overlay.id = 'sc-auth-overlay';
     overlay.innerHTML =
       '<div class="sc-auth-card">' +
-        '<div class="sc-auth-brand">SKINCONCEPT</div>' +
+        '<div class="sc-auth-brand">Skinconcept</div>' +
         '<div class="sc-auth-sub">Studio Hub</div>' +
         '<div class="sc-auth-userrow">' +
           USERS.map(u => '<button type="button" class="sc-auth-userbtn" data-user="' + u.id + '">' + u.label + '</button>').join('') +

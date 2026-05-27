@@ -51,7 +51,7 @@ function buildSkinReportDocx(entry) {
   // ==================== COVER ====================
   children.push(emptyParagraph(800));
 
-  children.push(centered('SKINCONCEPT HAGNER', { bold: true, color: GOLD, size: SZ.micro, characterSpacing: 200 }));
+  children.push(centered('Skinconcept Hagner', { bold: true, color: GOLD, size: SZ.micro, characterSpacing: 200 }));
 
   children.push(emptyParagraph(800));
 

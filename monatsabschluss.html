@@ -714,7 +714,7 @@ function renderSummary() {
     document.getElementById('sum-sales').textContent = eur(d.totalS);
     document.getElementById('sum-provision').textContent = eur(d.prov);
 
-    let t = '========================================\n MONATSABRECHNUNG – SKINCONCEPT HAGNER\n========================================\n\n';
+    let t = '========================================\n MONATSABRECHNUNG – Skinconcept Hagner\n========================================\n\n';
     t += 'Monat: ' + getMonthLabel() + '\nRegelarbeitszeit: Mo–Do, 9:00–18:30 (30 Min. Pause)\nStundenlohn: ' + eur(CONFIG.hourlyRate) + '\n\n';
     t += '--- BEZAHLTE STUNDEN ---\n';
     t += 'Arbeitstage (Mo–Do): ' + d.days + '\n';
@@ -798,7 +798,7 @@ const NAV_ITEMS = [
 function initSidebar() {
     const sidebar = document.getElementById('sidebarArea');
     if (!sidebar) return;
-    sidebar.innerHTML = '<div class="sidebar-brand"><h1>SKINCONCEPT</h1><span>Business Dashboard</span></div><nav class="sidebar-nav">' +
+    sidebar.innerHTML = '<div class="sidebar-brand"><h1>Skinconcept</h1><span>Business Dashboard</span></div><nav class="sidebar-nav">' +
         NAV_ITEMS.map(item => '<a href="' + item.href + '" class="sidebar-link ' + (item.href === 'monatsabschluss.html' ? 'active' : '') + '"><span class="icon">' + item.icon + '</span>' + item.label + '</a>').join('') +
         '</nav><div class="sidebar-footer">Skinconcept Hagner &middot; Morbach</div>';
 

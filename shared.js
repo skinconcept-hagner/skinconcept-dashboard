@@ -1,5 +1,5 @@
 // ============================================
-// SKINCONCEPT DASHBOARD — Shared Module
+// Skinconcept DASHBOARD — Shared Module
 // ============================================
 
 // ============ FIREBASE ============
@@ -54,7 +54,7 @@ function initNavigation() {
 
     sidebar.innerHTML = `
         <div class="sidebar-brand">
-            <h1>SKINCONCEPT</h1>
+            <h1>Skinconcept</h1>
             <span>Studio</span>
         </div>
         <nav class="sidebar-nav">

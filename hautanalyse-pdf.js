@@ -165,7 +165,7 @@ function buildSkinReportPdf(entry) {
   setSans('bold');
   doc.setFontSize(10);
   setColor(GOLD);
-  doc.text('SKINCONCEPT HAGNER', PAGE_W / 2, y, { align: 'center' });
+  doc.text('Skinconcept Hagner', PAGE_W / 2, y, { align: 'center' });
   y += 22;
 
   setSerif('normal');
