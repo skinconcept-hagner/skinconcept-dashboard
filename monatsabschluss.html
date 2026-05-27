@@ -223,6 +223,7 @@
             font-family: inherit; color: var(--text);
         }
         .pin-input:focus { border-color: var(--accent); }
+        @media (max-width: 900px) { .pin-input { font-size: 28px; } }
         .pin-input.error { border-color: var(--danger); animation: shake 0.4s; }
         @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
         .pin-error { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
@@ -474,6 +475,8 @@ function loadDeviations(callback) {
         renderCalendar();
         renderDeviations();
         if (callback) { callback(); callback = null; }
+    }, function() {
+        alert('Fehler beim Laden der Abweichungen. Bitte Seite neu laden.');
     });
 }
 
@@ -487,6 +490,8 @@ function loadSales(callback) {
         cachedSales.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
         renderSales();
         if (callback) { callback(); callback = null; }
+    }, function() {
+        alert('Fehler beim Laden der Verkäufe. Bitte Seite neu laden.');
     });
 }
 
@@ -616,7 +621,9 @@ function addDeviation() {
 }
 
 function deleteDeviation(id) {
-    db.collection('deviations').doc(id).delete();
+    db.collection('deviations').doc(id).delete().catch(function() {
+        alert('Fehler beim Löschen. Bitte Internetverbindung prüfen.');
+    });
 }
 
 function renderDeviations() {
@@ -652,7 +659,9 @@ function addSale() {
 }
 
 function deleteSale(id) {
-    db.collection('sales_monthly').doc(id).delete();
+    db.collection('sales_monthly').doc(id).delete().catch(function() {
+        alert('Fehler beim Löschen. Bitte Internetverbindung prüfen.');
+    });
 }
 
 function renderSales() {
@@ -772,8 +781,9 @@ function switchTab(name, el) {
     if (name === 'calendar') renderCalendar();
 }
 
+function localDateStr(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function setDefaultDates() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     ['d-from', 'd-to', 'd-hdate', 's-date'].forEach(id => { const el = document.getElementById(id); if (el) el.value = today; });
 }
 
@@ -781,9 +791,7 @@ function setDefaultDates() {
 const NAV_ITEMS = [
     { href: 'index.html', icon: '\u2302', label: 'Home' },
     { href: 'aufgaben.html', icon: '\u2611', label: 'Aufgaben' },
-    { href: 'nachsorge.html', icon: '\uD83D\uDCDE', label: 'Nachsorge' },
     { href: 'kundenkartei.html', icon: '\uD83D\uDCC7', label: 'Kundenkartei' },
-    { href: 'bestellungen.html', icon: '\u2750', label: 'Bestellungen' },
     { href: 'monatsabschluss.html', icon: '\uD83D\uDCCA', label: 'Elena Monatsabschluss' }
 ];
 
@@ -985,16 +993,16 @@ function addScannedSale() {
     document.getElementById('s-product').value = product;
     document.getElementById('s-qty').value = qty;
     document.getElementById('s-price').value = price;
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     if (!document.getElementById('s-date').value) document.getElementById('s-date').value = today;
     addSale();
+    // Save price in cache for next time (read EAN before clearing)
+    const ean = document.getElementById('scanEanInput').value;
     // Reset scanner
     document.getElementById('scanResult').style.display = 'none';
     document.getElementById('scanEanInput').value = '';
     document.getElementById('scan-qty').value = 1;
     document.getElementById('scan-price').value = '';
-    // Save price in cache for next time
-    const ean = document.getElementById('scanEanInput').value;
     if (ean && scanProductDb[ean]) {
         scanProductDb[ean].price = price;
         localStorage.setItem('sc_products_db', JSON.stringify(scanProductDb));

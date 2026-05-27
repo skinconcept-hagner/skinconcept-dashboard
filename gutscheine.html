@@ -108,6 +108,26 @@
         }
         .rg-hint strong { color: var(--text); }
 
+        /* ============ MOBILE ============ */
+        @media (max-width: 900px) {
+            .rg-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .rg-stat { padding: 14px; }
+            .rg-stat-val { font-size: 24px; }
+            .rg-tab { padding: 12px 18px; font-size: 14px; }
+            .rg-actions { gap: 8px; }
+            .rg-actions .btn { width: 100%; justify-content: center; }
+            .gs-preview { padding: 24px 20px; }
+            .gs-preview .gs-amount { font-size: 38px; }
+        }
+        @media (max-width: 600px) {
+            .rg-stat-val { font-size: 20px; }
+            .rg-stat-label { font-size: 10px; }
+            .rg-tab { padding: 12px 14px; font-size: 13px; }
+            .gs-preview { padding: 20px 16px; border-radius: 12px; }
+            .gs-preview .gs-brand { font-size: 18px; letter-spacing: 3px; }
+            .gs-preview .gs-amount { font-size: 32px; }
+        }
+
         /* ARCHIV TABLE */
         .rg-archive-filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
         .rg-archive-filters input, .rg-archive-filters select {
@@ -248,7 +268,7 @@
                     </div>
 
                     <div class="rg-actions">
-                        <button class="btn-primary" onclick="createVoucher()">
+                        <button class="btn-primary" onclick="createVoucher(event)">
                             <span>&#10003;</span> Gutschein &amp; Rechnung erstellen
                         </button>
                         <button class="btn-secondary" onclick="resetVoucherForm()">Zurücksetzen</button>
@@ -324,7 +344,7 @@ const STUDIO = {
 // MwSt-Modus für Gutscheine: 'einzweck' (sofort 19% ausgewiesen) oder 'mehrzweck' (erst bei Einlösung)
 const VOUCHER_VAT_MODE = 'einzweck';
 
-const today = new Date().toISOString().slice(0, 10);
+const today = todayStr();
 const currentUser = (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown';
 
 let allVouchers = [];
@@ -343,6 +363,7 @@ function switchSection(name) {
 }
 
 // ============ FORMAT HELPERS ============
+function roundCent(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 function formatEUR(val) {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val || 0);
 }
@@ -452,7 +473,7 @@ async function sendVoucherEmailAndArchive(p) {
 }
 
 // ============ CREATE VOUCHER ============
-async function createVoucher() {
+async function createVoucher(evt) {
     const beneficiary = document.getElementById('g-beneficiary').value.trim();
     const gifter = document.getElementById('g-gifter').value.trim();
     const value = parseFloat(document.getElementById('g-value').value) || 0;
@@ -472,7 +493,7 @@ async function createVoucher() {
     if (!validUntil) { showToast('Bitte Gültigkeitsdatum angeben.', 'error'); return; }
     if (!buyerName) { showToast('Bitte den Namen der Käuferin eintragen (für die Rechnung).', 'error'); return; }
 
-    const btn = event && event.target && event.target.closest('button');
+    const btn = evt && evt.target && evt.target.closest('button');
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
     try {
@@ -504,9 +525,9 @@ async function createVoucher() {
                 qty: 1,
                 priceBrutto: value
             }],
-            subtotal: VOUCHER_VAT_MODE === 'einzweck' ? +(value / 1.19).toFixed(2) : value,
-            vat: VOUCHER_VAT_MODE === 'einzweck' ? +(value - (value / 1.19)).toFixed(2) : 0,
-            total: value,
+            subtotal: VOUCHER_VAT_MODE === 'einzweck' ? roundCent(value / 1.19) : value,
+            vat: VOUCHER_VAT_MODE === 'einzweck' ? roundCent(value - roundCent(value / 1.19)) : 0,
+            total: roundCent(value),
             notes: 'Gutschein für ' + beneficiary + (gifter ? ' (von ' + gifter + ')' : ''),
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: currentUser
@@ -570,7 +591,7 @@ function resetVoucherForm() {
 function setDefaultValidity() {
     const d = new Date();
     d.setFullYear(d.getFullYear() + 1);
-    document.getElementById('g-valid-until').value = d.toISOString().slice(0, 10);
+    document.getElementById('g-valid-until').value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
 // ============ PDF: VOUCHER (A5 LANDSCAPE) ============
@@ -766,8 +787,8 @@ function buildInvoicePDF(doc, inv) {
     inv.items.forEach(item => {
         posIdx++;
         y += 9;
-        const netPrice = item.priceBrutto / 1.19;
-        const netTotal = netPrice * item.qty;
+        const netPrice = roundCent(item.priceBrutto / 1.19);
+        const netTotal = roundCent(netPrice * item.qty);
         doc.text(String(posIdx), ml + 2, y);
         const descLines = doc.splitTextToSize(item.description, 90);
         doc.text(descLines, ml + 14, y);
@@ -954,7 +975,8 @@ async function markRedeemed(voucherCode) {
 // ============ STATS ============
 function loadStats() {
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const ms = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthStart = ms.getFullYear() + '-' + String(ms.getMonth()+1).padStart(2,'0') + '-' + String(ms.getDate()).padStart(2,'0');
 
     let monthCount = 0, openCount = 0, openValue = 0, redeemedThisMonth = 0;
     allVouchers.forEach(v => {
@@ -964,7 +986,8 @@ function loadStats() {
             openValue += v.value || 0;
         }
         if (v.status === 'redeemed' && v.redeemedAt && v.redeemedAt.toMillis) {
-            const r = new Date(v.redeemedAt.toMillis()).toISOString().slice(0, 10);
+            const rd = new Date(v.redeemedAt.toMillis());
+            const r = rd.getFullYear() + '-' + String(rd.getMonth()+1).padStart(2,'0') + '-' + String(rd.getDate()).padStart(2,'0');
             if (r >= monthStart) redeemedThisMonth++;
         }
     });

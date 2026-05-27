@@ -1,14 +1,12 @@
-const CACHE = 'skinconcept-v8-auto-update-' + Date.now();
-const ASSETS = [
-  './', './index.html', './style.css', './shared.js',
-  './kundenkartei.html', './kunden.html', './finanzen.html',
-  './preislisten.html', './bestellungen.html',
-  './aufgaben.html', './monatsabschluss.html',
-  './import-kunden.html', './rechnungen.html', './jspdf.min.js'
+const CACHE = 'skinconcept-v47';
+
+const STATIC_ASSETS = [
+  './style.css', './shared.js', './jspdf.min.js',
+  './hautanalyse.js', './hautanalyse-pdf.js', './hautanalyse-docx.js'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
@@ -24,7 +22,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Network first, fallback to cache
+  const url = new URL(e.request.url);
+  if (url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('.js') && url.pathname.includes('trello')) {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
   e.respondWith(
     fetch(e.request).then(r => {
       const clone = r.clone();

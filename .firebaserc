@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "skinconcept-hagner"
-  }
+  },
+  "targets": {
+    "skinconcept-hagner": {
+      "hosting": {
+        "main": [
+          "skinconcept-hagner"
+        ],
+        "studio": [
+          "studio-17b59688"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

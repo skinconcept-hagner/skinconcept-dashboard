@@ -10,36 +10,66 @@
       "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
     }
   ],
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      ".firebaserc",
-      "**/.*",
-      "**/node_modules/**",
-      "*.mjs",
-      "kalender-check.png",
-      "kalender-debug.png",
-      "_april_visits.json",
-      "kalender-kunden.json",
-      "server-dashboard.js",
-      "Rechnungstool/**"
-    ],
-    "headers": [
-      {
-        "source": "**/*.html",
-        "headers": [
-          { "key": "Cache-Control", "value": "no-cache" },
-          { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet" },
-          { "key": "Referrer-Policy", "value": "no-referrer" }
-        ]
-      },
-      {
-        "source": "/**",
-        "headers": [
-          { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-        ]
-      }
-    ]
-  }
+  "hosting": [
+    {
+      "target": "main",
+      "public": "disabled-site",
+      "cleanUrls": true,
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "headers": [
+        {
+          "source": "**/*",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-store" },
+            { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet" }
+          ]
+        }
+      ],
+      "rewrites": [
+        { "source": "**", "destination": "/404.html" }
+      ]
+    },
+    {
+      "target": "studio",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "**/.*",
+        "**/node_modules/**",
+        "*.mjs",
+        "kalender-check.png",
+        "kalender-debug.png",
+        "_april_visits.json",
+        "kalender-kunden.json",
+        "server-dashboard.js",
+        "Rechnungstool/**",
+        "disabled-site/**",
+        ".treatwell-profile/**",
+        ".google-session.json",
+        ".treatwell-session.json"
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-cache" },
+            { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet" },
+            { "key": "Referrer-Policy", "value": "no-referrer" }
+          ]
+        },
+        {
+          "source": "/**",
+          "headers": [
+            { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+          ]
+        }
+      ]
+    }
+  ]
 }

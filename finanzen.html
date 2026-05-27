@@ -17,6 +17,22 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+            .stat-card { padding: 16px !important; }
+            .stat-value { font-size: 26px !important; }
+            .card-header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+            .card-header > div { width: 100%; display: flex; gap: 8px; }
+            .card-header > div .btn { flex: 1; justify-content: center; min-height: 44px; }
+            .tabs { gap: 0; }
+            .tab { padding: 12px 16px !important; }
+        }
+        @media (max-width: 480px) {
+            .stat-value { font-size: 22px !important; }
+            .stat-sub { font-size: 11px; }
+        }
+    </style>
 </head>
 <body>
 
@@ -313,6 +329,7 @@ async function loadData() {
 
     } catch (err) {
         console.error('Error loading data:', err);
+        showToast('Fehler beim Laden der Buchungen', 'error');
     }
 }
 
@@ -496,6 +513,7 @@ async function renderYearChart(year) {
         });
     } catch (err) {
         console.error('Error loading year data:', err);
+        showToast('Fehler beim Laden der Jahresdaten', 'error');
     }
 }
 
@@ -511,39 +529,86 @@ async function deleteEntry(id) {
     }
 }
 
-// ============ DATEV EXPORT ============
+// ============ DATEV EXPORT (SKR03) ============
+const SKR03_EINNAHMEN = {
+    'Behandlung':    { konto: '8400', bu: '9', label: 'Erloese 19% USt' },
+    'Produktverkauf':{ konto: '8400', bu: '9', label: 'Erloese 19% USt' },
+    'Gutschein':     { konto: '8400', bu: '9', label: 'Erloese 19% USt' },
+    'Sonstiges':     { konto: '8400', bu: '9', label: 'Erloese 19% USt' },
+};
+const SKR03_AUSGABEN = {
+    'Miete':         { konto: '4210', bu: '',  label: 'Miete' },
+    'Material':      { konto: '3400', bu: '9', label: 'Wareneingang 19% VSt' },
+    'Produkte':      { konto: '3400', bu: '9', label: 'Wareneingang 19% VSt' },
+    'Marketing':     { konto: '4600', bu: '9', label: 'Werbekosten' },
+    'Versicherung':  { konto: '4360', bu: '',  label: 'Versicherungen' },
+    'Software':      { konto: '4964', bu: '9', label: 'EDV-Kosten' },
+    'Fortbildung':   { konto: '4945', bu: '9', label: 'Fortbildungskosten' },
+    'Sonstiges':     { konto: '4900', bu: '9', label: 'Sonst. betriebl. Aufwand' },
+};
+const ZAHLUNGSKONTO = {
+    'karte':         '1200',
+    'bar':           '1000',
+    'ueberweisung':  '1200',
+    'paypal':        '1360',
+    '':              '1200',
+};
+
 function exportDATEV() {
     if (allEntries.length === 0) {
         showToast('Keine Daten zum Exportieren', 'error');
         return;
     }
 
-    // DATEV CSV format (simplified Buchungsstapel)
-    const header = 'Umsatz (ohne Soll/Haben-Kz);Soll/Haben-Kennzeichen;WKZ Umsatz;Kurs;Basisumsatz;WKZ Basisumsatz;Konto;Gegenkonto (ohne BU-Schluessel);BU-Schluessel;Belegdatum;Belegfeld 1;Belegfeld 2;Skonto;Buchungstext';
+    const month = Number(document.getElementById('filterMonth').value);
+    const year = Number(document.getElementById('filterYear').value);
+    const firstDay = `${year}${String(month + 1).padStart(2, '0')}01`;
+    const lastDay = new Date(year, month + 1, 0);
+    const lastDayStr = `${year}${String(month + 1).padStart(2, '0')}${String(lastDay.getDate()).padStart(2, '0')}`;
+    const now = new Date();
+    const created = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}000`;
+    const fyStart = `${year}0101`;
 
-    const rows = allEntries.map(e => {
-        const amount = Number(e.amount).toFixed(2).replace('.', ',');
-        const shk = e.type === 'einnahme' ? 'S' : 'H';
-        const konto = e.type === 'einnahme' ? '1200' : '1000';
-        const gegenkonto = e.type === 'einnahme' ? '8400' : '4900';
-        const date = e.date.split('-');
-        const belegDatum = date[2] + date[1]; // DDMM format
-        const text = (e.category + (e.description ? ' - ' + e.description : '')).replace(/;/g, ',');
+    const headerRecord = `"EXTF";700;21;"Buchungsstapel";7;${created};;"SK";0;0;${fyStart};4;${firstDay};${lastDayStr};"Skinconcept";"";"EUR";;;;;;"";;""`;
 
-        return `${amount};${shk};EUR;;;;${konto};${gegenkonto};;${belegDatum};;;0,00;${text}`;
+    const colHeaders = 'Umsatz (ohne Soll/Haben-Kz);Soll/Haben-Kennzeichen;WKZ Umsatz;Kurs;Basisumsatz;WKZ Basisumsatz;Konto;Gegenkonto (ohne BU-Schluessel);BU-Schluessel;Belegdatum;Belegfeld 1;Belegfeld 2;Skonto;Buchungstext';
+
+    const rows = allEntries.map((e, idx) => {
+        const amount = Math.round(Number(e.amount) * 100) / 100;
+        const amountStr = amount.toFixed(2).replace('.', ',');
+        const isIncome = e.type === 'einnahme';
+        const mapping = isIncome ? SKR03_EINNAHMEN[e.category] : SKR03_AUSGABEN[e.category];
+        const fallback = isIncome ? SKR03_EINNAHMEN['Sonstiges'] : SKR03_AUSGABEN['Sonstiges'];
+        const skr = mapping || fallback;
+
+        const zahlKonto = isIncome
+            ? (ZAHLUNGSKONTO[e.paymentMethod] || '1200')
+            : '1200';
+
+        const shk = isIncome ? 'S' : 'H';
+        const konto = isIncome ? zahlKonto : skr.konto;
+        const gegenkonto = isIncome ? skr.konto : zahlKonto;
+
+        const dateParts = (e.date || '').split('-');
+        const belegDatum = dateParts.length === 3
+            ? dateParts[2] + dateParts[1]
+            : '';
+
+        const belegNr = `SC-${String(idx + 1).padStart(4, '0')}`;
+        const text = (e.category + (e.description ? ' - ' + e.description : '')).replace(/;/g, ',').substring(0, 60);
+
+        return `${amountStr};${shk};EUR;;;;${konto};${gegenkonto};${skr.bu};${belegDatum};${belegNr};;0,00;${text}`;
     });
 
-    const csv = header + '\n' + rows.join('\n');
+    const csv = headerRecord + '\n' + colHeaders + '\n' + rows.join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const month = Number(document.getElementById('filterMonth').value);
-    const year = Number(document.getElementById('filterYear').value);
     a.href = url;
-    a.download = `DATEV_Skinconcept_${getMonthName(month)}_${year}.csv`;
+    a.download = `DATEV_Buchungsstapel_Skinconcept_${getMonthName(month)}_${year}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('DATEV-Export heruntergeladen', 'success');
+    showToast(`DATEV-Export (SKR03) heruntergeladen \u2014 ${rows.length} Buchungen`, 'success');
 }
 
 // ============ PDF REPORT ============
@@ -572,16 +637,52 @@ function exportPDFReport() {
     doc.text(`Monatsabschluss ${getMonthName(month)} ${year}`, 105, 28, { align: 'center' });
     doc.setTextColor(0);
 
-    // KPIs
+    function rc(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+    let revBar = 0, revKarte = 0;
+    allEntries.forEach(e => {
+        if (e.type !== 'einnahme') return;
+        const a = Number(e.amount) || 0;
+        if (e.paymentMethod === 'bar') revBar += a; else revKarte += a;
+    });
+
+    const nettoUmsatz = rc(revenue / 1.19);
+    const ustBetrag = rc(revenue - nettoUmsatz);
+    let vstBetrag = 0;
+    allEntries.forEach(e => {
+        if (e.type !== 'ausgabe') return;
+        const m = SKR03_AUSGABEN[e.category] || SKR03_AUSGABEN['Sonstiges'];
+        if (m.bu === '9') vstBetrag += rc(Number(e.amount) / 1.19 * 0.19);
+    });
+    vstBetrag = rc(vstBetrag);
+    const zahllast = rc(ustBetrag - vstBetrag);
+
     doc.setFontSize(12);
     let y = 45;
     doc.setFont(undefined, 'bold');
-    doc.text('Zusammenfassung', 15, y); y += 10;
+    doc.text('Einnahmen-Ueberschuss-Rechnung (EUeR)', 15, y); y += 10;
     doc.setFont(undefined, 'normal');
-    doc.text(`Einnahmen: ${formatCurrency(revenue)}`, 20, y); y += 7;
-    doc.text(`Ausgaben: ${formatCurrency(expenses)}`, 20, y); y += 7;
-    doc.text(`Gewinn: ${formatCurrency(revenue - expenses)}`, 20, y); y += 7;
-    doc.text(`Buchungen: ${allEntries.length}`, 20, y); y += 15;
+    doc.text(`Einnahmen (brutto):`, 20, y); doc.text(formatCurrency(revenue), 120, y); y += 7;
+    doc.text(`  davon Bar:`, 20, y); doc.text(formatCurrency(revBar), 120, y); y += 6;
+    doc.text(`  davon Karte/Ueberweisung:`, 20, y); doc.text(formatCurrency(revKarte), 120, y); y += 7;
+    doc.text(`Ausgaben (brutto):`, 20, y); doc.text(formatCurrency(expenses), 120, y); y += 7;
+    doc.setFont(undefined, 'bold');
+    doc.text(`Gewinn:`, 20, y); doc.text(formatCurrency(revenue - expenses), 120, y); y += 12;
+
+    doc.setFont(undefined, 'bold');
+    doc.text('Umsatzsteuer', 15, y); y += 8;
+    doc.setFont(undefined, 'normal');
+    doc.text(`Netto-Umsatz:`, 20, y); doc.text(formatCurrency(nettoUmsatz), 120, y); y += 6;
+    doc.text(`USt 19%:`, 20, y); doc.text(formatCurrency(ustBetrag), 120, y); y += 6;
+    doc.text(`Vorsteuer (abzugsfaehig):`, 20, y); doc.text(formatCurrency(vstBetrag), 120, y); y += 6;
+    doc.setFont(undefined, 'bold');
+    doc.text(`USt-Zahllast:`, 20, y); doc.text(formatCurrency(zahllast), 120, y); y += 6;
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8); doc.setTextColor(120);
+    doc.text('(= an das Finanzamt abzufuehren)', 20, y); y += 4;
+    doc.setTextColor(0); doc.setFontSize(12);
+    y += 6;
+    doc.text(`Buchungen: ${allEntries.length}`, 20, y); y += 12;
 
     // Transaction table
     doc.setFont(undefined, 'bold');
@@ -947,13 +1048,14 @@ async function saveImportedTransactions() {
     showToast(`Speichere ${importedTx.length} Buchungen...`, '');
 
     try {
-        const batch = db.batch();
+        let batch = db.batch();
         let count = 0;
 
         for (const tx of importedTx) {
             // Batch limit is 500
             if (count >= 450) {
                 await batch.commit();
+                batch = db.batch();
                 count = 0;
             }
             const ref = db.collection('revenue').doc();

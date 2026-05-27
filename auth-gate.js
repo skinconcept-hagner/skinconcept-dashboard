@@ -10,11 +10,15 @@
   const SESSION_KEY = 'skinconcept_session_v1';
   const SESSION_DAYS = 30;
 
-  // PINs (direkter Vergleich - Client-Side-Security ist eh nur Obscurity)
   const USERS = [
-    { id: 'tamara', label: 'Tamara', pin: '1403' },
-    { id: 'elena',  label: 'Elena',  pin: '2503' }
+    { id: 'tamara', label: 'Tamara', hash: 'e8026bda3ea2eedc7dc7bce9daa640f8cc0f33e335bd73d986a872b3ba789c71' },
+    { id: 'elena',  label: 'Elena',  hash: '9caa05aeaaaf486bd3f697aaffa2e74e6a1805ff113366526ec0ae038a5aca4b' }
   ];
+
+  async function sha256(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
 
   // Inhalt sofort verstecken
   document.documentElement.style.visibility = 'hidden';
@@ -133,7 +137,7 @@
       msg.className = 'sc-auth-msg' + (type ? ' ' + type : '');
     }
 
-    function tryLogin() {
+    async function tryLogin() {
       setMsg('');
       pinInputs.forEach(p => p.classList.remove('error'));
       if (!selectedUser) { setMsg('Bitte Nutzer waehlen'); return; }
@@ -141,7 +145,8 @@
       if (pin.length !== 4) { setMsg('PIN unvollstaendig'); return; }
 
       const userObj = USERS.find(u => u.id === selectedUser);
-      if (userObj && pin === userObj.pin) {
+      const pinHash = await sha256(pin);
+      if (userObj && pinHash === userObj.hash) {
         writeSession(userObj.id);
         revealPage(userObj.id);
         return;

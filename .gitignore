@@ -13,6 +13,23 @@ _april_visits.json
 # Debug-Screenshots (lokale Treatwell-Scraper-Outputs)
 kalender-check.png
 kalender-debug.png
+sync-screenshots/
+
+# Treatwell-Sync Laufzeitdaten
+.sync-cache.json
+.treatwell-profile/
+
+# Temporaere Skripte und Hilfsdateien
+_check.mjs
+_kalcheck.mjs
+safari-treatwell-*.mjs
+safari-treatwell-loop.sh
+com.skinconcept.treatwell-sync.plist
+firebase.json.backup
+fix2025.html
+update.html
+userscripts/
+disabled-site/
 
 # Logs & Caches
 *.log

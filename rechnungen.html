@@ -106,6 +106,27 @@
         }
         .rg-hint strong { color: var(--text); }
 
+        /* ============ MOBILE ============ */
+        @media (max-width: 900px) {
+            .rg-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .rg-stat { padding: 14px; }
+            .rg-stat-val { font-size: 24px; }
+            .rg-tab { padding: 12px 18px; font-size: 14px; }
+            .rg-actions { gap: 8px; }
+            .rg-actions .btn { width: 100%; justify-content: center; }
+            .rg-totals { padding: 16px; }
+            .rg-total-row.grand { font-size: 18px; }
+        }
+        @media (max-width: 600px) {
+            .rg-stat-val { font-size: 20px; }
+            .rg-stat-label { font-size: 10px; }
+            .rg-tab { padding: 12px 14px; font-size: 13px; }
+            .pos-row { grid-template-columns: 1fr; }
+            .pos-remove { width: 100%; }
+            .rg-archive-filters { flex-direction: column; gap: 8px; }
+            .rg-archive-filters input, .rg-archive-filters select { width: 100%; }
+        }
+
         /* ARCHIV TABLE */
         .rg-archive-filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
         .rg-archive-filters input, .rg-archive-filters select {
@@ -257,7 +278,7 @@
                 </div>
 
                 <div class="rg-actions">
-                    <button class="btn-primary" onclick="createInvoice()">
+                    <button class="btn-primary" onclick="createInvoice(event)">
                         <span>&#10003;</span> Rechnung erstellen
                     </button>
                     <button class="btn-secondary" onclick="resetInvoiceForm()">Zurücksetzen</button>
@@ -307,7 +328,7 @@ const STUDIO = {
     email: 'skinconcept.hagner@gmail.com'
 };
 
-const today = new Date().toISOString().slice(0, 10);
+const today = todayStr();
 const currentUser = (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown';
 
 let allInvoices = [];
@@ -326,6 +347,7 @@ function switchSection(name) {
 }
 
 // ============ FORMAT HELPERS ============
+function roundCent(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 function formatEUR(val) {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val || 0);
 }
@@ -385,16 +407,17 @@ function calcInvoiceTotals() {
     document.querySelectorAll('.pos-row').forEach(row => {
         const qty = parseFloat(row.querySelector('.pos-qty').value) || 0;
         const price = parseFloat(row.querySelector('.pos-price').value) || 0;
-        bruttoTotal += qty * price;
+        bruttoTotal += roundCent(qty * price);
     });
-    const subtotal = bruttoTotal / 1.19;
-    const vat = bruttoTotal - subtotal;
+    bruttoTotal = roundCent(bruttoTotal);
+    const subtotal = roundCent(bruttoTotal / 1.19);
+    const vat = roundCent(bruttoTotal - subtotal);
     document.getElementById('t-subtotal').textContent = formatEUR(subtotal);
     document.getElementById('t-vat').textContent = formatEUR(vat);
     document.getElementById('t-total').textContent = formatEUR(bruttoTotal);
 }
 
-async function createInvoice() {
+async function createInvoice(evt) {
     const name = document.getElementById('r-name').value.trim();
     const email = document.getElementById('r-email').value.trim();
     const street = document.getElementById('r-street').value.trim();
@@ -413,20 +436,21 @@ async function createInvoice() {
         const qty = parseFloat(row.querySelector('.pos-qty').value) || 0;
         const price = parseFloat(row.querySelector('.pos-price').value) || 0;
         if (desc && qty > 0 && price > 0) {
-            items.push({ description: desc, qty, priceBrutto: price });
-            bruttoTotal += qty * price;
+            items.push({ description: desc, qty, priceBrutto: roundCent(price) });
+            bruttoTotal += roundCent(qty * price);
         }
     });
 
     if (items.length === 0) { showToast('Bitte mindestens eine Position eintragen.', 'error'); return; }
 
-    const btn = event && event.target && event.target.closest('button');
+    const btn = evt && evt.target && evt.target.closest('button');
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
     try {
         const invoiceNumber = await getNextNumber('invoice');
-        const subtotal = +(bruttoTotal / 1.19).toFixed(2);
-        const vat = +(bruttoTotal - subtotal).toFixed(2);
+        bruttoTotal = roundCent(bruttoTotal);
+        const subtotal = roundCent(bruttoTotal / 1.19);
+        const vat = roundCent(bruttoTotal - subtotal);
 
         const invoiceData = {
             number: invoiceNumber,
@@ -434,7 +458,7 @@ async function createInvoice() {
             customer: { name, email, street, zip, city },
             date, due,
             vatMode: 'standard',
-            items, subtotal, vat, total: +bruttoTotal.toFixed(2),
+            items, subtotal, vat, total: bruttoTotal,
             notes,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: currentUser
@@ -571,8 +595,8 @@ function buildInvoicePDF(doc, inv) {
     inv.items.forEach(item => {
         posIdx++;
         y += 9;
-        const netPrice = item.priceBrutto / 1.19;
-        const netTotal = netPrice * item.qty;
+        const netPrice = roundCent(item.priceBrutto / 1.19);
+        const netTotal = roundCent(netPrice * item.qty);
         doc.text(String(posIdx), ml + 2, y);
         const descLines = doc.splitTextToSize(item.description, 90);
         doc.text(descLines, ml + 14, y);
@@ -737,8 +761,10 @@ async function reprintInvoice(invoiceNumber) {
 // ============ STATS ============
 function loadStats() {
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-    const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+    const ms = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthStart = ms.getFullYear() + '-' + String(ms.getMonth()+1).padStart(2,'0') + '-' + String(ms.getDate()).padStart(2,'0');
+    const ys = new Date(now.getFullYear(), 0, 1);
+    const yearStart = ys.getFullYear() + '-' + String(ys.getMonth()+1).padStart(2,'0') + '-' + String(ys.getDate()).padStart(2,'0');
 
     let monthCount = 0, monthRev = 0, yearCount = 0, yearRev = 0;
     allInvoices.forEach(inv => {

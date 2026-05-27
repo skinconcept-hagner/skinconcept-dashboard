@@ -238,6 +238,30 @@
   .crm-row td:first-child{padding-left:0!important}
   .crm-row td:first-child::before{display:none}
   .crm-row .actions-cell{width:100%;margin-top:6px}
+  .crm-search{min-width:0;width:100%;flex:1 1 100%}
+  .crm-toolbar{gap:8px}
+  .crm-select{flex:1;min-width:0}
+  .quick-filters{width:100%}
+  .qf{min-height:40px;padding:8px 12px}
+}
+@media(max-width:600px){
+  .action-center{padding:16px;border-radius:14px}
+  .ac-left h2{font-size:18px}
+  .ac-alerts{gap:8px}
+  .seg-stats{gap:6px}
+  .seg-stat{padding:12px}
+  .seg-num{font-size:22px}
+  .seg-label{font-size:11px}
+  .crm-row{padding:12px}
+  .crm-btn{padding:8px 12px;font-size:11px;min-height:40px}
+  .dp-header{padding:20px 18px 16px}
+  .dp-body{padding:20px 18px}
+  .dp-name{font-size:20px}
+  .dp-actions{padding:16px 18px}
+  .dp-metrics{grid-template-columns:repeat(3,1fr);gap:6px}
+  .crm-modal{padding:24px 20px}
+  .modal-actions{flex-direction:column}
+  .modal-btn{width:100%;justify-content:center;min-height:44px}
 }
 
 /* TOUCH/iPad-OPTIMIERUNG */
@@ -340,7 +364,7 @@ const nsDb=nsApp.firestore();
 
 // ── CONSTANTS ──
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
-const TODAY_STR=TODAY.toISOString().split('T')[0];
+const TODAY_STR=TODAY.getFullYear()+'-'+String(TODAY.getMonth()+1).padStart(2,'0')+'-'+String(TODAY.getDate()).padStart(2,'0');
 const STORE_KEY='sc_kartei_v2';
 const CRM_KEY='sc_crm_data';
 
@@ -362,7 +386,7 @@ function formatDays(d){if(d===0)return'Heute';if(d===1)return'Gestern';if(d<7)re
 function formatPhone(ph){if(!ph)return'';return ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'')}
 function getWaUrl(ph){const n=formatPhone(ph);return n?'https://wa.me/'+n:''}
 function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
-function getWeekStart(){const d=new Date(TODAY);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return d.toISOString().split('T')[0]}
+function getWeekStart(){const d=new Date(TODAY);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 
 // ── KARTEI ──
 let _karteiCache=null;

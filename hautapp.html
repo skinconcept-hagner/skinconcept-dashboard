@@ -196,6 +196,21 @@
             50% { opacity: 0.5; transform: scale(1.2); }
         }
 
+        /* ============ MOBILE ============ */
+        @media (max-width: 900px) {
+            .ha-wrap { gap: 14px; }
+            .ha-col { max-height: none; padding: 14px; }
+            .photo-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important; gap: 8px; }
+            .stat-row { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+        }
+        @media (max-width: 600px) {
+            .ha-col h3 { font-size: 18px; }
+            .ha-tabs button { padding: 10px 8px; font-size: 12px; min-height: 40px; }
+            .msg-card .subj { font-size: 13px; }
+            .msg-card .text { font-size: 12.5px; }
+            .anam-field .v { font-size: 12.5px; }
+        }
+
         /* TOUCH/iPad-OPTIMIERUNG */
         @media (hover: none) and (pointer: coarse) {
             button, .btn, [class*="btn-"]:not(input), a.btn { min-height: 44px; touch-action: manipulation; }
@@ -486,7 +501,7 @@ async function initApp() {
         // Demo-Banner oben anzeigen
         const banner = document.createElement('div');
         banner.style.cssText = 'background:linear-gradient(90deg,#C4A265,#E8D5B0);color:#4A3728;text-align:center;padding:10px 14px;font-size:13px;font-weight:600;border-radius:10px;margin-bottom:16px;box-shadow:var(--shadow-sm)';
-        banner.innerHTML = '✨ Demo-Modus &middot; So sieht es aus, wenn Kundinnen bereits Inhalte geteilt haben. Keine echten Daten.';
+        banner.innerHTML = 'Demo-Modus &middot; So sieht es aus, wenn Kundinnen bereits Inhalte geteilt haben. Keine echten Daten.';
         document.querySelector('.page-header').after(banner);
 
         CLIENTS = MOCK.clients;
@@ -660,10 +675,10 @@ function renderOverview() {
     if (lastNotif && lastNotif.type === 'anamnese_updated' && lastNotif.changedFields?.length) {
         changesHtml = `
             <div class="change-badge">
-                <span class="bell">🔔</span>
+                <span class="bell" style="display:inline-flex;align-items:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
                 <div>
                     <strong>Anamnese wurde aktualisiert &middot; ${fmtDateTime(lastNotif.createdAt)}</strong>
-                    Geänderte Felder: ${lastNotif.changedFields.map(f => '<span class="anam-chip" style="background:#FEF3C7;color:#92400E">'+esc(f)+'</span>').join(' ')}
+                    Geänderte Felder: ${lastNotif.changedFields.map(f => '<span class="anam-chip" style="background:var(--bg-subtle);color:var(--primary-dark);border:1px solid var(--border)">'+esc(f)+'</span>').join(' ')}
                 </div>
             </div>
         `;
@@ -704,7 +719,7 @@ function renderOverview() {
 function renderDiaryPanel() {
     const b = document.getElementById('panel-diary');
     if (!ALL_DIARY.length) { b.innerHTML = '<div class="ha-card ha-empty"><div class="big">Nichts geteilt</div>Diese Kundin teilt keine Diary-Einträge.</div>'; return; }
-    const moods = {1:'😔 Nicht gut', 2:'😐 Okay', 3:'🙂 Gut', 4:'😃 Sehr gut', 5:'😍 Ausgezeichnet'};
+    const moods = {1:'Nicht gut', 2:'Okay', 3:'Gut', 4:'Sehr gut', 5:'Ausgezeichnet'};
     b.innerHTML = '<div class="ha-card">' + ALL_DIARY.map(e => `
         <div class="entry">
             <div class="top">
@@ -742,18 +757,20 @@ function renderRoutinesPanel() {
         return '<div class="ha-card">'+headRow + steps.map((s,i) => {
             const p = ALL_PRODUCTS.find(x => x.id === s.productId);
             const origin = s.addedBy === 'studio'
-                ? '<span class="anam-chip" style="background:#FEF3C7;color:#92400E;font-size:9px;padding:1px 7px">Studio</span>'
+                ? '<span class="anam-chip" style="background:var(--bg-subtle);color:var(--primary-dark);border:1px solid var(--border);font-size:9px;padding:1px 7px">Studio</span>'
                 : '<span class="anam-chip" style="background:#EDE9E4;color:var(--text-muted);font-size:9px;padding:1px 7px">Kundin</span>';
             const delBtn = s.addedBy === 'studio' ? `<button onclick="deleteRoutineStep('${slot}',${i})" style="background:none;border:0;color:var(--text-light);font-size:18px;cursor:pointer;padding:4px 8px">×</button>` : '';
             return '<div class="step"><div class="num">'+(i+1)+'</div><div class="b"><div class="n">'+esc(p?p.name:'—')+' '+origin+'</div><div class="m">'+esc(p?.type||'')+(s.instruction?' &middot; '+esc(s.instruction):'')+'</div></div>'+delBtn+'</div>';
         }).join('') + '</div>';
     };
-    b.innerHTML = '<div class="routines-grid">'+render('morning','Morgen','☀')+render('evening','Abend','☾')+'</div>';
+    const SUN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    const MOON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    b.innerHTML = '<div class="routines-grid">'+render('morning','Morgen',SUN)+render('evening','Abend',MOON)+'</div>';
 }
 
 function renderProductsPanel() {
     const b = document.getElementById('panel-products');
-    const header = `<div class="ha-card" style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#FEF9E7,#fff);border-color:#F59E0B">
+    const header = `<div class="ha-card" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);border-color:var(--border)">
         <div><h3 style="margin:0">Produkte für Kundin eintragen</h3>
         <p style="font-size:12px;color:var(--text-muted);margin-top:4px">Erscheint in ihrer App mit "Von Studio" · sie bekommt eine Benachrichtigung.</p></div>
         <button onclick="openProductModal(null)" style="padding:10px 16px;background:var(--accent);color:#fff;border:0;border-radius:10px;font-family:inherit;font-weight:600;cursor:pointer">+ Produkt eintragen</button>
@@ -761,7 +778,7 @@ function renderProductsPanel() {
     if (!ALL_PRODUCTS.length) { b.innerHTML = header + '<div class="ha-card ha-empty"><div class="big">Keine Produkte</div>Diese Kundin hat noch nichts eingetragen.</div>'; return; }
     const timingLabel = t => ({both:'Morgens & Abends',morning:'Morgens',evening:'Abends',weekly:'Wöchentlich'}[t]||'');
     const byChip = p => p.addedBy === 'studio'
-        ? '<span class="anam-chip" style="background:#FEF3C7;color:#92400E">Von Studio</span>'
+        ? '<span class="anam-chip" style="background:var(--bg-subtle);color:var(--primary-dark);border:1px solid var(--border)">Von Studio</span>'
         : '<span class="anam-chip" style="background:#EDE9E4;color:var(--text-muted)">Von Kundin</span>';
     b.innerHTML = header + '<div class="ha-card">' + ALL_PRODUCTS.map(p => `
         <div class="step" style="cursor:${p.addedBy==='studio'?'pointer':'default'}" ${p.addedBy==='studio'?`onclick="openProductModal('${p.id}')"`:''}>
@@ -775,43 +792,57 @@ function renderProductsPanel() {
     `).join('') + '</div>';
 }
 
+// Premium SVG-Icons (Lucide-style, stroke 1.5) statt Emojis
+const ANAM_ICONS = {
+  user:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  health:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+  pill:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>',
+  life:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>',
+  hormone: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  star:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  droplet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>',
+  search:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  target:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+  spa:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.69 12C3.69 17 9 21 12 21s8.31-4 8.31-9c0-3-2-5-2.5-7C16.5 8 12 12 12 12s-4.5-4-5.81-7C5.69 7 3.69 9 3.69 12Z"/></svg>',
+};
+
 const ANAM_SECTIONS = [
-    { icon:'👤', title:'Kontaktdaten', fields:[
+    { icon:ANAM_ICONS.user, title:'Kontaktdaten', fields:[
         { id:'vorname', label:'Vorname' },{ id:'name', label:'Nachname' },
         { id:'geburtsdatum', label:'Geburtsdatum' },{ id:'telefon', label:'Telefon' },
         { id:'email', label:'E-Mail' },{ id:'plz', label:'PLZ' },
         { id:'adresse', label:'Adresse' },{ id:'hautprobleme_seit', label:'Hautprobleme seit' }
     ]},
-    { icon:'⚕', title:'Gesundheitliche Angaben', fields:[
+    { icon:ANAM_ICONS.health, title:'Gesundheitliche Angaben', fields:[
         { id:'sachlagen', label:'Gesundheit', type:'chips' },
         { id:'sachlagen_details', label:'Details (z.B. welche Allergien?)' }
     ]},
-    { icon:'💊', title:'Medikamente', fields:[
+    { icon:ANAM_ICONS.pill, title:'Medikamente', fields:[
         { id:'medikamente_checks', label:'Aktuelle Medikamente', type:'chips' },
         { id:'medikamente_weitere', label:'Weitere Medikamente' }
     ]},
-    { icon:'🍽', title:'Lebensumstände', fields:[
+    { icon:ANAM_ICONS.life, title:'Lebensumstände', fields:[
         { id:'lebensumstaende', label:'Lebensumstände', type:'chips' }
     ]},
-    { icon:'⚡', title:'Hormonstatus', fields:[
+    { icon:ANAM_ICONS.hormone, title:'Hormonstatus', fields:[
         { id:'hormonstatus', label:'Hormonstatus', type:'chips' }
     ]},
-    { icon:'✨', title:'Bisherige Behandlungen', fields:[
+    { icon:ANAM_ICONS.star, title:'Bisherige Behandlungen', fields:[
         { id:'vorbehandlungen_aesthetisch', label:'Ästhetische Vorbehandlungen', type:'chips' },
         { id:'vorbehandlungen_details', label:'Details' },
         { id:'braeunung', label:'Bräunung', type:'chips' }
     ]},
-    { icon:'🧴', title:'Aktuelle Pflege', fields:[
+    { icon:ANAM_ICONS.droplet, title:'Aktuelle Pflege', fields:[
         { id:'haeusliche_pflege', label:'Pflegeroutine', type:'chips' },
         { id:'pflege_details', label:'Produkte / Marken' }
     ]},
-    { icon:'🔍', title:'Hautprobleme', fields:[
+    { icon:ANAM_ICONS.search, title:'Hautprobleme', fields:[
         { id:'hautproblem', label:'Hautprobleme', type:'chips' }
     ]},
-    { icon:'🎯', title:'Hautziel', fields:[
+    { icon:ANAM_ICONS.target, title:'Hautziel', fields:[
         { id:'besuchsgrund', label:'Grund' }
     ]},
-    { icon:'💆', title:'Erfahrung', fields:[
+    { icon:ANAM_ICONS.spa, title:'Erfahrung', fields:[
         { id:'erfahrung_medical', label:'Erfahrung' }
     ]}
 ];
@@ -828,12 +859,12 @@ function renderAnamnesePanel() {
     const anamNotifs = ANAM_NOTIFICATIONS.filter(n => n.type === 'anamnese_updated');
     let historyHtml = '';
     if (anamNotifs.length) {
-        historyHtml = `<div class="ha-card" style="background:#FEF9E7;border-color:#F59E0B">
-            <h3>🔔 Änderungen von der Kundin</h3>
+        historyHtml = `<div class="ha-card" style="background:var(--bg-card);border-color:var(--border)">
+            <h3>Änderungen von der Kundin</h3>
             ${anamNotifs.slice(0,10).map(n => `
                 <div class="entry">
                     <div class="date">${fmtDateTime(n.createdAt)}</div>
-                    <div style="margin-top:4px">${(n.changedFields||[]).map(f=>'<span class="anam-chip" style="background:#FEF3C7;color:#92400E">'+esc(f)+'</span>').join(' ')}</div>
+                    <div style="margin-top:4px">${(n.changedFields||[]).map(f=>'<span class="anam-chip" style="background:var(--bg-subtle);color:var(--primary-dark);border:1px solid var(--border)">'+esc(f)+'</span>').join(' ')}</div>
                 </div>
             `).join('')}
         </div>`;

@@ -114,6 +114,29 @@
         .log-dot.done { background: var(--success); }
         .log-dot.added { background: var(--info); }
         .log-time { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+        /* ============ MOBILE ============ */
+        @media (max-width: 900px) {
+            .task-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+            .task-stat { padding: 14px !important; }
+            .task-stat-val { font-size: 28px !important; }
+            .task-item { padding: 14px 16px; gap: 12px; }
+            .task-check { width: 28px; height: 28px; padding: 8px; box-sizing: content-box; margin: -8px; }
+            .task-actions { gap: 4px; }
+            .task-btn { width: 36px; height: 36px; min-height: 44px; min-width: 44px; }
+            .task-filters { gap: 6px; }
+            .filter-btn { padding: 8px 12px !important; font-size: 12.5px !important; min-height: 40px; }
+        }
+        @media (max-width: 600px) {
+            .task-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .task-stat-val { font-size: 24px !important; }
+            .task-stat-label { font-size: 10px !important; }
+            .task-title { font-size: 14px; }
+            .task-desc { font-size: 12.5px; }
+            .task-meta { gap: 8px; }
+            .task-item { padding: 12px 14px; gap: 10px; }
+            .log-item { font-size: 12.5px; }
+        }
     </style>
 </head>
 <body>
@@ -469,14 +492,21 @@ function toggleTask(id, isDone) {
     if (isDone) {
         db.collection('studio_tasks').doc(id).update({
             status: 'open', completedAt: null, completedBy: null
+        }).catch(e => {
+            console.error(e);
+            showToast('Fehler beim Aktualisieren der Aufgabe', 'error');
         });
     } else {
         db.collection('studio_tasks').doc(id).update({
             status: 'done',
             completedAt: todayStr(),
             completedBy: 'Team'
+        }).then(() => {
+            showToast('Erledigt!', 'success');
+        }).catch(e => {
+            console.error(e);
+            showToast('Fehler beim Aktualisieren der Aufgabe', 'error');
         });
-        showToast('Erledigt!', 'success');
     }
 }
 
@@ -484,6 +514,9 @@ function deleteTask(id) {
     if (!confirm('Aufgabe wirklich loeschen?')) return;
     db.collection('studio_tasks').doc(id).delete().then(() => {
         showToast('Geloescht.', '');
+    }).catch(e => {
+        console.error(e);
+        showToast('Fehler beim Loeschen der Aufgabe', 'error');
     });
 }
 
@@ -516,6 +549,9 @@ function saveEdit() {
     }).then(() => {
         showToast('Gespeichert!', 'success');
         closeEditModal();
+    }).catch(e => {
+        console.error(e);
+        showToast('Fehler beim Speichern der Aufgabe', 'error');
     });
 }
 

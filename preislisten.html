@@ -16,6 +16,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @media (max-width: 900px) {
+            .card-header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+            .card-header > div { width: 100%; display: flex; gap: 8px; }
+            .card-header > div .btn { flex: 1; justify-content: center; min-height: 44px; }
+        }
+        @media (max-width: 600px) {
+            .card-header > div { flex-direction: column; }
+            .card-header > div .btn { width: 100%; }
+            #categoryFilter { width: 100% !important; min-height: 44px; }
+        }
+    </style>
 </head>
 <body>
 
@@ -33,8 +45,8 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('treatments')">Behandlungen</button>
-            <button class="tab" onclick="switchTab('products')">Produkte</button>
+            <button class="tab active" onclick="switchTab('treatments', this)">Behandlungen</button>
+            <button class="tab" onclick="switchTab('products', this)">Produkte</button>
         </div>
 
         <!-- TREATMENTS TAB -->
@@ -189,16 +201,24 @@ let allCategories = new Set();
 let allBrands = new Set();
 
 // ============ TABS ============
-function switchTab(tab) {
+function switchTab(tab, btn) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    if (btn) btn.classList.add('active');
     document.getElementById('tab-treatments').style.display = tab === 'treatments' ? 'block' : 'none';
     document.getElementById('tab-products').style.display = tab === 'products' ? 'block' : 'none';
 }
 
 // ============ TREATMENTS ============
+function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
 async function loadTreatments() {
-    const snap = await db.collection('treatments').orderBy('category').orderBy('sortOrder').get();
+    let snap;
+    try {
+        snap = await db.collection('treatments').orderBy('category').orderBy('sortOrder').get();
+    } catch(e) {
+        console.error('Treatments load error:', e);
+        try { snap = await db.collection('treatments').get(); } catch(e2) { console.error(e2); return; }
+    }
     allTreatments = [];
     allCategories = new Set();
     snap.forEach(doc => {
@@ -237,15 +257,15 @@ function renderTreatments() {
     tbody.innerHTML = filtered.map(t => `
         <tr>
             <td>
-                <strong>${t.name}</strong>
-                ${t.description ? `<br><small style="color:var(--text-light)">${t.description}</small>` : ''}
+                <strong>${escHtml(t.name)}</strong>
+                ${t.description ? `<br><small style="color:var(--text-light)">${escHtml(t.description)}</small>` : ''}
             </td>
-            <td><span class="badge badge-aktiv">${t.category || '-'}</span></td>
+            <td><span class="badge badge-aktiv">${escHtml(t.category) || '-'}</span></td>
             <td>${t.duration ? t.duration + ' Min.' : '-'}</td>
             <td><strong>${formatCurrency(t.price || 0)}</strong></td>
             <td>
                 <button class="btn btn-secondary btn-sm" onclick="editTreatment('${t.id}')">Bearbeiten</button>
-                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteTreatment('${t.id}', '${t.name}')">&#10005;</button>
+                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteTreatment('${t.id}', '${escHtml(t.name).replace(/'/g, "\\'")}')">&#10005;</button>
             </td>
         </tr>
     `).join('');
@@ -319,7 +339,13 @@ async function deleteTreatment(id, name) {
 
 // ============ PRODUCTS ============
 async function loadProducts() {
-    const snap = await db.collection('products').orderBy('brand').get();
+    let snap;
+    try {
+        snap = await db.collection('products').orderBy('brand').get();
+    } catch(e) {
+        console.error('Products load error:', e);
+        try { snap = await db.collection('products').get(); } catch(e2) { console.error(e2); return; }
+    }
     allProducts = [];
     allBrands = new Set();
     snap.forEach(doc => {
@@ -343,9 +369,9 @@ function renderProducts() {
 
     tbody.innerHTML = allProducts.map(p => `
         <tr>
-            <td><strong>${p.name}</strong></td>
-            <td>${p.brand || '-'}</td>
-            <td>${p.category || '-'}</td>
+            <td><strong>${escHtml(p.name)}</strong></td>
+            <td>${escHtml(p.brand) || '-'}</td>
+            <td>${escHtml(p.category) || '-'}</td>
             <td><strong>${formatCurrency(p.price || 0)}</strong></td>
             <td>${p.inStock !== false ? '<span class="badge badge-aktiv">Ja</span>' : '<span class="badge badge-entwurf">Nein</span>'}</td>
             <td>

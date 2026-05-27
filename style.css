@@ -184,10 +184,36 @@ body {
 }
 
 .sidebar-link .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 20px;
-    text-align: center;
-    font-size: 15px;
+    height: 20px;
+    flex-shrink: 0;
     opacity: 0.85;
+}
+.sidebar-link .icon svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.5;
+}
+.sidebar-link .label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sidebar-link .ext-arrow {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    opacity: 0.45;
+    flex-shrink: 0;
+}
+.sidebar-link .ext-arrow svg {
+    width: 13px;
+    height: 13px;
 }
 
 .sidebar-footer {
@@ -955,5 +981,610 @@ tr:hover {
     .form-group select,
     .form-group textarea {
         font-size: 14px;
+    }
+}
+
+/* ============================================
+   PREMIUM REFINEMENTS — Apple-like (global)
+   2026-05-19 — gilt für ALLE Sub-Seiten
+   ============================================ */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'kern' 1;
+    letter-spacing: -0.01em;
+}
+
+/* Main padding großzügig */
+.main {
+    padding: 48px 56px;
+    max-width: 1200px;
+}
+
+/* Page-Header — premium Serif-Display */
+.page-header {
+    margin-bottom: 36px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+.page-header h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif !important;
+    font-size: 42px !important;
+    font-weight: 400 !important;
+    color: var(--primary-dark) !important;
+    letter-spacing: -1px !important;
+    line-height: 1.1 !important;
+    margin: 0 0 8px 0 !important;
+}
+.page-header p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+    letter-spacing: 0;
+}
+
+/* KPI / Stat Cards — premium */
+.task-stat, .stat-card {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+    padding: 24px !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    transition: border-color 0.2s var(--ease);
+}
+.task-stat:hover, .stat-card:hover {
+    border-color: var(--border-strong) !important;
+}
+.task-stat-val, .stat-value {
+    font-family: 'Cormorant Garamond', Georgia, serif !important;
+    font-size: 36px !important;
+    font-weight: 500 !important;
+    color: var(--primary-dark) !important;
+    letter-spacing: -0.5px !important;
+    line-height: 1.05 !important;
+}
+.task-stat-label, .stat-label {
+    font-size: 11.5px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    color: var(--text-muted) !important;
+    font-weight: 500 !important;
+    margin-top: 6px !important;
+}
+.stat-icon { display: none !important; }
+
+/* Card — cleaner */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    box-shadow: none;
+}
+.card h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--primary-dark);
+    letter-spacing: -0.3px;
+    margin-bottom: 16px;
+}
+
+/* Buttons premium */
+.btn {
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+    border-radius: 10px;
+    padding: 11px 18px;
+    transition: all 0.2s var(--ease);
+}
+.btn-primary {
+    background: var(--primary-dark);
+    color: #FCFAF6;
+    border: 1px solid var(--primary-dark);
+}
+.btn-primary:hover {
+    background: #1F1B17;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(31, 27, 23, 0.18);
+}
+.btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+}
+.btn-secondary:hover {
+    background: var(--bg-subtle);
+}
+
+/* Filter-Buttons (Chips) premium */
+.filter-btn {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+    font-size: 12.5px !important;
+    padding: 8px 16px !important;
+    border-radius: 100px !important;
+    transition: all 0.2s var(--ease) !important;
+}
+.filter-btn:hover {
+    border-color: var(--border-strong) !important;
+    color: var(--text) !important;
+}
+.filter-btn.active {
+    background: var(--primary-dark) !important;
+    color: var(--bg) !important;
+    border-color: var(--primary-dark) !important;
+}
+.filter-btn .count {
+    background: var(--bg-subtle) !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+}
+.filter-btn.active .count {
+    background: rgba(252, 250, 246, 0.18) !important;
+    color: rgba(252, 250, 246, 0.95) !important;
+}
+
+/* Tag-Pills — neutral, premium (statt Bonbon-Farben) */
+.task-tag, .tag-tamara, .tag-elena, .tag-alle {
+    background: var(--bg-subtle) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+    font-size: 11px !important;
+    letter-spacing: 0.3px !important;
+    padding: 4px 11px !important;
+    border-radius: 100px !important;
+    border: 1px solid var(--border) !important;
+}
+.tag-tamara { color: var(--primary-dark) !important; }
+.tag-elena  { color: var(--primary-dark) !important; }
+
+/* Form-Inputs premium */
+.form-group label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    background: var(--bg-card);
+    color: var(--text);
+    transition: border-color 0.2s var(--ease);
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Sidebar-Brand — feinere Hierarchie */
+.sidebar-brand h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    color: #FCFAF6;
+}
+.sidebar-brand span {
+    font-size: 9px;
+    opacity: 0.5;
+    letter-spacing: 3px;
+}
+
+/* Task-Item Premium-Look */
+.task-item {
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    padding: 18px 22px !important;
+}
+.task-item:hover {
+    border-color: var(--border-strong) !important;
+    box-shadow: 0 2px 4px rgba(74,55,40,0.04), 0 8px 24px rgba(74,55,40,0.06) !important;
+}
+.task-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.1px !important;
+}
+.task-desc {
+    color: var(--text-muted) !important;
+}
+
+/* Modal-Overlay sanft */
+.modal-content {
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 64px rgba(31, 27, 23, 0.18);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .main { padding: 28px 24px; }
+    .page-header h2 { font-size: 32px !important; }
+}
+
+/* ============================================
+   PREMIUM REFINEMENTS — Phase 2 (Sub-Seiten Komponenten)
+   ============================================ */
+
+/* Tabs (monatsabschluss, preislisten, bestellungen) */
+.tab, .ek-tab {
+    padding: 14px 24px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--text-muted) !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    cursor: pointer;
+    transition: all 0.2s var(--ease) !important;
+    font-family: -apple-system, 'Inter', system-ui, sans-serif !important;
+    letter-spacing: 0.2px !important;
+}
+.tab:hover, .ek-tab:hover {
+    color: var(--text) !important;
+}
+.tab.active, .ek-tab.active {
+    color: var(--primary-dark) !important;
+    border-bottom-color: var(--primary-dark) !important;
+    font-weight: 600 !important;
+}
+.tab-count {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 100px;
+    margin-left: 6px;
+}
+
+/* Tab Navigation Container */
+.tabs, .ek-tabs {
+    border-bottom: 1px solid var(--border) !important;
+    margin-bottom: 28px !important;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+}
+
+/* Empty State — premium */
+.empty-state {
+    padding: 64px 24px !important;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+.empty-state .icon {
+    display: none !important;
+}
+.empty-state h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif !important;
+    font-size: 22px !important;
+    font-weight: 500 !important;
+    color: var(--primary-dark) !important;
+    letter-spacing: -0.3px !important;
+    margin-bottom: 8px !important;
+}
+.empty-state p {
+    font-size: 13px !important;
+    color: var(--text-muted) !important;
+    margin-bottom: 24px !important;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+/* Tabellen — Apple-like */
+table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    background: var(--bg-card);
+}
+.table-wrap, .data-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+thead th {
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    color: var(--text-muted) !important;
+    font-weight: 500 !important;
+    text-align: left;
+    padding: 14px 20px !important;
+    background: var(--bg-subtle) !important;
+    border-bottom: 1px solid var(--border);
+}
+tbody td {
+    padding: 14px 20px !important;
+    border-bottom: 1px solid var(--border) !important;
+    font-size: 14px;
+    color: var(--text);
+}
+tbody tr:last-child td {
+    border-bottom: none !important;
+}
+tbody tr:hover {
+    background: var(--bg-subtle);
+}
+
+/* Loading / Spinner */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-strong);
+    border-top-color: var(--primary-dark);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Modal — premium */
+.modal-overlay {
+    background: rgba(31, 27, 23, 0.4) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.modal-content {
+    border-radius: 18px !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 24px 64px rgba(31, 27, 23, 0.22) !important;
+    padding: 32px !important;
+}
+.modal-content h3, .modal-content h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--primary-dark);
+    letter-spacing: -0.3px;
+    margin-bottom: 20px;
+}
+
+/* Section-Title generisch */
+.section-title {
+    font-family: 'Cormorant Garamond', Georgia, serif !important;
+    font-size: 24px !important;
+    font-weight: 500 !important;
+    color: var(--primary-dark) !important;
+    letter-spacing: -0.3px !important;
+}
+
+/* Toast */
+.toast {
+    background: var(--primary-dark) !important;
+    color: var(--bg) !important;
+    border-radius: 12px !important;
+    padding: 14px 20px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 12px 32px rgba(31, 27, 23, 0.2) !important;
+    border: none !important;
+}
+
+/* Generic select premium look (für Tabs/Filter wo es noch Sonderfälle gibt) */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C857A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px !important;
+}
+
+/* Hover-Card Effekte ruhiger */
+.app-tile:hover, .stat-card:hover, .card:hover {
+    box-shadow: 0 2px 6px rgba(74,55,40,0.04), 0 10px 28px rgba(74,55,40,0.08) !important;
+}
+
+/* ============================================================
+   MOBILE FOUNDATION — 2026-05-23
+   iPhone/iPad-Safari-spezifische Fixes. Greift global auf
+   ALLEN Subseiten. Reihenfolge: zuerst Basics, dann Layout,
+   dann Komponenten, am Schluss Safe-Area.
+   ============================================================ */
+
+/* iOS-Tap-Highlight ausblenden, Touch-Verhalten sauber */
+html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+a, button, [role="button"], .v2-tile, .v2-hero, .v2-alert-action,
+.sidebar-link, .nav-card, .quick-action, .filter-btn, .tab, .ek-tab {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* ============ MOBILE ≤ 900px ============ */
+@media (max-width: 900px) {
+    /* iOS-Auto-Zoom auf Inputs verhindern (Font-Size ≥ 16px) */
+    input, select, textarea,
+    .form-group input, .form-group select, .form-group textarea {
+        font-size: 16px !important;
+    }
+
+    /* Body etwas größer für besseres Lesen am Handy */
+    body { font-size: 15px; }
+
+    /* Tap-Targets: min 44px Höhe für interaktive Elemente */
+    .btn, .btn-sm, .v2-alert-action, .filter-btn, .tab, .ek-tab {
+        min-height: 44px;
+    }
+
+    /* Sidebar: Slide-In von links, schmaler & mit Inset */
+    .sidebar {
+        width: min(86vw, 320px);
+        padding-left: env(safe-area-inset-left, 0);
+    }
+
+    /* Burger-Toggle: höher, sicher unter Notch */
+    .menu-toggle {
+        top: calc(env(safe-area-inset-top, 0) + 12px);
+        left: calc(env(safe-area-inset-left, 0) + 12px);
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.92);
+    }
+    .menu-toggle:active {
+        transform: scale(0.94);
+    }
+
+    /* Main: oben Platz für Burger, sicher unter Notch + Home-Indicator */
+    .main {
+        padding: calc(env(safe-area-inset-top, 0) + 72px) 20px calc(env(safe-area-inset-bottom, 0) + 24px) !important;
+        max-width: 100%;
+    }
+
+    /* Sidebar-Overlay: lighteres Blur (Performance auf iPad) */
+    .sidebar-overlay {
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    /* Page-Header / Section-Titel ruhiger */
+    .page-header { margin-bottom: 24px; padding-bottom: 16px; }
+    .page-header h2 { font-size: 30px !important; }
+
+    /* Cards mit weniger Padding aber genug Atmen */
+    .card { padding: 20px !important; border-radius: 14px; }
+
+    /* Filter-Chips/Tabs nicht abschneiden — wrappen statt scrollen wo möglich */
+    .tabs, .ek-tabs {
+        gap: 2px;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+    }
+    .tab, .ek-tab {
+        padding: 12px 16px !important;
+        scroll-snap-align: start;
+    }
+
+    /* Tabellen: native Scroll + visueller Hint, dass nach rechts mehr kommt */
+    .table-wrap, .data-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+        background:
+            linear-gradient(to right, var(--bg-card), var(--bg-card)) left/24px 100% no-repeat,
+            linear-gradient(to right, rgba(31,27,23,0.08), transparent) left/12px 100% no-repeat,
+            linear-gradient(to right, var(--bg-card), var(--bg-card)) right/24px 100% no-repeat,
+            linear-gradient(to left, rgba(31,27,23,0.08), transparent) right/12px 100% no-repeat,
+            var(--bg-card);
+        background-attachment: local, scroll, local, scroll;
+    }
+
+    /* Modals als Bottom-Sheet — leicht zu schließen, daumengerecht */
+    .modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
+    .modal, .modal-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 92vh !important;
+        border-radius: 20px 20px 0 0 !important;
+        padding: 24px 20px calc(env(safe-area-inset-bottom, 0) + 24px) !important;
+        animation: modalSlideUp 0.3s var(--ease) !important;
+    }
+    /* Drag-Handle oben am Sheet */
+    .modal::before, .modal-content::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: var(--border-strong);
+        border-radius: 4px;
+        margin: -8px auto 18px;
+    }
+    @keyframes modalSlideUp {
+        from { transform: translateY(100%); }
+        to   { transform: translateY(0); }
+    }
+
+    /* Toast unten mittig, nicht in Ecke verloren */
+    .toast {
+        left: 16px !important;
+        right: 16px !important;
+        bottom: calc(env(safe-area-inset-bottom, 0) + 16px) !important;
+        text-align: center;
+    }
+}
+
+/* ============ MOBILE ≤ 600px (Handy hochkant) ============ */
+@media (max-width: 600px) {
+    .page-header h2 { font-size: 26px !important; }
+    .main {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    .card { padding: 18px !important; }
+    .v2-section-title, .section-title,
+    .modal-content h2, .modal-content h3 {
+        font-size: 22px !important;
+    }
+    .v2-kpi-value { font-size: 28px !important; }
+
+    /* Knöpfe in Modals/Action-Bars über volle Breite stapeln */
+    .modal .btn, .modal-content .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .modal .btn + .btn, .modal-content .btn + .btn {
+        margin-top: 8px;
+    }
+}
+
+/* ============ HOVER ohne Hover-Gerät unterdrücken ============ */
+/* Verhindert "klebende" Hover-States nach Tap auf iPad */
+@media (hover: none) and (pointer: coarse) {
+    .v2-tile:hover,
+    .nav-card:hover,
+    .stat-card:hover,
+    .card:hover,
+    .quick-action:hover {
+        transform: none !important;
+    }
+    /* Aktiv-Feedback auf Touch */
+    .v2-tile:active,
+    .nav-card:active,
+    .quick-action:active,
+    .v2-alert-action:active,
+    .btn:active {
+        transform: scale(0.98);
+        transition: transform 0.1s var(--ease);
     }
 }
