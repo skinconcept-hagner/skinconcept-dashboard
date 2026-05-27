@@ -866,14 +866,43 @@ function openKarteiIDB(){
   });
 }
 
+let _idbSaveQueue=Promise.resolve();
 function idbKarteiSave(data){
-  openKarteiIDB().then(function(db){
-    if(!db)return;
-    try{
-      var tx=db.transaction(IDB_KARTEI_STORE,'readwrite');
-      tx.objectStore(IDB_KARTEI_STORE).put(data,'data');
-    }catch(e){console.warn('[KarteiIDB] Save-Fehler:',e.message)}
+  _idbSaveQueue=_idbSaveQueue.then(function(){
+    return openKarteiIDB().then(function(db){
+      if(!db){
+        console.error('[KarteiIDB] Datenbank nicht verfügbar');
+        updateSaveStatus('error');
+        return;
+      }
+      return new Promise(function(resolve){
+        try{
+          var clone=JSON.parse(JSON.stringify(data));
+          var tx=db.transaction(IDB_KARTEI_STORE,'readwrite');
+          tx.objectStore(IDB_KARTEI_STORE).put(clone,'data');
+          tx.oncomplete=function(){resolve(true)};
+          tx.onerror=function(){
+            console.error('[KarteiIDB] Transaktion fehlgeschlagen:',tx.error);
+            updateSaveStatus('error');
+            resolve(false);
+          };
+          tx.onabort=function(){
+            console.error('[KarteiIDB] Transaktion abgebrochen:',tx.error);
+            updateSaveStatus('error');
+            resolve(false);
+          };
+        }catch(e){
+          console.error('[KarteiIDB] Save-Fehler:',e.message);
+          updateSaveStatus('error');
+          resolve(false);
+        }
+      });
+    }).catch(function(e){
+      console.error('[KarteiIDB] Unerwarteter Fehler:',e);
+      updateSaveStatus('error');
+    });
   });
+  return _idbSaveQueue;
 }
 
 function idbKarteiLoad(){
@@ -1067,10 +1096,30 @@ function flushKartei(){
       if(Array.isArray(kd.consents))kd.consents.forEach(function(c){moveData(c,'signature')});
     });
   }catch(e){console.error('[flushKartei] Cleanup-Fehler:',e)}
-  idbKarteiSave(_karteiCache);
+  idbKarteiSave(_karteiCache).then(function(ok){
+    if(ok===false){
+      // IDB fehlgeschlagen → localStorage als Notfall-Fallback
+      try{
+        localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache));
+        console.warn('[Flush] IDB fehlgeschlagen, localStorage-Fallback genutzt');
+      }catch(e2){
+        console.error('[Flush] Auch localStorage-Fallback fehlgeschlagen');
+        toast('Speichern fehlgeschlagen — bitte Seite neu laden und erneut versuchen','warn');
+      }
+    }
+  });
   _karteiDirty=false;
   updateSaveStatus('ok');
 }
+
+// ── SCHUTZ: Seite nicht schliessen wenn noch nicht gespeichert ──
+let _pendingSaves=0;
+window.addEventListener('beforeunload',function(e){
+  if(_karteiDirty||_pendingSaves>0){
+    e.preventDefault();
+    e.returnValue='Daten werden noch gespeichert — wirklich verlassen?';
+  }
+});
 
 // ── SAVE STATUS UI ──
 function updateSaveStatus(status){
@@ -1181,9 +1230,21 @@ function syncClientToFirebase(id){
       console.log('[Sync] OK:',id);
       updateSaveStatus('ok');
     }).catch(function(err){
-      console.error('[Sync] Firebase FEHLER:',id,err&&err.message);
-      updateSaveStatus('error');
-      toast('Speicherfehler — bitte erneut versuchen','warn');
+      console.error('[Sync] Firebase FEHLER (1. Versuch):',id,err&&err.message);
+      // Automatischer Retry nach 3 Sekunden
+      setTimeout(function(){
+        try{
+          FB_KARTEI_REF.child(id).update(payload).then(function(){
+            console.log('[Sync] Retry OK:',id);
+            updateSaveStatus('ok');
+            toast('Daten nachträglich synchronisiert');
+          }).catch(function(err2){
+            console.error('[Sync] Firebase FEHLER (2. Versuch):',id,err2&&err2.message);
+            updateSaveStatus('error');
+            toast('Cloud-Sync fehlgeschlagen — Daten sind lokal gesichert, bitte Seite später neu laden','warn');
+          });
+        }catch(e){updateSaveStatus('error')}
+      },3000);
     });
   }catch(e){
     console.error('[Sync] Unerwarteter Fehler:',e);
@@ -3022,8 +3083,15 @@ function saveTreatment(){
   });
 
   try{
+    _pendingSaves++;
     saveClientKartei(selectedClient.id,kd);
-  }catch(e){console.error('saveClientKartei Fehler:',e);toast('Speicher-Fehler: '+(e&&e.message||e),'warn');return}
+    setTimeout(function(){_pendingSaves=Math.max(0,_pendingSaves-1)},2000);
+  }catch(e){
+    _pendingSaves=Math.max(0,_pendingSaves-1);
+    console.error('saveClientKartei Fehler:',e);
+    toast('Speicher-Fehler: '+(e&&e.message||e),'warn');
+    return;
+  }
 
   const treatDate=dateEl.value||TODAY_STR;
   if(!selectedClient.lv||treatDate>selectedClient.lv){
