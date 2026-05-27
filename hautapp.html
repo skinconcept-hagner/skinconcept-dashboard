@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#b08d57">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Skinconcept Hagner - HautApp</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Inter is loaded via style.css -->
     <link rel="stylesheet" href="style.css">
     <style>
         .ha-wrap { display:grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
@@ -21,7 +21,7 @@
             padding: 16px; box-shadow: var(--shadow); max-height: calc(100vh - 120px); overflow-y:auto;
         }
         .ha-col h3 {
-            font-family: 'Cormorant Garamond', serif; font-size: 20px; margin-bottom: 10px;
+            font-family: inherit; font-size: 20px; margin-bottom: 10px;
             color: var(--primary-dark); display:flex; align-items:center; justify-content:space-between;
         }
         .ha-col h3 .cnt {
@@ -51,7 +51,7 @@
         .ha-client.selected { background: var(--accent-light); border-color: var(--accent); }
         .ha-client .avatar {
             width: 36px; height: 36px; border-radius: 50%; background: var(--primary-dark); color: var(--accent);
-            display:flex; align-items:center; justify-content:center; font-family: 'Cormorant Garamond', serif;
+            display:flex; align-items:center; justify-content:center; font-family: inherit;
             font-size: 15px; flex-shrink: 0;
         }
         .ha-client .info { flex:1; min-width:0; }
@@ -67,7 +67,7 @@
             padding: 40px 20px; text-align:center; color: var(--text-muted); font-size: 13px;
         }
         .ha-empty .big {
-            font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--text-light);
+            font-family: inherit; font-size: 24px; color: var(--text-light);
             margin-bottom: 6px;
         }
 
@@ -79,7 +79,7 @@
             content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px;
             background: radial-gradient(circle, var(--accent-glow), transparent 70%);
         }
-        .ha-head h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; margin-bottom: 4px; }
+        .ha-head h2 { font-family: inherit; font-size: 28px; font-weight: 500; margin-bottom: 4px; }
         .ha-head .email { color: var(--accent-light); font-size: 13px; }
         .ha-head .meta-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-top: 18px; }
         .ha-head .meta label { display:block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color:#bcb3a6; margin-bottom:3px; }
@@ -103,7 +103,7 @@
             padding: 20px; box-shadow: var(--shadow); margin-bottom: 12px;
         }
         .ha-card h3 {
-            font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--primary-dark); margin-bottom: 12px;
+            font-family: inherit; font-size: 20px; color: var(--primary-dark); margin-bottom: 12px;
             display:flex; align-items:center; gap: 8px;
         }
 
@@ -111,7 +111,7 @@
         .stat-box {
             padding: 14px; background: var(--bg); border-radius: 10px; text-align:center;
         }
-        .stat-box .v { font-family:'Cormorant Garamond', serif; font-size: 28px; color: var(--primary-dark); font-weight: 600; }
+        .stat-box .v { font-family: inherit; font-size: 28px; color: var(--primary-dark); font-weight: 600; }
         .stat-box .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
         .entry {
@@ -255,7 +255,7 @@
 
             <section>
                 <div id="empty-panel" class="ha-card" style="text-align:center;padding: 80px 20px">
-                    <h2 style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;margin-bottom:8px">Willkommen</h2>
+                    <h2 style="font-family:inherit;font-size:32px;font-weight:500;margin-bottom:8px">Willkommen</h2>
                     <p style="color:var(--text-muted);font-size:14px">Wähle links eine Kundin aus, um alles zu sehen,<br>was sie in der HautApp mit euch teilt.</p>
                 </div>
 
@@ -292,7 +292,7 @@
 <!-- Modal: Produkt -->
 <div id="prod-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px">
     <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;padding:28px">
-        <h3 id="prod-modal-title" style="font-family:'Cormorant Garamond',serif;font-size:26px;margin-bottom:4px;color:var(--primary-dark)">Produkt für Kundin eintragen</h3>
+        <h3 id="prod-modal-title" style="font-family:inherit;font-size:26px;margin-bottom:4px;color:var(--primary-dark)">Produkt für Kundin eintragen</h3>
         <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px">Das Produkt erscheint in ihrer App. Sie bekommt eine Benachrichtigung.</p>
 
         <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Produktname *</label>
@@ -328,7 +328,7 @@
 <!-- Modal: Routine-Schritt -->
 <div id="rs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px">
     <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:28px">
-        <h3 id="rs-modal-title" style="font-family:'Cormorant Garamond',serif;font-size:24px;margin-bottom:4px;color:var(--primary-dark)">Routine-Schritt</h3>
+        <h3 id="rs-modal-title" style="font-family:inherit;font-size:24px;margin-bottom:4px;color:var(--primary-dark)">Routine-Schritt</h3>
         <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px">Trage einen Schritt in die App-Routine der Kundin ein.</p>
 
         <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:5px">Produkt *</label>
@@ -900,7 +900,7 @@ function renderAnamnesePanel() {
         ${historyHtml}
         <div class="ha-card">
             <div style="display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:14px">
-                <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--accent)">${pct}%</div>
+                <div style="font-family:inherit;font-size:36px;font-weight:600;color:var(--accent)">${pct}%</div>
                 <div style="flex:1">
                     <div style="font-size:13px;font-weight:600;color:var(--primary-dark)">Vollständigkeit</div>
                     <div style="font-size:11px;color:var(--text-muted)">${filled} von ${total} Feldern ausgefüllt</div>

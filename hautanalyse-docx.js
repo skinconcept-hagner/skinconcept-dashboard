@@ -28,7 +28,7 @@ function buildSkinReportDocx(entry) {
   const INK_MUTED = '8C857A';
   const BORDER = 'E8E0CF';
 
-  const SERIF = 'Cambria';       // Cormorant-Ersatz für Display
+  const SERIF = 'Cambria';       // Serif für Display-Elemente
   const SANS = 'Calibri';
 
   // Größen in half-points
@@ -104,7 +104,7 @@ function buildSkinReportDocx(entry) {
     children.push(paragraph(r.analysis_intro));
   }
 
-  // Mode-Sections — jede mit Modus-Caps + Cormorant Title + Body
+  // Mode-Sections — jede mit Modus-Caps + Serif Title + Body
   for (const sec of (r.mode_sections || [])) {
     if (!sec || (!sec.title && !sec.paragraphs)) continue;
     children.push(emptyParagraph(400));

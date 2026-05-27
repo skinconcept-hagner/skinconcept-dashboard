@@ -69,7 +69,7 @@ function buildSkinReportPdf(entry) {
   }
 
   function setSerif(weight) {
-    doc.setFont('times', weight || 'normal'); // jsPDF Built-in Serif als Cormorant-Ersatz
+    doc.setFont('times', weight || 'normal'); // jsPDF Built-in Serif
   }
   function setSans(weight) {
     doc.setFont('helvetica', weight || 'normal');

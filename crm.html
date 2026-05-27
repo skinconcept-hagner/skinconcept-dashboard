@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="icon.svg">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <title>Skinconcept Hagner - CRM</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Inter loaded via style.css -->
     <link rel="stylesheet" href="style.css">
     <style>
 /* ═══════════════════════════════════════
@@ -26,12 +26,12 @@
 .action-center::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(196,162,101,.08);border-radius:50%}
 .action-center::after{content:'';position:absolute;bottom:-60px;left:-20px;width:160px;height:160px;background:rgba(196,162,101,.05);border-radius:50%}
 .ac-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;gap:24px;flex-wrap:wrap}
-.ac-left h2{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;margin-bottom:4px}
+.ac-left h2{font-family:inherit;font-size:24px;font-weight:600;margin-bottom:4px}
 .ac-left p{font-size:13px;opacity:.65;max-width:400px;line-height:1.5}
 .ac-alerts{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .ac-alert{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,.1);border-radius:10px;font-size:12px;font-weight:500;backdrop-filter:blur(4px);cursor:pointer;transition:background .2s}
 .ac-alert:hover{background:rgba(255,255,255,.18)}
-.ac-alert .num{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--accent-light)}
+.ac-alert .num{font-family:inherit;font-size:18px;font-weight:700;color:var(--accent-light)}
 .ac-right{display:flex;gap:10px;flex-shrink:0;position:relative;z-index:1}
 .ac-btn{padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px);letter-spacing:.3px}
 .ac-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3)}
@@ -55,7 +55,7 @@
 .seg-stat.s-orange::before{background:#EA580C}
 .seg-stat.s-red::before{background:var(--danger)}
 .seg-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.seg-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;line-height:1}
+.seg-num{font-family:inherit;font-size:32px;font-weight:700;line-height:1}
 .seg-stat.s-green .seg-num{color:var(--success)}
 .seg-stat.s-yellow .seg-num{color:var(--warning)}
 .seg-stat.s-orange .seg-num{color:#EA580C}
@@ -93,7 +93,7 @@
 .seg-head{display:flex;align-items:center;gap:12px;padding:10px 0;margin-bottom:10px;border-bottom:2px solid var(--border);cursor:pointer;user-select:none}
 .seg-head:hover .seg-head-title{color:var(--accent)}
 .seg-stripe{width:4px;height:24px;border-radius:2px;flex-shrink:0}
-.seg-head-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--primary-dark);transition:color .2s}
+.seg-head-title{font-family:inherit;font-size:17px;font-weight:600;color:var(--primary-dark);transition:color .2s}
 .seg-head-count{font-size:11px;color:#fff;padding:2px 10px;border-radius:10px;font-weight:700}
 .seg-head-info{margin-left:auto;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:12px}
 .seg-head-arrow{font-size:14px;color:var(--text-muted);transition:transform .2s;margin-left:4px}
@@ -121,7 +121,7 @@
 .crm-row .sub{font-size:11px;color:var(--text-muted);margin-top:2px}
 .crm-row .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
 .crm-row .days-cell{text-align:center;min-width:50px}
-.crm-row .days-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;line-height:1}
+.crm-row .days-num{font-family:inherit;font-size:20px;font-weight:700;line-height:1}
 .crm-row .days-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
 .crm-row .visits-cell{text-align:center;font-size:13px;font-weight:600;color:var(--text-secondary)}
 .crm-row .date-cell{font-size:12px;color:var(--text-secondary);white-space:nowrap}
@@ -149,7 +149,7 @@
 .crm-modal-bg{position:fixed;inset:0;background:rgba(44,36,32,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
 .crm-modal-bg.open{display:flex}
 .crm-modal{background:var(--bg-card);border-radius:var(--radius-lg);padding:32px;max-width:520px;width:92%;box-shadow:var(--shadow-lg);position:relative;max-height:90vh;overflow-y:auto}
-.crm-modal h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--primary-dark);margin-bottom:4px}
+.crm-modal h2{font-family:inherit;font-size:22px;font-weight:600;color:var(--primary-dark);margin-bottom:4px}
 .crm-modal .modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.5}
 .crm-modal label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;letter-spacing:.5px;text-transform:uppercase}
 .crm-modal textarea,.crm-modal select,.crm-modal input[type="date"]{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;color:var(--text);outline:none;background:var(--bg);margin-bottom:14px;transition:border-color .2s}
@@ -178,7 +178,7 @@
 /* ── EMPTY ── */
 .crm-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
 .crm-empty-icon{font-size:48px;opacity:.3;margin-bottom:12px}
-.crm-empty h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--text-secondary);margin-bottom:6px}
+.crm-empty h3{font-family:inherit;font-size:20px;color:var(--text-secondary);margin-bottom:6px}
 
 /* ── DETAIL PANEL ── */
 .detail-overlay{position:fixed;inset:0;background:rgba(44,36,32,.4);backdrop-filter:blur(3px);z-index:400;opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
@@ -188,7 +188,7 @@
 .dp-header{padding:24px 28px 20px;border-bottom:1px solid var(--border);background:var(--bg-elevated);position:sticky;top:0;z-index:2}
 .dp-back{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;border:none;background:none;font-family:inherit;padding:0;margin-bottom:14px;transition:color .2s}
 .dp-back:hover{color:var(--accent)}
-.dp-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--primary-dark);margin-bottom:6px}
+.dp-name{font-family:inherit;font-size:24px;font-weight:600;color:var(--primary-dark);margin-bottom:6px}
 .dp-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
 .dp-contact{display:flex;flex-direction:column;gap:8px}
 .dp-contact-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-secondary)}
@@ -202,7 +202,7 @@
 .dp-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .dp-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
 .dp-metric{text-align:center;padding:14px 10px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)}
-.dp-metric-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1}
+.dp-metric-val{font-family:inherit;font-size:22px;font-weight:700;line-height:1}
 .dp-metric-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-top:4px}
 .dp-treat{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}
 .dp-treat:last-child{border-bottom:none}
@@ -882,7 +882,7 @@ function startBatchFollowUp(){
         const waUrl=getWaUrl(c.ph);
         const dayColor=seg.color==='green'?'var(--success)':seg.color==='yellow'?'var(--warning)':seg.color==='orange'?'#EA580C':'var(--danger)';
         return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:10px">
-          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:${dayColor};min-width:40px;text-align:center">${c.days}</div>
+          <div style="font-family:inherit;font-size:18px;font-weight:700;color:${dayColor};min-width:40px;text-align:center">${c.days}</div>
           <div style="flex:1"><div style="font-weight:600;font-size:13px">${esc(c.fn)} ${esc(c.ln)}</div><div style="font-size:11px;color:var(--text-muted)">${c.visits} Besuche &middot; ${fmtDate(c.lv)}</div></div>
           ${waUrl?'<button class="crm-btn wa" onclick="openWaModal(\''+c.id+'\');closeModal()" style="font-size:12px">&#128172; WhatsApp</button>':'<span style="font-size:11px;color:var(--text-muted)">Keine Nr.</span>'}
         </div>`;

@@ -48,11 +48,11 @@
     const style = document.createElement('style');
     style.id = 'sc-auth-styles';
     style.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
       #sc-auth-overlay{position:fixed;inset:0;z-index:2147483647;background:linear-gradient(135deg,#F6F4F1 0%,#EDE9E4 100%);display:flex;align-items:center;justify-content:center;padding:20px;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;visibility:visible !important}
       #sc-auth-overlay *{box-sizing:border-box}
       .sc-auth-card{max-width:400px;width:100%;background:#fff;border-radius:22px;box-shadow:0 20px 60px rgba(74,55,40,.15),0 4px 16px rgba(74,55,40,.08);padding:44px 32px;text-align:center}
-      .sc-auth-brand{font-family:'Playfair Display',Georgia,serif;font-size:30px;color:#4A3728;letter-spacing:1.5px;margin-bottom:6px;font-weight:600}
+      .sc-auth-brand{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:30px;color:#4A3728;letter-spacing:1.5px;margin-bottom:6px;font-weight:600}
       .sc-auth-sub{color:#9E9894;font-size:11px;margin-bottom:32px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
       .sc-auth-userrow{display:flex;gap:10px;margin-bottom:22px}
       .sc-auth-userbtn{flex:1;padding:16px 8px;border:2px solid rgba(107,83,68,.14);background:#FDFCFB;border-radius:14px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#2C2420;transition:all .2s;min-height:60px;-webkit-tap-highlight-color:transparent}
