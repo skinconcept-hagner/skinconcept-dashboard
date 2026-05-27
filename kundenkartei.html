@@ -846,6 +846,50 @@ function idbDelete(key){
   });
 }
 
+// ── IndexedDB für Kartei-Stammdaten (ersetzt localStorage — kein 5MB-Limit) ──
+let _idbKarteiDb=null;
+const IDB_KARTEI_NAME='skinconcept_kartei';
+const IDB_KARTEI_STORE='kartei';
+
+function openKarteiIDB(){
+  return new Promise(function(resolve){
+    if(_idbKarteiDb){resolve(_idbKarteiDb);return}
+    try{
+      var req=indexedDB.open(IDB_KARTEI_NAME,1);
+      req.onupgradeneeded=function(e){
+        var db=e.target.result;
+        if(!db.objectStoreNames.contains(IDB_KARTEI_STORE))db.createObjectStore(IDB_KARTEI_STORE);
+      };
+      req.onsuccess=function(e){_idbKarteiDb=e.target.result;resolve(_idbKarteiDb)};
+      req.onerror=function(){resolve(null)};
+    }catch(e){resolve(null)}
+  });
+}
+
+function idbKarteiSave(data){
+  openKarteiIDB().then(function(db){
+    if(!db)return;
+    try{
+      var tx=db.transaction(IDB_KARTEI_STORE,'readwrite');
+      tx.objectStore(IDB_KARTEI_STORE).put(data,'data');
+    }catch(e){console.warn('[KarteiIDB] Save-Fehler:',e.message)}
+  });
+}
+
+function idbKarteiLoad(){
+  return openKarteiIDB().then(function(db){
+    if(!db)return null;
+    return new Promise(function(resolve){
+      try{
+        var tx=db.transaction(IDB_KARTEI_STORE,'readonly');
+        var req=tx.objectStore(IDB_KARTEI_STORE).get('data');
+        req.onsuccess=function(){resolve(req.result||null)};
+        req.onerror=function(){resolve(null)};
+      }catch(e){resolve(null)}
+    });
+  }).catch(function(){return null});
+}
+
 // ── Migration: alte Daten (base64/idbKey) → Firebase Cloud ──
 let _migrationDone=false;
 function migrateToCloud(){
@@ -966,50 +1010,10 @@ function deleteMedia(item){
   idbDelete(mid);
 }
 
-// ── localStorage: nur Stammdaten (ohne base64) ──
-// Beim ersten Load: prüfe Größe, wenn voll → reset
-(function checkStorageHealth(){
-  try{
-    var total=0;
-    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);total+=(localStorage.getItem(k)||'').length}
-    var mb=(total/(1024*1024)).toFixed(2);
-    console.log('[Storage] Gesamtgröße:',mb,'MB');
-    if(total>4*1024*1024){
-      console.warn('[Storage] ÜBER 4 MB — localStorage wird bereinigt');
-      var karteiRaw=localStorage.getItem(STORE_KEY);
-      if(karteiRaw&&karteiRaw.length>2*1024*1024){
-        var kartei=JSON.parse(karteiRaw);
-        var cleaned={};
-        var kept=0;
-        for(var id in kartei){
-          if(id.startsWith('_')){cleaned[id]=kartei[id];continue}
-          var kd=kartei[id];
-          if(!kd||typeof kd!=='object')continue;
-          var has=(kd.treatments&&kd.treatments.length)||(kd.notesList&&kd.notesList.length)||
-            (kd.skinReports&&kd.skinReports.length)||(kd.consents&&kd.consents.length)||
-            (kd.products&&kd.products.length)||(kd.kuren&&kd.kuren.length);
-          if(has){
-            if(kd._anamneseData){delete kd._anamneseData.unterschrift;delete kd._anamneseData._unterschrift}
-            if(Array.isArray(kd.consents))kd.consents.forEach(function(c){delete c.signature});
-            if(Array.isArray(kd.photos))kd.photos.forEach(function(p){delete p.data});
-            if(Array.isArray(kd.hautberichte))kd.hautberichte.forEach(function(b){delete b.data});
-            cleaned[id]=kd;
-            kept++;
-          }
-        }
-        localStorage.setItem(STORE_KEY,JSON.stringify(cleaned));
-        var after=0;
-        for(var j=0;j<localStorage.length;j++){var k2=localStorage.key(j);after+=(localStorage.getItem(k2)||'').length}
-        console.log('[Storage] Bereinigt: nur',kept,'Kunden mit Daten behalten. Neue Größe:',(after/(1024*1024)).toFixed(2),'MB');
-      }
-    }
-  }catch(e){console.warn('[Storage] Health-Check Fehler:',e)}
-})();
-
+// ── Kartei-Cache (Daten liegen in IndexedDB, nicht mehr localStorage) ──
 function loadKartei(){
-  if(_karteiCache)return _karteiCache;
-  try{_karteiCache=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return _karteiCache}
-  catch(e){_karteiCache={};return _karteiCache}
+  if(!_karteiCache)_karteiCache={};
+  return _karteiCache;
 }
 
 function saveKartei(data,changedId){
@@ -1063,34 +1067,9 @@ function flushKartei(){
       if(Array.isArray(kd.consents))kd.consents.forEach(function(c){moveData(c,'signature')});
     });
   }catch(e){console.error('[flushKartei] Cleanup-Fehler:',e)}
-  var serialize=function(){return JSON.stringify(_karteiCache)};
-  try{
-    localStorage.setItem(STORE_KEY,serialize());
-    _karteiDirty=false;
-    updateSaveStatus('ok');
-  }catch(e){
-    // Quota voll? Alle grossen inline-data aggressiv entfernen und retry
-    console.warn('localStorage voll — Cleanup & Retry:',e.message);
-    try{
-      Object.keys(data).forEach(function(id){
-        if(id.startsWith('_'))return;
-        var kd=data[id];
-        ['photos','hautberichte','hautanalysen'].forEach(function(k){
-          if(!kd[k])return;
-          kd[k].forEach(function(it){if(it.data){delete it.data}});
-        });
-        if(kd.consents)kd.consents.forEach(function(c){if(c.signature&&c.signature.length>500)delete c.signature});
-      });
-      localStorage.setItem(STORE_KEY,serialize());
-      _karteiDirty=false;
-      updateSaveStatus('ok');
-      console.log('Retry nach Cleanup erfolgreich');
-    }catch(e2){
-      console.error('Speicherfehler auch nach Cleanup:',e2.message);
-      updateSaveStatus('error');
-      toast('localStorage voll — Daten sind in Cloud, aber lokaler Cache defekt. Bitte Seite neu laden.','warn');
-    }
-  }
+  idbKarteiSave(_karteiCache);
+  _karteiDirty=false;
+  updateSaveStatus('ok');
 }
 
 // ── SAVE STATUS UI ──
@@ -1115,12 +1094,8 @@ function updateStorageInfo(){
   var el=document.getElementById('storageInfo');
   if(!el)return;
   try{
-    var total=0;
-    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);total+=localStorage.getItem(k).length}
-    var mb=(total/(1024*1024)).toFixed(1);
-    var maxMb=5;
-    var pct=Math.round((total/(maxMb*1024*1024))*100);
-    el.innerHTML='Lokal: '+mb+' MB &middot; Bilder in Cloud';
+    var count=Object.keys(_karteiCache||{}).filter(function(k){return !k.startsWith('_')}).length;
+    el.innerHTML=count+' Kunden lokal &middot; Bilder in Cloud';
     el.style.color='var(--muted)';
   }catch(e){}
 }
@@ -1246,7 +1221,7 @@ function scheduleBatchedSave(changedSelected){
   if(_fbSaveTimer)return;
   _fbSaveTimer=setTimeout(function(){
     _fbSaveTimer=null;
-    try{localStorage.setItem(STORE_KEY,JSON.stringify(_karteiCache||{}))}catch(e){console.warn('Batch-Save Fehler:',e.message)}
+    idbKarteiSave(_karteiCache||{})
     if(_fbChangedSelected&&typeof selectedClient!=='undefined'&&selectedClient){
       try{renderKartei(selectedClient)}catch(e){}
     }
@@ -1396,7 +1371,7 @@ function migrateMediaListsToCloud(){
       }
       Promise.all(pending).then(function(){
         localStorage.setItem(MEDIA_MIGRATION_KEY,'done');
-        try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){}
+        idbKarteiSave(data);
         if(pushed>0){
           console.log('Medien-Migration: '+pushed+' Kunden mit Medien-Listen nach Cloud gepusht');
           try{toast(pushed+' Kartei'+(pushed>1?'en':'')+' mit Fotos/Berichten in Cloud synchronisiert — jetzt auf allen Geräten verfuegbar!')}catch(e){}
@@ -2145,8 +2120,8 @@ function deleteClient(id){
   if(Array.isArray(d.__newClients)){
     d.__newClients=d.__newClients.filter(nc=>nc&&nc.id!==id);
   }
-  localStorage.setItem(STORE_KEY,JSON.stringify(d));
-  if(typeof _karteiCache!=='undefined')_karteiCache=d;
+  _karteiCache=d;
+  idbKarteiSave(d);
 
   // 3) Schwarze Liste sofort markieren — damit auch Trello-Re-Imports und
   //    Cloud-Syncs (z.B. von iPad aus) den Kunden NICHT wieder hochspielen.
@@ -3916,12 +3891,10 @@ function saveAndRenderBericht(kd,count,failed){
   console.log('[Hautbericht-Upload] saveClientKartei fuer',selectedClient.id,'-',count,'ok,',failed||0,'fehler');
   saveClientKartei(selectedClient.id,kd);
   flushKartei();
-  // Verify: ist der Eintrag wirklich im localStorage gelandet?
   try{
-    var stored=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
-    var savedCount=(stored[selectedClient.id]&&stored[selectedClient.id].hautberichte||[]).length;
-    console.log('[Hautbericht-Upload] Nach Save: localStorage hat',savedCount,'Berichte fuer',selectedClient.id);
-  }catch(e){console.warn('Verify fehlgeschlagen:',e.message)}
+    var cachedCount=(_karteiCache[selectedClient.id]&&_karteiCache[selectedClient.id].hautberichte||[]).length;
+    console.log('[Hautbericht-Upload] Nach Save: Cache hat',cachedCount,'Berichte fuer',selectedClient.id);
+  }catch(e){}
   renderKartei(selectedClient);
   if(count>0)toast(count+' Hautanalysebericht'+(count>1?'e':'')+' hinterlegt');
   if(failed&&failed>0)toast(failed+' Datei'+(failed>1?'en':'')+' konnte'+(failed>1?'n':'')+' nicht hochgeladen werden','warn');
@@ -4028,14 +4001,13 @@ function diagnoseHautbericht(){
     lines.push('  '+(i+1)+'. '+(b.label||b.filename||'?')+'  ['+((b._mediaId||b._idbKey)?'ID: '+(b._mediaId||b._idbKey):'nur local data, noch nicht hochgeladen')+']');
   });
   lines.push('');
-  lines.push('--- localStorage ---');
+  lines.push('--- IndexedDB-Cache ---');
   try{
-    var all=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
-    var kdStored=all[id]||{};
+    var kdStored=(_karteiCache||{})[id]||{};
     var storedList=kdStored.hautberichte||[];
-    lines.push('Berichte in localStorage: '+storedList.length);
-    var size=Math.round((localStorage.getItem(STORE_KEY)||'').length/1024);
-    lines.push('localStorage-Groesse: '+size+' KB (Limit ca. 5000 KB)');
+    lines.push('Berichte im Cache: '+storedList.length);
+    var cacheSize=Math.round(JSON.stringify(_karteiCache||{}).length/1024);
+    lines.push('Cache-Groesse: '+cacheSize+' KB (IndexedDB, kein Limit)');
   }catch(e){lines.push('Fehler beim Lesen: '+e.message)}
   lines.push('');
   lines.push('--- CLOUD (Firebase) ---');
@@ -4974,120 +4946,52 @@ function deleteNote(i){
   toast('Notiz geloescht');
 }
 
-// ── STORAGE CLEANUP (einmalig beim Start) ──
-(function storageCleanup(){
+// ── ASYNC INIT: Kartei aus IndexedDB laden (mit localStorage-Migration) ──
+(async function asyncInit(){
   try{
-    var data=loadKartei();
-    var before=JSON.stringify(data).length;
-    var removed=0;
-
-    // 1. Leere Kartei-Einträge entfernen
-    Object.keys(data).forEach(function(id){
-      if(id.startsWith('_'))return;
-      var kd=data[id];
-      if(!kd||typeof kd!=='object'){delete data[id];removed++;return}
-      var hasContent=(kd.treatments&&kd.treatments.length)||(kd.notesList&&kd.notesList.length)||
-        (kd.skinReports&&kd.skinReports.length)||(kd.products&&kd.products.length)||
-        (kd.consents&&kd.consents.length)||(kd.notes&&String(kd.notes).trim().length>0)||
-        (kd.hauttyp&&String(kd.hauttyp).trim().length>0)||(kd.allergien&&String(kd.allergien).trim().length>0)||
-        (kd.adresse&&String(kd.adresse).trim().length>0)||kd._anamneseData||
-        kd.noonProdukte!==undefined||(kd.kuren&&kd.kuren.length)||
-        (kd.stamm&&Object.keys(kd.stamm).some(function(k){return kd.stamm[k]&&String(kd.stamm[k]).trim().length>0}));
-      if(!hasContent){delete data[id];removed++}
-    });
-
-    // 2. ALLE inline base64-Daten entfernen (Signaturen, Fotos, Berichte, Anamnesebogen-Unterschriften)
-    Object.keys(data).forEach(function(id){
-      if(id.startsWith('_'))return;
-      var kd=data[id];
-      if(!kd)return;
-      if(Array.isArray(kd.consents))kd.consents.forEach(function(c){
-        if(c.signature&&c.signature.length>500){
-          if(!c._mediaId){var mid='sig_'+id+'_'+(c.date||'');c._mediaId=mid;try{idbPut(mid,c.signature)}catch(e){}}
-          delete c.signature;
+    var data=await idbKarteiLoad();
+    if(!data){
+      // Migration: localStorage → IndexedDB (einmalig)
+      try{
+        var raw=localStorage.getItem(STORE_KEY);
+        if(raw&&raw.length>2){
+          data=JSON.parse(raw);
+          await openKarteiIDB().then(function(db){
+            if(!db)return;
+            try{
+              var tx=db.transaction(IDB_KARTEI_STORE,'readwrite');
+              tx.objectStore(IDB_KARTEI_STORE).put(data,'data');
+            }catch(e){}
+          });
+          localStorage.removeItem(STORE_KEY);
+          console.log('[Storage] Kartei von localStorage nach IndexedDB migriert — Speicher-Limit aufgehoben');
+        }else{
+          data={};
         }
-      });
-      if(Array.isArray(kd.photos))kd.photos.forEach(function(p){if(p.data&&p.data.length>500)delete p.data});
-      if(Array.isArray(kd.hautberichte))kd.hautberichte.forEach(function(b){if(b.data&&b.data.length>500)delete b.data});
-      if(kd._anamneseData){
-        if(kd._anamneseData.unterschrift)delete kd._anamneseData.unterschrift;
-        if(kd._anamneseData._unterschrift)delete kd._anamneseData._unterschrift;
-      }
+      }catch(e){data={};console.warn('Migration-Fehler:',e)}
+    }
+    _karteiCache=data||{};
+  }catch(e){
+    _karteiCache={};
+    console.warn('[Init] IDB-Load fehlgeschlagen, starte leer:',e);
+  }
+
+  initClients();
+  renderSidebar();
+  loadAnamnese();
+  loadHeimtherapie();
+  loadNachsorge();
+  setupFirebaseLiveSync();
+
+  openIDB().then(function(){
+    migrateMediaListsToCloud().then(function(){
+      updateStorageInfo();
     });
-
-    // 3. __newClients Duplikate entfernen
-    if(data.__newClients&&Array.isArray(data.__newClients)){
-      var seen=new Set();
-      data.__newClients=data.__newClients.filter(function(nc){
-        if(!nc||!nc.id||seen.has(nc.id))return false;
-        seen.add(nc.id);return true;
-      });
-    }
-
-    var after=JSON.stringify(data).length;
-    if(removed>0||after<before){
-      _karteiCache=data;
-      _karteiDirty=true;
-      try{localStorage.setItem(STORE_KEY,JSON.stringify(data));_karteiDirty=false}catch(e){console.warn('Storage Cleanup: localStorage immer noch voll nach Cleanup')}
-      console.log('[Storage Cleanup]',removed,'leere Einträge entfernt, '+(((before-after)/1024).toFixed(0))+' KB gespart ('+(before/1024).toFixed(0)+'→'+(after/1024).toFixed(0)+' KB)');
-    }
-  }catch(e){console.warn('Storage Cleanup Fehler:',e)}
-})();
-
-// ── INIT ──
-initClients();
-renderSidebar();
-loadAnamnese();
-loadHeimtherapie();
-loadNachsorge();
-
-// Firebase LIVE-Sync: Listener auf Kartei-Baum, Änderungen von allen Geräten sofort sichtbar
-setupFirebaseLiveSync();
-
-// Migration: alte Bilder → Firebase Cloud (laeuft einmal, danach auf allen Geräten)
-// Schritt 2: Medien-Listen (photos/hautberichte/hautanalysen) nach Cloud pushen,
-// damit Handy & PC dieselbe Kartei sehen
-openIDB().then(function(){
-  migrateMediaListsToCloud().then(function(){
-    updateStorageInfo();
   });
-});
 
-// ── EINMALIGER REPARATUR-PUSH (2026-04-23) ──
-// Vor dem Fix der Firebase-Rules wurden Cloud-Writes still abgelehnt → lokal gespeicherte
-// Behandlungen/Notizen/Adressen sind nie in der Cloud angekommen. Wir schieben einmalig alle
-// lokalen Kunden in die Cloud, danach laeuft der normale Sync.
-(function oneTimeFullPushAfterRulesFix(){
-  var FIX_KEY='sc_kartei_rules_fix_push_2026_04_23';
-  if(localStorage.getItem(FIX_KEY)==='done')return;
-  // Live-Sync erst initial hydrieren lassen, dann pushen (sonst ueberschreiben wir evtl. juengere Cloud-Daten)
-  setTimeout(function(){
-    try{
-      var data=loadKartei();
-      var ids=Object.keys(data).filter(function(id){return !String(id).startsWith('_')&&data[id]});
-      if(!ids.length){localStorage.setItem(FIX_KEY,'done');return}
-      var pushed=0,failed=0,pending=ids.length;
-      ids.forEach(function(id){
-        try{
-          FB_KARTEI_REF.child(id).set(clientSyncPayload(data[id]))
-            .then(function(){pushed++})
-            .catch(function(){failed++})
-            .finally(function(){
-              pending--;
-              if(pending<=0){
-                localStorage.setItem(FIX_KEY,'done');
-                console.log('[Rules-Fix Push] '+pushed+' Kunden in Cloud, '+failed+' Fehler');
-                if(pushed>0){try{toast(pushed+' Kartei'+(pushed>1?'en':'')+' in Cloud hochgeladen — jetzt auf allen Geräten verfuegbar')}catch(e){}}
-              }
-            });
-        }catch(e){failed++;pending--}
-      });
-    }catch(e){console.warn('Rules-Fix Push Fehler:',e&&e.message)}
-  },4000);
+  console.log('%c[Kundenkartei v57] geladen:','color:#b68;font-weight:bold',clients.length,'Kunden','(IndexedDB)');
+  document.title='Kundenkartei v57 — Skinconcept';
 })();
-
-console.log('%c[Kundenkartei v56] geladen:','color:#b68;font-weight:bold',clients.length,'Kunden');
-document.title='Kundenkartei v56 — Skinconcept';
 </script>
 
 <script>

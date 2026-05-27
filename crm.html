@@ -388,15 +388,32 @@ function getWaUrl(ph){const n=formatPhone(ph);return n?'https://wa.me/'+n:''}
 function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
 function getWeekStart(){const d=new Date(TODAY);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 
-// ── KARTEI ──
+// ── KARTEI (IndexedDB statt localStorage — kein 5MB-Limit) ──
 let _karteiCache=null;
-function loadKartei(){if(_karteiCache)return _karteiCache;try{_karteiCache=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return _karteiCache}catch{_karteiCache={};return _karteiCache}}
+let _idbKarteiDb=null;
+const IDB_KARTEI_NAME='skinconcept_kartei';
+const IDB_KARTEI_STORE='kartei';
+function openKarteiIDB(){
+  return new Promise(function(resolve){
+    if(_idbKarteiDb){resolve(_idbKarteiDb);return}
+    try{
+      var req=indexedDB.open(IDB_KARTEI_NAME,1);
+      req.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains(IDB_KARTEI_STORE))db.createObjectStore(IDB_KARTEI_STORE)};
+      req.onsuccess=function(e){_idbKarteiDb=e.target.result;resolve(_idbKarteiDb)};
+      req.onerror=function(){resolve(null)};
+    }catch(e){resolve(null)}
+  });
+}
+function idbKarteiSave(data){
+  openKarteiIDB().then(function(db){
+    if(!db)return;
+    try{var tx=db.transaction(IDB_KARTEI_STORE,'readwrite');tx.objectStore(IDB_KARTEI_STORE).put(data,'data')}catch(e){}
+  });
+}
+function loadKartei(){if(!_karteiCache)_karteiCache={};return _karteiCache}
 function getClientKartei(id){const k=loadKartei();if(!k[id])k[id]={treatments:[],products:[],photos:[],contacts:[],plan:[],hautanalysen:[],hautberichte:[],notesList:[]};return k[id]}
-// WICHTIG: nur den geaenderten Kunden in Firebase aktualisieren, NIEMALS das gesamte kartei_data mit .set() ueberschreiben,
-// sonst werden andere Geraete (insbesondere Handy mit leerem localStorage) die gesamte Cloud-Kartei loeschen.
-function saveClientKartei(id,data){const k=loadKartei();k[id]=data;_karteiCache=k;localStorage.setItem(STORE_KEY,JSON.stringify(k));try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).update(data)}catch(e){}}
-// Nur einzelne Felder eines Kunden anfassen (Kontaktiert-Status, Erinnerungen usw.) — Consents/Behandlungen bleiben unberuehrt.
-function updateCrmClientFields(id,fields){const kd=getClientKartei(id);Object.assign(kd,fields);const k=loadKartei();k[id]=kd;_karteiCache=k;localStorage.setItem(STORE_KEY,JSON.stringify(k));try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).update(fields)}catch(e){}}
+function saveClientKartei(id,data){const k=loadKartei();k[id]=data;_karteiCache=k;idbKarteiSave(k);try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).update(data)}catch(e){}}
+function updateCrmClientFields(id,fields){const kd=getClientKartei(id);Object.assign(kd,fields);const k=loadKartei();k[id]=kd;_karteiCache=k;idbKarteiSave(k);try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).update(fields)}catch(e){}}
 
 // ── CRM DATA ──
 let crmData={};
@@ -972,7 +989,7 @@ function deleteClientCRM(id){
   // Aus Client-Liste entfernen
   clients=clients.filter(x=>x.id!==id);
   // Aus Kartei-localStorage entfernen + nur diesen EINEN Kunden aus der Cloud entfernen
-  const k=loadKartei();if(k[id]){delete k[id];_karteiCache=k;localStorage.setItem(STORE_KEY,JSON.stringify(k));try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).remove()}catch(e){}}
+  const k=loadKartei();if(k[id]){delete k[id];_karteiCache=k;idbKarteiSave(k);try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).remove()}catch(e){}}
   // Aus CRM-Daten entfernen
   if(crmData[id]){delete crmData[id];saveCrmData(id)}
   // Panel schliessen falls offen
@@ -993,8 +1010,20 @@ document.getElementById('crmSearch').addEventListener('input',function(){searchQ
 document.getElementById('crmSort').addEventListener('change',function(){sortMode=this.value;renderList()});
 document.getElementById('fuModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
 
-// ── INIT ──
-document.addEventListener('DOMContentLoaded',function(){
+// ── INIT (async: Kartei aus IndexedDB laden, dann rendern) ──
+document.addEventListener('DOMContentLoaded',async function(){
+  try{
+    var idbData=await openKarteiIDB().then(function(db){
+      if(!db)return null;
+      return new Promise(function(resolve){
+        try{var tx=db.transaction(IDB_KARTEI_STORE,'readonly');var req=tx.objectStore(IDB_KARTEI_STORE).get('data');req.onsuccess=function(){resolve(req.result||null)};req.onerror=function(){resolve(null)}}catch(e){resolve(null)}
+      });
+    });
+    if(!idbData){
+      try{var raw=localStorage.getItem(STORE_KEY);if(raw&&raw.length>2){idbData=JSON.parse(raw);localStorage.removeItem(STORE_KEY)}}catch(e){}
+    }
+    _karteiCache=idbData||{};
+  }catch(e){_karteiCache={}}
   loadCrmData();loadExternalData();initClients();render();loadNachsorge();initFirebaseSync();
   setTimeout(()=>{
     const reminders=clients.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR}).length;
