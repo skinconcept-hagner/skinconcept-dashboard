@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FCFAF6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Skinconcept">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <title>Skinconcept Hagner — Kalender</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+/* ============================================================
+   KALENDER — Treatwell-Style Tages-/Wochenansicht
+   ============================================================ */
+
+.kal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 0 20px; margin-bottom: 0; gap: 12px; flex-wrap: wrap;
+}
+.kal-nav { display: flex; align-items: center; gap: 8px; }
+.kal-nav-btn {
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg-card); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: var(--text-secondary); transition: all 0.2s;
+    font-size: 18px;
+}
+.kal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.kal-nav-btn:active { transform: scale(0.95); }
+.page-header h2 { font-family: inherit !important; font-size: 28px !important; font-weight: 700 !important; }
+.kal-date-label {
+    font-family: inherit;
+    font-size: 22px; font-weight: 600; color: var(--primary-dark);
+    min-width: 200px; text-align: center; letter-spacing: -0.3px;
+}
+.kal-today-btn {
+    padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-card); cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); font-family: inherit; transition: all 0.2s;
+}
+.kal-today-btn:hover { background: var(--primary-dark); color: #fff; border-color: var(--primary-dark); }
+
+.kal-view-toggle { display: flex; gap: 2px; background: var(--bg-subtle); border-radius: 10px; padding: 3px; }
+.kal-view-btn {
+    padding: 8px 16px; border-radius: 8px; border: none; background: transparent;
+    cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted);
+    font-family: inherit; transition: all 0.2s;
+}
+.kal-view-btn.active { background: var(--bg-card); color: var(--primary-dark); box-shadow: var(--shadow-sm); }
+
+.kal-actions { display: flex; gap: 8px; }
+.kal-add-btn {
+    padding: 10px 20px; border-radius: 10px; border: none;
+    background: var(--primary-dark); color: #FCFAF6; cursor: pointer;
+    font-size: 13px; font-weight: 600; font-family: inherit;
+    display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+}
+.kal-add-btn:hover { background: #1F1B17; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(31,27,23,0.2); }
+
+/* ============ GRID ============ */
+.kal-grid-wrap {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; position: relative;
+}
+.kal-grid-scroll {
+    overflow-y: auto; max-height: calc(100vh - 220px);
+    -webkit-overflow-scrolling: touch;
+}
+.kal-col-headers {
+    display: grid; gap: 0; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10; background: var(--bg-subtle);
+}
+.kal-col-header {
+    padding: 14px 16px; text-align: center; font-size: 13px; font-weight: 600;
+    color: var(--primary-dark); letter-spacing: 0.2px;
+}
+.kal-col-header .sub { font-size: 11px; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
+.kal-grid {
+    display: grid; gap: 0; position: relative;
+}
+.kal-time-col {
+    border-right: 1px solid var(--border); background: var(--bg-subtle);
+}
+.kal-time-slot {
+    height: 60px; padding: 4px 10px; font-size: 11px; color: var(--text-muted);
+    font-weight: 500; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: flex-end;
+}
+.kal-day-col {
+    border-right: 1px solid var(--border); position: relative; min-height: 60px;
+}
+.kal-day-col:last-child { border-right: none; }
+.kal-slot {
+    height: 60px; border-bottom: 1px solid rgba(42,37,32,0.04);
+    cursor: pointer; transition: background 0.15s;
+}
+.kal-slot:hover { background: rgba(184,151,99,0.06); }
+.kal-slot.half { border-bottom-style: dashed; border-bottom-color: rgba(42,37,32,0.03); }
+
+/* ============ TERMINE (Appointment Blocks) ============ */
+.kal-appt {
+    position: absolute; left: 4px; right: 4px; border-radius: 8px;
+    padding: 6px 10px; font-size: 12px; cursor: pointer;
+    overflow: hidden; z-index: 5; transition: box-shadow 0.2s, transform 0.2s;
+    border-left: 3px solid;
+}
+.kal-appt:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: scale(1.01); z-index: 6; }
+.kal-appt .appt-time { font-size: 10px; font-weight: 600; opacity: 0.7; }
+.kal-appt .appt-name { font-weight: 600; line-height: 1.3; margin-top: 1px; }
+.kal-appt .appt-treatment { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+/* Farbcodes pro Kategorie */
+.kal-appt.cat-facial { background: #EBF5F0; border-color: #3D8B5F; color: #2D6B47; }
+.kal-appt.cat-noon { background: #FDF6E3; border-color: #B89763; color: #8B7340; }
+.kal-appt.cat-peel { background: #F0EBFA; border-color: #7C5FC4; color: #5B449B; }
+.kal-appt.cat-laser { background: #EDF4FB; border-color: #4A7FB5; color: #3A6490; }
+.kal-appt.cat-wax { background: #FFF0E6; border-color: #D4894A; color: #A8693A; }
+.kal-appt.cat-beratung { background: #F5F3F0; border-color: #8C857A; color: #5C564E; }
+.kal-appt.cat-default { background: #F8F4EC; border-color: #B89763; color: #6B5B45; }
+.kal-appt.cat-blocker { background: repeating-linear-gradient(135deg, #F0EDEA, #F0EDEA 4px, #E8E4E0 4px, #E8E4E0 8px); border-color: #C0B8B0; color: #8C857A; cursor: default; }
+.kal-appt.cat-blocker:hover { transform: none; box-shadow: none; }
+.kal-appt.status-abkassiert { opacity: 0.5; }
+.kal-appt.status-abkassiert::after { content: ''; position: absolute; top: 6px; right: 8px; width: 16px; height: 16px; border-radius: 50%; background: var(--success); display: flex; align-items: center; justify-content: center; }
+.kal-appt.status-noshow { opacity: 0.4; }
+.kal-appt.status-noshow .appt-name { text-decoration: line-through; }
+.kal-appt.status-abgesagt { display: none; }
+
+/* ============ CURRENT TIME LINE ============ */
+.kal-now-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: var(--danger); z-index: 8; pointer-events: none;
+}
+.kal-now-line::before {
+    content: ''; position: absolute; left: -4px; top: -4px;
+    width: 10px; height: 10px; border-radius: 50%; background: var(--danger);
+}
+
+/* ============ DETAIL PANEL ============ */
+.kal-detail-overlay {
+    position: fixed; inset: 0; background: rgba(31,27,23,0.4);
+    backdrop-filter: blur(4px); z-index: 400; display: none;
+}
+.kal-detail-overlay.open { display: block; }
+.kal-detail {
+    position: fixed; top: 0; right: 0; width: 420px; max-width: 92vw;
+    height: 100vh; background: var(--bg-card); z-index: 401;
+    transform: translateX(100%); transition: transform 0.3s var(--ease);
+    display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(31,27,23,0.15);
+}
+.kal-detail.open { transform: translateX(0); }
+.kal-detail-header {
+    padding: 24px 24px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.kal-detail-close {
+    width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
+    background: none; cursor: pointer; font-size: 18px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+}
+.kal-detail-close:hover { background: var(--bg-subtle); }
+.kal-detail-body { flex: 1; overflow-y: auto; padding: 24px; }
+.kal-detail-footer {
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px;
+}
+.kal-detail-footer .btn { flex: 1; justify-content: center; min-height: 44px; }
+
+/* ============ MODAL (Neuer Termin) ============ */
+.kal-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(31,27,23,0.4); backdrop-filter: blur(6px);
+    z-index: 500; align-items: flex-end; justify-content: center;
+}
+.kal-modal-overlay.open { display: flex; }
+.kal-modal {
+    background: var(--bg-card); width: 100%; max-width: 520px;
+    max-height: 92vh; overflow-y: auto; padding: 28px 24px 32px;
+    border-radius: 20px 20px 0 0; animation: kalModalUp 0.3s var(--ease);
+}
+.kal-modal::before {
+    content: ''; display: block; width: 40px; height: 4px;
+    background: var(--border-strong); border-radius: 4px;
+    margin: -8px auto 20px;
+}
+@keyframes kalModalUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.kal-modal h3 {
+    font-family: inherit;
+    font-size: 24px; font-weight: 500; color: var(--primary-dark);
+    margin-bottom: 20px;
+}
+
+@media (min-width: 600px) {
+    .kal-modal-overlay { align-items: center; padding: 24px; }
+    .kal-modal { border-radius: 20px; }
+    .kal-modal::before { display: none; }
+}
+
+/* ============ LOADING STATE ============ */
+.kal-loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+.kal-loading-spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ EMPTY STATE ============ */
+.kal-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.kal-empty h3 { font-size: 16px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; }
+.kal-empty p { font-size: 13px; line-height: 1.6; }
+
+/* ============ ANIMATIONS ============ */
+.kal-appt { animation: apptFadeIn 0.3s ease-out; }
+@keyframes apptFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.kal-grid-wrap { animation: gridFadeIn 0.4s ease-out; }
+@keyframes gridFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.kal-detail.open { animation: slideInRight 0.3s ease-out; }
+@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+/* ============ MOBILE ============ */
+@media (max-width: 900px) {
+    .kal-header { flex-direction: column; align-items: stretch; gap: 10px; }
+    .kal-nav { justify-content: center; }
+    .kal-view-toggle { justify-content: center; }
+    .kal-actions { justify-content: center; }
+    .kal-date-label { font-size: 20px; min-width: auto; }
+    .kal-grid-scroll { max-height: calc(100vh - 280px); }
+    .kal-col-header { padding: 10px 8px; font-size: 12px; }
+    .kal-appt { padding: 4px 6px; font-size: 11px; }
+    .kal-appt .appt-treatment { display: none; }
+}
+@media (max-width: 600px) {
+    .kal-time-slot { padding: 4px 6px; font-size: 10px; }
+    .kal-appt .appt-name { font-size: 11px; }
+}
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle" aria-label="Menue">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main" style="padding-top: 24px;">
+
+        <!-- Header -->
+        <div class="kal-header">
+            <div class="kal-nav">
+                <button class="kal-nav-btn" onclick="navigateDay(-1)" aria-label="Vorheriger Tag">&#8249;</button>
+                <div class="kal-date-label" id="kalDateLabel">Montag, 26. Mai 2026</div>
+                <button class="kal-nav-btn" onclick="navigateDay(1)" aria-label="Naechster Tag">&#8250;</button>
+                <button class="kal-today-btn" onclick="goToday()">Heute</button>
+            </div>
+            <div class="kal-view-toggle">
+                <button class="kal-view-btn active" onclick="setView('day', this)">Tag</button>
+                <button class="kal-view-btn" onclick="setView('week', this)">Woche</button>
+            </div>
+            <div class="kal-actions">
+                <button class="kal-add-btn" style="background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:10px 14px;font-size:12px;" onclick="printTagesplan()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Drucken
+                </button>
+                <button class="kal-add-btn" style="background:transparent;color:var(--text-secondary);border:1px solid var(--border);" onclick="openBlocker()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                    Blocker
+                </button>
+                <button class="kal-add-btn" onclick="openNewAppt()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Neuer Termin
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div id="kalStats" style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;"></div>
+
+        <!-- Calendar Grid -->
+        <div class="kal-grid-wrap">
+            <div id="kalColHeaders" class="kal-col-headers"></div>
+            <div class="kal-grid-scroll" id="kalGridScroll">
+                <div id="kalGrid" class="kal-grid"></div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Detail Panel -->
+<div class="kal-detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="kal-detail" id="detailPanel">
+    <div class="kal-detail-header">
+        <h3 id="detailTitle" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--primary-dark);margin:0;">Termindetails</h3>
+        <button class="kal-detail-close" onclick="closeDetail()">&times;</button>
+    </div>
+    <div class="kal-detail-body" id="detailBody"></div>
+    <div class="kal-detail-footer" style="flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="closeDetail()">Schliessen</button>
+        <button class="btn btn-primary" onclick="editAppt()">Bearbeiten</button>
+        <button class="btn" style="background:var(--success);color:#fff;" onclick="goToKasse()">Abkassieren</button>
+        <button class="btn" style="background:var(--warning);color:#fff;" onclick="markNoShow()">No-Show</button>
+        <button class="btn" style="background:var(--danger);color:#fff;" onclick="deleteAppt()">Absagen</button>
+    </div>
+</div>
+
+<!-- New Appointment Modal -->
+<div class="kal-modal-overlay" id="apptModal">
+    <div class="kal-modal">
+        <h3>Neuer Termin</h3>
+        <div class="form-group" style="position:relative;">
+            <label>Kundin</label>
+            <input type="text" id="apptClient" placeholder="Name eingeben oder suchen..." autocomplete="off" oninput="filterKalClients()">
+            <div id="clientDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:#fff;border:1px solid var(--border);border-radius:10px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.1);margin-top:4px;"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="apptDate">
+            </div>
+            <div class="form-group">
+                <label>Uhrzeit</label>
+                <input type="time" id="apptTime" step="900">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Behandlung</label>
+            <select id="apptTreatment"></select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Dauer (Min.)</label>
+                <input type="number" id="apptDuration" value="60" min="15" step="15">
+            </div>
+            <div class="form-group">
+                <label>Mitarbeiterin</label>
+                <select id="apptStaff">
+                    <option value="tamara">Tamara</option>
+                    <option value="elena">Elena</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Notizen</label>
+            <textarea id="apptNotes" rows="2" placeholder="Optional..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Wiederholung</label>
+            <select id="apptRepeat">
+                <option value="none">Einmalig</option>
+                <option value="weekly">Woechentlich</option>
+                <option value="biweekly">Alle 2 Wochen</option>
+                <option value="monthly">Monatlich</option>
+            </select>
+        </div>
+        <div id="repeatInfo" style="display:none;padding:10px 14px;background:var(--info-light);border-radius:10px;font-size:12px;color:var(--info);margin-bottom:10px;"></div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveNewAppt()">Termin speichern</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Blocker Modal -->
+<div class="kal-modal-overlay" id="blockerModal">
+    <div class="kal-modal">
+        <h3>Blocker eintragen</h3>
+        <div class="form-group">
+            <label>Grund</label>
+            <select id="blockerType">
+                <option value="Mittagspause">Mittagspause</option>
+                <option value="Urlaub">Urlaub</option>
+                <option value="Fortbildung">Fortbildung</option>
+                <option value="Privat">Privat</option>
+                <option value="Sonstiges">Sonstiges</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="blockerDate">
+            </div>
+            <div class="form-group">
+                <label>Von</label>
+                <input type="time" id="blockerStart" step="900" value="12:00">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Dauer (Min.)</label>
+                <input type="number" id="blockerDuration" value="60" min="15" step="15">
+            </div>
+            <div class="form-group">
+                <label>Mitarbeiterin</label>
+                <select id="blockerStaff">
+                    <option value="tamara">Tamara</option>
+                    <option value="elena">Elena</option>
+                    <option value="beide">Beide (Studio geschlossen)</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Notiz (optional)</label>
+            <input type="text" id="blockerNote" placeholder="z.B. Dr. Mueller, Noon Schulung...">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveBlocker()">Blocker speichern</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeBlockerModal()">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<script src="jspdf.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+function toast(msg) { if (typeof showToast === 'function') showToast(msg); else console.log(msg); }
+
+const STAFF = [
+    { id: 'tamara', name: 'Tamara', color: '#B89763' },
+    { id: 'elena', name: 'Elena', color: '#4A7FB5' }
+];
+const OPEN_HOURS = { start: 9, end: 18.5, friday_end: 16.5 };
+
+function getEaster(year) {
+    var a=year%19, b=Math.floor(year/100), c=year%100, d=Math.floor(b/4), e=b%4;
+    var f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+    var i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7;
+    var m=Math.floor((a+11*h+22*l)/451);
+    var month=Math.floor((h+l-7*m+114)/31), day=((h+l-7*m+114)%31)+1;
+    return new Date(year, month-1, day);
+}
+
+function getFeiertage(year) {
+    var easter = getEaster(year);
+    var e = function(offset) { var d = new Date(easter); d.setDate(d.getDate() + offset); return toDateStr(d); };
+    return {
+        [year+'-01-01']: 'Neujahr',
+        [e(-2)]: 'Karfreitag',
+        [e(0)]: 'Ostersonntag',
+        [e(1)]: 'Ostermontag',
+        [year+'-05-01']: 'Tag der Arbeit',
+        [e(39)]: 'Christi Himmelfahrt',
+        [e(49)]: 'Pfingstsonntag',
+        [e(50)]: 'Pfingstmontag',
+        [e(60)]: 'Fronleichnam',
+        [year+'-10-03']: 'Tag der Deutschen Einheit',
+        [year+'-11-01']: 'Allerheiligen',
+        [year+'-12-25']: '1. Weihnachtstag',
+        [year+'-12-26']: '2. Weihnachtstag',
+    };
+}
+
+var FEIERTAGE = Object.assign({}, getFeiertage(2026), getFeiertage(2027));
+
+function isFeiertag(dateStr) { return FEIERTAGE[dateStr] || null; }
+function isClosedDay(dateStr) {
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.getDay() === 0 || d.getDay() === 6 || !!FEIERTAGE[dateStr];
+}
+const SLOT_HEIGHT = 60;
+
+const CATEGORY_COLORS = {
+    'Noon Aesthetics': 'cat-noon',
+    'Facial': 'cat-facial',
+    'Peeling': 'cat-peel',
+    'Laser': 'cat-laser',
+    'Waxing': 'cat-wax',
+    'Beratung': 'cat-beratung'
+};
+let firestoreTreatments = [];
+var kalClients = [];
+
+var dashApp2 = firebase.initializeApp({
+  apiKey:"AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+  databaseURL:"https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"skinconcept-hagner",
+  appId:"1:101205413833:web:9734e0906dd71d1a9d2218"
+}, 'kalDash');
+var kalDashDb = dashApp2.database();
+var KAL_VAULT = 'v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
+
+function filterKalClients() {
+    var q = document.getElementById('apptClient').value.toLowerCase().trim();
+    var dd = document.getElementById('clientDropdown');
+    if (!q || q.length < 1) { dd.style.display = 'none'; return; }
+    var matches = kalClients.filter(function(c) { return c.name.toLowerCase().includes(q); }).slice(0, 8);
+    if (matches.length === 0) { dd.style.display = 'none'; return; }
+    dd.style.display = 'block';
+    dd.innerHTML = matches.map(function(c) {
+        return '<div style="padding:10px 14px;cursor:pointer;font-size:13px;transition:background 0.1s;border-bottom:1px solid rgba(0,0,0,0.04);" onmouseover="this.style.background=\'rgba(184,151,99,0.06)\'" onmouseout="this.style.background=\'transparent\'" onclick="pickKalClient(\'' + escHtml(c.name).replace(/'/g, "\\'") + '\')">' +
+            '<div style="font-weight:500;">' + escHtml(c.name) + '</div>' +
+            (c.phone ? '<div style="font-size:11px;color:var(--text-muted);">' + escHtml(c.phone) + '</div>' : '') +
+        '</div>';
+    }).join('');
+}
+
+function pickKalClient(name) {
+    document.getElementById('apptClient').value = name;
+    document.getElementById('clientDropdown').style.display = 'none';
+}
+
+async function loadKalClients() {
+    try {
+        var snap = await kalDashDb.ref(KAL_VAULT + '/kartei_data').once('value');
+        var data = snap.val();
+        if (!data) return;
+        kalClients = [];
+        for (var id in data) {
+            if (id.startsWith('_')) continue;
+            var r = data[id];
+            var fn = (r.fn || '').trim(), ln = (r.ln || '').trim();
+            var name = (r.name || (fn + ' ' + ln)).trim();
+            if (!name) continue;
+            kalClients.push({ id: id, name: name, phone: r.ph || '', email: r.em || '' });
+        }
+        kalClients.sort(function(a, b) { return a.name.localeCompare(b.name, 'de'); });
+    } catch(e) { console.error('Kal clients:', e); }
+}
+
+let currentDate = new Date();
+let currentView = 'day';
+let appointments = [];
+let selectedAppt = null;
+
+// ============ DEMO DATA ============
+const DEMO_APPTS = [
+    { id: 'd1', client: 'Maria Schneider', treatment: 'Noon Premium Facial', category: 'Noon Aesthetics', staff: 'tamara', date: todayStr(), time: '09:00', duration: 90, notes: 'Erstbehandlung, empfindliche Haut', phone: '0171 234 5678' },
+    { id: 'd2', client: 'Laura Weber', treatment: 'Fruchtsaeure Peeling', category: 'Peeling', staff: 'tamara', date: todayStr(), time: '11:00', duration: 60, phone: '0176 987 6543' },
+    { id: 'd3', client: 'Sophie Klein', treatment: 'Waxing Beine komplett', category: 'Waxing', staff: 'elena', date: todayStr(), time: '09:30', duration: 45 },
+    { id: 'd4', client: 'Anna Mueller', treatment: 'Noon Skin Renewal', category: 'Noon Aesthetics', staff: 'elena', date: todayStr(), time: '10:30', duration: 75, notes: 'Folgetermin #3' },
+    { id: 'd5', client: 'Lisa Braun', treatment: 'Hautanalyse + Beratung', category: 'Beratung', staff: 'tamara', date: todayStr(), time: '14:00', duration: 30 },
+    { id: 'd6', client: 'Emma Fischer', treatment: 'Microneedling', category: 'Noon Aesthetics', staff: 'elena', date: todayStr(), time: '13:00', duration: 60, phone: '0151 111 2233' },
+    { id: 'd7', client: 'Julia Hartmann', treatment: 'Classic Facial', category: 'Facial', staff: 'tamara', date: todayStr(), time: '16:00', duration: 60 },
+    { id: 'd8', client: 'Katharina Becker', treatment: 'Noon Eye Treatment', category: 'Noon Aesthetics', staff: 'elena', date: todayStr(), time: '15:00', duration: 45, notes: 'Stammkundin, VIP' },
+];
+
+function loadApptsLocal() {
+    try { var s = localStorage.getItem('sc_kalender_appts'); if (s) return JSON.parse(s); } catch(e) {}
+    return null;
+}
+function saveApptsLocal() {
+    try { localStorage.setItem('sc_kalender_appts', JSON.stringify(appointments)); } catch(e) {}
+}
+
+var _firestoreReady = false;
+
+async function saveApptToFirestore(appt) {
+    try { await db.collection('appointments').doc(appt.id).set(appt); } catch(e) { console.error('Firestore save:', e); }
+}
+async function deleteApptFromFirestore(id) {
+    try { await db.collection('appointments').doc(id).delete(); } catch(e) { console.error('Firestore delete:', e); }
+}
+function saveAppts() {
+    saveApptsLocal();
+}
+
+async function initAppointments() {
+    var local = loadApptsLocal();
+    try {
+        var snap = await db.collection('appointments').get();
+        if (snap.size > 0) {
+            appointments = [];
+            snap.forEach(function(doc) { appointments.push({ id: doc.id, ...doc.data() }); });
+            saveApptsLocal();
+            _firestoreReady = true;
+            render();
+            return;
+        }
+    } catch(e) { console.error('Firestore appointments load:', e); }
+
+    appointments = local || [...DEMO_APPTS];
+    saveApptsLocal();
+
+    if (!local) {
+        for (var i = 0; i < appointments.length; i++) {
+            await saveApptToFirestore(appointments[i]);
+        }
+    }
+    _firestoreReady = true;
+    render();
+}
+
+// ============ RENDER ============
+function render() {
+    renderHeader();
+    renderGrid();
+    renderStats();
+    updateNowLine();
+}
+
+function renderStats() {
+    var dateStr = toDateStr(currentDate);
+    var dayAppts = appointments.filter(function(a) { return a.date === dateStr && !a.isBlocker; });
+    var blockers = appointments.filter(function(a) { return a.date === dateStr && a.isBlocker; });
+
+    var totalMinBooked = 0;
+    dayAppts.forEach(function(a) { totalMinBooked += a.duration || 0; });
+
+    var isFriday = currentDate.getDay() === 5;
+    var totalAvailMin = (isFriday ? 7.5 : 9.5) * 60 * 2;
+    var auslastung = totalAvailMin > 0 ? Math.round(totalMinBooked / totalAvailMin * 100) : 0;
+
+    var revenue = 0;
+    dayAppts.forEach(function(a) {
+        var t = firestoreTreatments.find(function(ft) { return ft.name === a.treatment; });
+        if (t && t.price) revenue += t.price;
+    });
+
+    var statsEl = document.getElementById('kalStats');
+    if (currentView === 'week') { statsEl.innerHTML = ''; return; }
+
+    var auslColor = auslastung > 80 ? 'var(--success)' : auslastung > 50 ? 'var(--warning)' : 'var(--text-muted)';
+    statsEl.innerHTML =
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:13px;">' +
+            '<span style="font-weight:600;">' + dayAppts.length + '</span> Termine' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:13px;">' +
+            '<span style="font-weight:600;color:' + auslColor + ';">' + auslastung + '%</span> Auslastung' +
+        '</div>' +
+        (blockers.length ? '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:13px;">' +
+            '<span style="font-weight:600;">' + blockers.length + '</span> Blocker</div>' : '') +
+        (revenue > 0 ? '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:13px;">' +
+            '<span style="font-weight:600;">' + revenue.toLocaleString('de-DE', {minimumFractionDigits:0}) + ' EUR</span> Umsatzprognose</div>' : '');
+}
+
+function renderHeader() {
+    const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    var label = currentDate.toLocaleDateString('de-DE', opts);
+    var ft = isFeiertag(toDateStr(currentDate));
+    if (ft) label += ' — ' + ft;
+    document.getElementById('kalDateLabel').textContent = label;
+}
+
+function renderGrid() {
+    const isWeek = currentView === 'week';
+    const days = isWeek ? getWeekDays(currentDate) : [new Date(currentDate)];
+    const staffCols = isWeek ? [null] : STAFF;
+    const isFriday = days.length === 1 && days[0].getDay() === 5;
+    const endHour = isFriday ? OPEN_HOURS.friday_end : OPEN_HOURS.end;
+    const startHour = OPEN_HOURS.start;
+    const totalSlots = (endHour - startHour) * 2;
+
+    const gridCols = isWeek
+        ? `60px repeat(${days.length}, 1fr)`
+        : `60px repeat(${staffCols.length}, 1fr)`;
+
+    // Column headers
+    const headersEl = document.getElementById('kalColHeaders');
+    headersEl.style.gridTemplateColumns = gridCols;
+    if (isWeek) {
+        const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+        headersEl.innerHTML = '<div class="kal-col-header" style="background:var(--bg-subtle);"></div>' +
+            days.map(d => {
+                const isToday = toDateStr(d) === todayStr();
+                return `<div class="kal-col-header" style="${isToday ? 'background:rgba(184,151,99,0.1);font-weight:700;' : ''}">
+                    ${dayNames[d.getDay()]} <div class="sub">${d.getDate()}.${d.getMonth()+1}.</div>
+                </div>`;
+            }).join('');
+    } else {
+        headersEl.innerHTML = '<div class="kal-col-header" style="background:var(--bg-subtle);"></div>' +
+            staffCols.map(s => `<div class="kal-col-header">${s.name}</div>`).join('');
+    }
+
+    // Grid
+    const gridEl = document.getElementById('kalGrid');
+    gridEl.style.gridTemplateColumns = gridCols;
+    let html = '';
+
+    // Time column
+    html += '<div class="kal-time-col">';
+    for (let i = 0; i < totalSlots; i++) {
+        const h = startHour + i * 0.5;
+        const label = i % 2 === 0 ? `${String(Math.floor(h)).padStart(2,'0')}:00` : '';
+        html += `<div class="kal-time-slot${i % 2 === 1 ? ' half' : ''}">${label}</div>`;
+    }
+    html += '</div>';
+
+    // Day/Staff columns
+    const cols = isWeek ? days : staffCols;
+    cols.forEach((col, colIdx) => {
+        const colDateStr = isWeek ? toDateStr(col) : toDateStr(currentDate);
+        const staffId = isWeek ? null : col.id;
+
+        html += `<div class="kal-day-col" data-date="${colDateStr}" data-staff="${staffId || ''}">`;
+        for (let i = 0; i < totalSlots; i++) {
+            const h = startHour + i * 0.5;
+            const timeStr = `${String(Math.floor(h)).padStart(2,'0')}:${i % 2 === 0 ? '00' : '30'}`;
+            html += `<div class="kal-slot${i % 2 === 1 ? ' half' : ''}" data-time="${timeStr}" onclick="slotClick('${colDateStr}','${timeStr}','${staffId || 'tamara'}')"></div>`;
+        }
+        html += '</div>';
+    });
+
+    gridEl.innerHTML = html;
+
+    // Place appointments
+    const dayApptsMap = {};
+    appointments.forEach(a => {
+        if (!dayApptsMap[a.date]) dayApptsMap[a.date] = [];
+        dayApptsMap[a.date].push(a);
+    });
+
+    cols.forEach((col, colIdx) => {
+        const colDateStr = isWeek ? toDateStr(col) : toDateStr(currentDate);
+        const colAppts = dayApptsMap[colDateStr] || [];
+        const dayCol = gridEl.querySelectorAll('.kal-day-col')[colIdx];
+        if (!dayCol) return;
+
+        colAppts.forEach(a => {
+            if (!isWeek && a.staff !== col.id) return;
+
+            const [h, m] = a.time.split(':').map(Number);
+            const topMinutes = (h - startHour) * 60 + m;
+            if (topMinutes < 0) return;
+            const top = (topMinutes / 30) * (SLOT_HEIGHT / 2);
+            const height = (a.duration / 30) * (SLOT_HEIGHT / 2);
+            const isBlocker = a.isBlocker || a.category === '_blocker';
+            const catClass = isBlocker ? 'cat-blocker' : (CATEGORY_COLORS[a.category] || 'cat-default');
+
+            const el = document.createElement('div');
+            var statusClass = a.status === 'abkassiert' ? ' status-abkassiert' : a.status === 'no-show' ? ' status-noshow' : a.status === 'abgesagt' ? ' status-abgesagt' : '';
+            el.className = `kal-appt ${catClass}${statusClass}`;
+            el.style.top = top + 'px';
+            el.style.height = height + 'px';
+            if (isBlocker) {
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm(a.client + ' (' + a.time + ' - ' + endTime(a.time, a.duration) + ') entfernen?')) {
+                        appointments = appointments.filter(x => x.id !== a.id);
+                        saveAppts(); deleteApptFromFirestore(a.id); render();
+                        toast('Blocker entfernt');
+                    }
+                };
+                el.innerHTML = `
+                    <div class="appt-time">${a.time} - ${endTime(a.time, a.duration)}</div>
+                    <div class="appt-name">${escHtml(a.client)}</div>
+                    ${a.notes ? '<div class="appt-treatment">' + escHtml(a.notes) + '</div>' : ''}
+                `;
+            } else {
+                el.onclick = (e) => { if (!el._dragged) { e.stopPropagation(); openDetail(a); } el._dragged = false; };
+                el.innerHTML = `
+                    <div class="appt-time">${a.time} - ${endTime(a.time, a.duration)}</div>
+                    <div class="appt-name">${escHtml(a.client)}</div>
+                    <div class="appt-treatment">${escHtml(a.treatment)}</div>
+                `;
+                el.style.cursor = 'grab';
+                setupDrag(el, a, dayCol);
+            }
+            dayCol.appendChild(el);
+        });
+    });
+
+    // Scroll to 8:30
+    const scroll = document.getElementById('kalGridScroll');
+    if (scroll.scrollTop === 0) scroll.scrollTop = 0;
+}
+
+function updateNowLine() {
+    document.querySelectorAll('.kal-now-line').forEach(e => e.remove());
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    if (h < OPEN_HOURS.start || h >= 19) return;
+
+    const topMinutes = (h - OPEN_HOURS.start) * 60 + m;
+    const top = (topMinutes / 30) * (SLOT_HEIGHT / 2);
+
+    const dayCols = document.querySelectorAll('.kal-day-col');
+    const todayS = todayStr();
+    dayCols.forEach(col => {
+        if (col.dataset.date === todayS) {
+            const line = document.createElement('div');
+            line.className = 'kal-now-line';
+            line.style.top = top + 'px';
+            col.appendChild(line);
+        }
+    });
+}
+
+// ============ NAVIGATION ============
+function navigateDay(delta) {
+    if (currentView === 'week') delta *= 7;
+    currentDate.setDate(currentDate.getDate() + delta);
+    if (currentView === 'day') {
+        var safety = 0;
+        while (isClosedDay(toDateStr(currentDate)) && safety < 10) {
+            currentDate.setDate(currentDate.getDate() + (delta > 0 ? 1 : -1));
+            safety++;
+        }
+    }
+    render();
+}
+
+function goToday() {
+    currentDate = new Date();
+    render();
+}
+
+function setView(view, btn) {
+    currentView = view;
+    document.querySelectorAll('.kal-view-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    render();
+}
+
+// ============ DETAIL PANEL ============
+function openDetail(appt) {
+    selectedAppt = appt;
+    document.getElementById('detailTitle').textContent = appt.client;
+    const staffName = STAFF.find(s => s.id === appt.staff)?.name || appt.staff;
+    document.getElementById('detailBody').innerHTML = `
+        <div style="margin-bottom:20px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;">Behandlung</div>
+            <div style="font-size:16px;font-weight:600;color:var(--primary-dark);">${escHtml(appt.treatment)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div>
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">Datum</div>
+                <div style="font-size:14px;">${formatDate(appt.date)}</div>
+            </div>
+            <div>
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">Uhrzeit</div>
+                <div style="font-size:14px;">${appt.time} - ${endTime(appt.time, appt.duration)} Uhr</div>
+            </div>
+            <div>
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">Dauer</div>
+                <div style="font-size:14px;">${appt.duration} Minuten</div>
+            </div>
+            <div>
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">Mitarbeiterin</div>
+                <div style="font-size:14px;">${staffName}</div>
+            </div>
+        </div>
+        ${appt.phone ? `<div style="margin-bottom:16px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">Telefon</div>
+            <a href="tel:${appt.phone}" style="font-size:14px;color:var(--accent);text-decoration:none;">${escHtml(appt.phone)}</a>
+        </div>` : ''}
+        ${appt.notes ? `<div style="margin-bottom:16px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px;">Notizen</div>
+            <div style="font-size:14px;color:var(--text-secondary);line-height:1.5;padding:12px;background:var(--bg-subtle);border-radius:10px;">${escHtml(appt.notes)}</div>
+        </div>` : ''}
+        <div style="margin-bottom:16px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;">Status</div>
+            <span style="display:inline-block;padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;${appt.status==='abkassiert'?'background:var(--success-light);color:var(--success);':appt.status==='abgesagt'?'background:var(--danger-light);color:var(--danger);':appt.status==='no-show'?'background:var(--warning-light);color:var(--warning);':'background:var(--info-light);color:var(--info);'}">${appt.status==='abkassiert'?'Abkassiert':appt.status==='abgesagt'?'Abgesagt':appt.status==='no-show'?'Nicht erschienen':'Bestaetigt'}</span>
+        </div>
+        <a href="kundenkartei.html" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);text-decoration:none;padding:10px 14px;border:1px solid var(--border);border-radius:10px;transition:all 0.2s;" onmouseover="this.style.background='var(--accent-glow)'" onmouseout="this.style.background='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Kundenkartei oeffnen
+        </a>
+    `;
+    document.getElementById('detailOverlay').classList.add('open');
+    document.getElementById('detailPanel').classList.add('open');
+}
+
+function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+    document.getElementById('detailPanel').classList.remove('open');
+    selectedAppt = null;
+}
+
+function editAppt() {
+    if (!selectedAppt) return;
+    document.getElementById('apptClient').value = selectedAppt.client;
+    document.getElementById('apptDate').value = selectedAppt.date;
+    document.getElementById('apptTime').value = selectedAppt.time;
+    document.getElementById('apptDuration').value = selectedAppt.duration;
+    document.getElementById('apptStaff').value = selectedAppt.staff;
+    document.getElementById('apptNotes').value = selectedAppt.notes || '';
+    document.getElementById('apptTreatment').value = selectedAppt.category || 'Noon Aesthetics';
+    document.getElementById('apptModal').dataset.editId = selectedAppt.id;
+    document.querySelector('#apptModal h3').textContent = 'Termin bearbeiten';
+    closeDetail();
+    document.getElementById('apptModal').classList.add('open');
+}
+function deleteAppt() {
+    if (!selectedAppt) return;
+    if (!confirm('Termin von ' + selectedAppt.client + ' wirklich absagen?')) return;
+    var reason = prompt('Absagegrund (optional):') || '';
+    var delAppt = selectedAppt;
+    delAppt.status = 'abgesagt';
+    delAppt.cancelReason = reason;
+    saveApptToFirestore(delAppt);
+
+    var addToWaitlist = confirm('Soll der freigewordene Slot auf die Warteliste?\n\n' + delAppt.date + ' ' + delAppt.time + ' (' + delAppt.duration + ' Min.) bei ' + (delAppt.staff === 'tamara' ? 'Tamara' : 'Elena'));
+    if (addToWaitlist) {
+        try {
+            db.collection('waitlist').add({
+                date: delAppt.date, time: delAppt.time, duration: delAppt.duration,
+                staff: delAppt.staff, treatment: delAppt.treatment,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                notified: false
+            });
+            toast('Slot auf Warteliste gesetzt');
+        } catch(e) { console.error(e); }
+    }
+
+    appointments = appointments.filter(a => a.id !== delAppt.id);
+    saveAppts();
+    closeDetail();
+    render();
+    toast('Termin abgesagt' + (reason ? ' (' + reason + ')' : ''));
+}
+function markNoShow() {
+    if (!selectedAppt) return;
+    if (!confirm(selectedAppt.client + ' ist nicht erschienen?')) return;
+    selectedAppt.status = 'no-show';
+    var idx = appointments.findIndex(function(a) { return a.id === selectedAppt.id; });
+    if (idx >= 0) appointments[idx].status = 'no-show';
+    saveAppts();
+    saveApptToFirestore(selectedAppt);
+
+    try {
+        db.collection('noShows').add({
+            client: selectedAppt.client,
+            date: selectedAppt.date,
+            time: selectedAppt.time,
+            treatment: selectedAppt.treatment,
+            staff: selectedAppt.staff,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch(e) { console.error(e); }
+
+    closeDetail();
+    render();
+    toast(selectedAppt.client + ' als No-Show markiert');
+}
+
+function goToKasse() {
+    if (!selectedAppt) return;
+    const params = new URLSearchParams({
+        client: selectedAppt.client,
+        treatment: selectedAppt.treatment,
+        category: selectedAppt.category || '',
+        staff: selectedAppt.staff,
+        time: selectedAppt.time,
+        duration: String(selectedAppt.duration),
+        phone: selectedAppt.phone || '',
+        apptId: selectedAppt.id
+    });
+    window.location.href = 'kasse.html?' + params.toString();
+}
+
+// ============ NEW APPOINTMENT ============
+function openNewAppt() {
+    document.getElementById('apptDate').value = toDateStr(currentDate);
+    document.getElementById('apptTime').value = '09:00';
+    document.getElementById('apptClient').value = '';
+    document.getElementById('apptNotes').value = '';
+    document.getElementById('apptDuration').value = '60';
+    delete document.getElementById('apptModal').dataset.editId;
+    document.querySelector('#apptModal h3').textContent = 'Neuer Termin';
+    document.getElementById('apptModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('apptModal').classList.remove('open'); }
+
+function slotClick(date, time, staff) {
+    document.getElementById('apptDate').value = date;
+    document.getElementById('apptTime').value = time;
+    document.getElementById('apptStaff').value = staff;
+    document.getElementById('apptClient').value = '';
+    document.getElementById('apptModal').classList.add('open');
+}
+
+function saveNewAppt() {
+    try { _saveNewApptInner(); } catch(e) { console.error('saveNewAppt error:', e); toast('Fehler beim Speichern'); closeModal(); }
+}
+function _saveNewApptInner() {
+    const client = document.getElementById('apptClient').value.trim();
+    if (!client) { toast('Bitte Kundinnenname eingeben'); return; }
+    const date = document.getElementById('apptDate').value;
+    const time = document.getElementById('apptTime').value;
+    if (!date || !time) { toast('Bitte Datum und Uhrzeit angeben'); return; }
+    const staff = document.getElementById('apptStaff').value;
+    const duration = Number(document.getElementById('apptDuration').value) || 60;
+
+    const collision = appointments.find(a =>
+        a.date === date && a.staff === staff && a.id !== (document.getElementById('apptModal').dataset.editId || '') &&
+        timeOverlap(a.time, a.duration, time, duration)
+    );
+    if (collision) {
+        if (!confirm(staff.charAt(0).toUpperCase() + staff.slice(1) + ' hat um ' + time + ' bereits einen Termin (' + collision.client + '). Trotzdem speichern?')) return;
+    }
+
+    const editId = document.getElementById('apptModal').dataset.editId;
+    if (editId) {
+        const idx = appointments.findIndex(a => a.id === editId);
+        if (idx >= 0) {
+            appointments[idx] = { ...appointments[idx], client, treatment: (document.getElementById('apptTreatment').selectedOptions[0]?.dataset?.name || document.getElementById('apptTreatment').selectedOptions[0]?.text || 'Behandlung'), category: document.getElementById('apptTreatment').value, staff, date, time, duration, notes: document.getElementById('apptNotes').value.trim() };
+        }
+        delete document.getElementById('apptModal').dataset.editId;
+        saveApptToFirestore(appointments[idx]);
+        toast('Termin aktualisiert');
+    } else {
+        var treatName = (document.getElementById('apptTreatment').selectedOptions[0]?.dataset?.name || document.getElementById('apptTreatment').selectedOptions[0]?.text || 'Behandlung');
+        var category = document.getElementById('apptTreatment').value;
+        var notes = document.getElementById('apptNotes').value.trim();
+        var repeat = document.getElementById('apptRepeat').value;
+
+        var dates = [date];
+        if (repeat !== 'none') {
+            var dObj = new Date(date + 'T00:00:00');
+            var count = repeat === 'monthly' ? 5 : 7;
+            for (var r = 1; r <= count; r++) {
+                var next = new Date(dObj);
+                if (repeat === 'weekly') next.setDate(next.getDate() + r * 7);
+                else if (repeat === 'biweekly') next.setDate(next.getDate() + r * 14);
+                else if (repeat === 'monthly') next.setMonth(next.getMonth() + r);
+                if (next.getDay() === 0) next.setDate(next.getDate() + 1);
+                if (next.getDay() === 6) next.setDate(next.getDate() + 2);
+                dates.push(toDateStr(next));
+            }
+        }
+
+        var seriesId = repeat !== 'none' ? 's' + Date.now() : null;
+        dates.forEach(function(d) {
+            var newAppt = { id: 'a' + Date.now() + Math.random().toString(36).substring(2,5), client, treatment: treatName, category: category, staff: staff, date: d, time: time, duration: duration, notes: notes };
+            if (seriesId) newAppt.seriesId = seriesId;
+            appointments.push(newAppt);
+            saveApptToFirestore(newAppt);
+        });
+        toast(dates.length > 1 ? dates.length + ' Termine erstellt (Serie)' : 'Termin erstellt');
+        document.getElementById('apptRepeat').value = 'none';
+    }
+    saveAppts();
+    closeModal();
+    render();
+}
+
+function printTagesplan() {
+    var dateStr = toDateStr(currentDate);
+    var dayAppts = appointments.filter(function(a) { return a.date === dateStr; });
+    dayAppts.sort(function(a, b) { return (a.time || '').localeCompare(b.time || ''); });
+
+    if (dayAppts.length === 0) { toast('Keine Termine an diesem Tag'); return; }
+
+    try {
+        var jsPDF = window.jspdf.jsPDF;
+        var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        var w = 210, ml = 15, mr = 15, y = 18;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('SKINCONCEPT HAGNER — Tagesplan', w / 2, y, { align: 'center' }); y += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        var dateLabel = currentDate.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        doc.text(dateLabel, w / 2, y, { align: 'center' }); y += 10;
+        doc.setTextColor(0);
+
+        STAFF.forEach(function(staff) {
+            var staffAppts = dayAppts.filter(function(a) { return a.staff === staff.id; });
+            if (staffAppts.length === 0) return;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(13);
+            doc.text(staff.name, ml, y); y += 2;
+            doc.setDrawColor(180); doc.line(ml, y, w - mr, y); y += 5;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            doc.setTextColor(120);
+            doc.text('ZEIT', ml, y);
+            doc.text('KUNDIN', ml + 30, y);
+            doc.text('BEHANDLUNG', ml + 85, y);
+            doc.text('DAUER', w - mr - 25, y);
+            doc.text('NOTIZEN', w - mr, y, { align: 'right' });
+            y += 1; doc.line(ml, y, w - mr, y); y += 4;
+
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+
+            staffAppts.forEach(function(a) {
+                if (y > 270) { doc.addPage(); y = 20; }
+                var isBlocker = a.isBlocker || a.category === '_blocker';
+                var endT = endTime(a.time, a.duration);
+                doc.text(a.time + ' - ' + endT, ml, y);
+                doc.text(isBlocker ? '[' + a.client + ']' : (a.client || '').substring(0, 22), ml + 30, y);
+                doc.text(isBlocker ? '' : (a.treatment || '').substring(0, 25), ml + 85, y);
+                doc.text((a.duration || '') + ' Min.', w - mr - 25, y);
+                if (a.notes) doc.text((a.notes || '').substring(0, 15), w - mr, y, { align: 'right' });
+                y += 6;
+            });
+            y += 6;
+        });
+
+        y += 4;
+        doc.setFontSize(7);
+        doc.setTextColor(150);
+        doc.text('Erstellt am ' + new Date().toLocaleString('de-DE') + ' — Skinconcept Hagner, Morbach', w / 2, y, { align: 'center' });
+
+        doc.save('Tagesplan_' + dateStr + '.pdf');
+        toast('Tagesplan als PDF heruntergeladen');
+    } catch(e) {
+        console.error('Tagesplan PDF:', e);
+        toast('Fehler beim PDF-Export');
+    }
+}
+
+function openBlocker() {
+    document.getElementById('blockerDate').value = toDateStr(currentDate);
+    document.getElementById('blockerModal').classList.add('open');
+}
+function closeBlockerModal() { document.getElementById('blockerModal').classList.remove('open'); }
+
+function saveBlocker() {
+    var type = document.getElementById('blockerType').value;
+    var date = document.getElementById('blockerDate').value;
+    var time = document.getElementById('blockerStart').value;
+    var duration = Number(document.getElementById('blockerDuration').value) || 60;
+    var staff = document.getElementById('blockerStaff').value;
+    var note = document.getElementById('blockerNote').value.trim();
+    if (!date || !time) { toast('Bitte Datum und Uhrzeit angeben'); return; }
+
+    var staffList = staff === 'beide' ? ['tamara', 'elena'] : [staff];
+    staffList.forEach(function(s) {
+        var blocker = {
+            id: 'b' + Date.now() + Math.random().toString(36).substring(2, 5),
+            client: type,
+            treatment: note || type,
+            category: '_blocker',
+            staff: s,
+            date: date,
+            time: time,
+            duration: duration,
+            isBlocker: true,
+            notes: note
+        };
+        appointments.push(blocker);
+        saveApptToFirestore(blocker);
+    });
+    saveAppts();
+    closeBlockerModal();
+    render();
+    toast(type + ' eingetragen');
+}
+
+function setupDrag(el, appt, col) {
+    var startY = 0, startTop = 0, dragging = false;
+
+    function onStart(e) {
+        var ev = e.touches ? e.touches[0] : e;
+        startY = ev.clientY;
+        startTop = parseInt(el.style.top) || 0;
+        dragging = false;
+        el.style.zIndex = '20';
+        el.style.opacity = '0.85';
+        el.style.cursor = 'grabbing';
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+    }
+
+    function onMove(e) {
+        var ev = e.touches ? e.touches[0] : e;
+        var dy = ev.clientY - startY;
+        if (Math.abs(dy) > 5) dragging = true;
+        if (!dragging) return;
+        if (e.preventDefault) e.preventDefault();
+        el._dragged = true;
+        var newTop = Math.max(0, startTop + dy);
+        var snapInterval = SLOT_HEIGHT / 2;
+        newTop = Math.round(newTop / snapInterval) * snapInterval;
+        el.style.top = newTop + 'px';
+    }
+
+    function onEnd() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+        el.style.zIndex = '';
+        el.style.opacity = '';
+        el.style.cursor = 'grab';
+        if (!dragging) return;
+
+        var newTop = parseInt(el.style.top) || 0;
+        var newMinutes = (newTop / (SLOT_HEIGHT / 2)) * 30;
+        var totalMin = OPEN_HOURS.start * 60 + newMinutes;
+        var newH = Math.floor(totalMin / 60);
+        var newM = totalMin % 60;
+        var newTime = String(newH).padStart(2, '0') + ':' + String(newM).padStart(2, '0');
+
+        if (newTime !== appt.time) {
+            appt.time = newTime;
+            saveAppts();
+            saveApptToFirestore(appt);
+            render();
+            toast(appt.client + ' verschoben auf ' + newTime);
+        }
+    }
+
+    el.addEventListener('mousedown', onStart);
+    el.addEventListener('touchstart', onStart, { passive: true });
+}
+
+function timeOverlap(t1, d1, t2, d2) {
+    if (!t1 || !t2) return false;
+    const toMin = t => { const [h,m] = (t||'0:0').split(':').map(Number); return h * 60 + m; };
+    const s1 = toMin(t1), e1 = s1 + d1, s2 = toMin(t2), e2 = s2 + d2;
+    return s1 < e2 && s2 < e1;
+}
+
+// ============ HELPERS ============
+function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function toDateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function endTime(start, duration) {
+    const [h, m] = start.split(':').map(Number);
+    const total = h * 60 + m + duration;
+    return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`;
+}
+
+function getWeekDays(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d);
+    monday.setDate(diff);
+    const days = [];
+    for (let i = 0; i < 5; i++) {
+        const dd = new Date(monday);
+        dd.setDate(monday.getDate() + i);
+        days.push(dd);
+    }
+    return days;
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    loadFirestoreTreatments();
+    loadKalClients();
+    initAppointments();
+    setInterval(updateNowLine, 60000);
+});
+
+async function loadFirestoreTreatments() {
+    const treatSelect = document.getElementById('apptTreatment');
+    try {
+        const snap = await db.collection('treatments').orderBy('category').get();
+        firestoreTreatments = [];
+        snap.forEach(function(doc) { firestoreTreatments.push({ id: doc.id, ...doc.data() }); });
+        if (firestoreTreatments.length > 0) {
+            treatSelect.innerHTML = firestoreTreatments.map(function(t) {
+                return '<option value="' + escHtml(t.category || 'Sonstiges') + '" data-name="' + escHtml(t.name) + '" data-duration="' + (t.duration || 60) + '" data-price="' + (t.price || 0) + '">' + escHtml(t.name) + ' (' + (t.duration || '?') + ' Min.)</option>';
+            }).join('') + '<option value="Sonstiges" data-name="Sonstiges" data-duration="30" data-price="0">Sonstiges</option>';
+            treatSelect.addEventListener('change', function() {
+                var opt = this.selectedOptions[0];
+                if (opt && opt.dataset.duration) document.getElementById('apptDuration').value = opt.dataset.duration;
+            });
+            return;
+        }
+    } catch(e) { console.error('Treatments load:', e); }
+    treatSelect.innerHTML = Object.keys(CATEGORY_COLORS).map(function(c) {
+        return '<option value="' + c + '" data-name="' + c + '" data-duration="60">' + c + '</option>';
+    }).join('') + '<option value="Sonstiges" data-name="Sonstiges" data-duration="30">Sonstiges</option>';
+}
+</script>
+</body>
+</html>

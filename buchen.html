@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Termin buchen — Skinconcept Hagner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --ink: #2A2520; --gold: #B89763; --cream: #FCFAF6; --muted: #8C857A; --border: rgba(42,37,32,0.08); --success: #3D8B5F; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+        .header { text-align: center; padding: 48px 20px 32px; }
+        .header .brand { font-family: 'Cormorant Garamond', serif; font-size: 28px; letter-spacing: 6px; color: var(--ink); }
+        .header .sub { font-size: 10px; letter-spacing: 3px; color: var(--gold); margin-top: 6px; text-transform: uppercase; }
+        .header h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; margin-top: 24px; color: var(--ink); }
+        .header p { font-size: 14px; color: var(--muted); margin-top: 8px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+
+        .container { max-width: 520px; margin: 0 auto; padding: 0 20px 60px; }
+
+        .step { display: none; }
+        .step.active { display: block; }
+        .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+        .step-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
+        .step-dot.done { background: var(--success); }
+
+        .step-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--ink); }
+
+        .treatment-list { display: flex; flex-direction: column; gap: 8px; }
+        .treatment-card {
+            padding: 16px 18px; border: 2px solid var(--border); border-radius: 12px;
+            cursor: pointer; transition: all 0.2s; background: #fff;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .treatment-card:hover { border-color: var(--gold); }
+        .treatment-card.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); }
+        .treatment-card .tc-name { font-size: 14px; font-weight: 600; }
+        .treatment-card .tc-info { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .treatment-card .tc-price { font-size: 15px; font-weight: 700; color: var(--ink); }
+
+        .staff-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .staff-btn {
+            padding: 20px 16px; border: 2px solid var(--border); border-radius: 12px;
+            cursor: pointer; text-align: center; background: #fff; transition: all 0.2s;
+        }
+        .staff-btn:hover { border-color: var(--gold); }
+        .staff-btn.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); }
+        .staff-btn .sb-name { font-size: 15px; font-weight: 600; margin-top: 8px; }
+        .staff-btn .sb-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+        .staff-btn .sb-avatar {
+            width: 48px; height: 48px; border-radius: 50%; margin: 0 auto;
+            background: rgba(184,151,99,0.12); display: flex; align-items: center;
+            justify-content: center; font-size: 18px; font-weight: 600; color: var(--gold);
+        }
+        .no-pref { padding: 12px; text-align: center; font-size: 13px; color: var(--muted); cursor: pointer; border: 1px solid var(--border); border-radius: 10px; margin-top: 8px; }
+        .no-pref:hover { background: rgba(42,37,32,0.02); }
+        .no-pref.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); }
+
+        .date-input, .time-slots { margin-bottom: 16px; }
+        .date-input input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-family: inherit; }
+        .date-input input:focus { outline: none; border-color: var(--gold); }
+        .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .time-slot {
+            padding: 12px 8px; border: 2px solid var(--border); border-radius: 10px;
+            text-align: center; cursor: pointer; font-size: 14px; font-weight: 500;
+            background: #fff; transition: all 0.2s;
+        }
+        .time-slot:hover { border-color: var(--gold); }
+        .time-slot.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); font-weight: 600; }
+        .time-slot.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+        .form-field { margin-bottom: 14px; }
+        .form-field label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
+        .form-field input, .form-field textarea { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-family: inherit; }
+        .form-field input:focus, .form-field textarea:focus { outline: none; border-color: var(--gold); }
+
+        .nav-btns { display: flex; gap: 10px; margin-top: 24px; }
+        .btn-next {
+            flex: 1; padding: 16px; border: none; border-radius: 12px;
+            background: var(--ink); color: var(--cream); font-size: 15px;
+            font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .btn-next:hover { background: #1F1B17; transform: translateY(-1px); }
+        .btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-back {
+            padding: 16px 20px; border: 1px solid var(--border); border-radius: 12px;
+            background: #fff; color: var(--ink); font-size: 14px; font-weight: 500;
+            cursor: pointer; font-family: inherit;
+        }
+
+        .summary-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+        .summary-row .label { color: var(--muted); }
+        .summary-row .value { font-weight: 600; }
+
+        .success-card { text-align: center; padding: 40px 20px; }
+        .success-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(61,139,95,0.1); color: var(--success); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; }
+        .success-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+        .success-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+        .footer { text-align: center; padding: 24px; font-size: 11px; color: var(--muted); letter-spacing: 0.5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 26px; }
+            .time-grid { grid-template-columns: repeat(3, 1fr); }
+            .header { padding: 32px 20px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="brand">SKINCONCEPT</div>
+    <div class="sub">Hagner · Morbach</div>
+    <h1>Termin buchen</h1>
+    <p>Waehlen Sie Ihre Wunschbehandlung und einen freien Termin — wir freuen uns auf Sie.</p>
+</div>
+
+<div class="container">
+    <div class="step-indicator">
+        <div class="step-dot active" id="dot0"></div>
+        <div class="step-dot" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+        <div class="step-dot" id="dot3"></div>
+        <div class="step-dot" id="dot4"></div>
+    </div>
+
+    <!-- STEP 0: Behandlung -->
+    <div class="step active" id="step0">
+        <div class="step-title">Behandlung waehlen</div>
+        <div class="treatment-list" id="treatmentList"></div>
+        <div class="nav-btns"><button class="btn-next" id="btnNext0" disabled onclick="nextStep()">Weiter</button></div>
+    </div>
+
+    <!-- STEP 1: Mitarbeiterin -->
+    <div class="step" id="step1">
+        <div class="step-title">Mitarbeiterin</div>
+        <div class="staff-btns">
+            <div class="staff-btn" onclick="selectStaff('tamara', this)">
+                <div class="sb-avatar">TH</div>
+                <div class="sb-name">Tamara</div>
+                <div class="sb-sub">Inhaberin</div>
+            </div>
+            <div class="staff-btn" onclick="selectStaff('elena', this)">
+                <div class="sb-avatar">E</div>
+                <div class="sb-name">Elena</div>
+                <div class="sb-sub">Kosmetikerin</div>
+            </div>
+        </div>
+        <div class="no-pref" onclick="selectStaff('egal', this)">Keine Praeferenz</div>
+        <div class="nav-btns"><button class="btn-back" onclick="prevStep()">Zurueck</button><button class="btn-next" id="btnNext1" disabled onclick="nextStep()">Weiter</button></div>
+    </div>
+
+    <!-- STEP 2: Datum + Uhrzeit -->
+    <div class="step" id="step2">
+        <div class="step-title">Datum und Uhrzeit</div>
+        <div class="date-input"><input type="date" id="bookDate" onchange="loadSlots()"></div>
+        <div id="slotsContainer"></div>
+        <div class="nav-btns"><button class="btn-back" onclick="prevStep()">Zurueck</button><button class="btn-next" id="btnNext2" disabled onclick="nextStep()">Weiter</button></div>
+    </div>
+
+    <!-- STEP 3: Kontaktdaten -->
+    <div class="step" id="step3">
+        <div class="step-title">Ihre Kontaktdaten</div>
+        <div class="form-field"><label>Vorname *</label><input type="text" id="bookFirstName" placeholder="Ihr Vorname"></div>
+        <div class="form-field"><label>Nachname *</label><input type="text" id="bookLastName" placeholder="Ihr Nachname"></div>
+        <div class="form-field"><label>E-Mail *</label><input type="email" id="bookEmail" placeholder="ihre@email.de"></div>
+        <div class="form-field"><label>Telefon</label><input type="tel" id="bookPhone" placeholder="+49 ..."></div>
+        <div class="form-field"><label>Anmerkungen (optional)</label><textarea id="bookNotes" rows="2" placeholder="Allergien, Wuensche..."></textarea></div>
+        <div class="nav-btns"><button class="btn-back" onclick="prevStep()">Zurueck</button><button class="btn-next" onclick="nextStep()">Zur Uebersicht</button></div>
+    </div>
+
+    <!-- STEP 4: Zusammenfassung -->
+    <div class="step" id="step4">
+        <div class="step-title">Buchungsuebersicht</div>
+        <div class="summary-card" id="summaryCard"></div>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px;">
+            <input type="checkbox" id="agbCheck" style="width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:var(--ink);">
+            Ich akzeptiere die Buchungsbedingungen. Bitte sagen Sie spaetestens 24 Stunden vor dem Termin ab, andernfalls wird eine Ausfallgebuehr berechnet.
+        </label>
+        <div class="nav-btns"><button class="btn-back" onclick="prevStep()">Zurueck</button><button class="btn-next" style="background:var(--success);" onclick="submitBooking()">Verbindlich buchen</button></div>
+    </div>
+
+    <!-- STEP 5: Erfolg -->
+    <div class="step" id="step5">
+        <div class="success-card">
+            <div class="success-icon">&#10003;</div>
+            <div class="success-title">Termin gebucht!</div>
+            <div class="success-text" id="successMsg">Sie erhalten in Kuerze eine Bestaetigungsmail. Wir freuen uns auf Ihren Besuch!</div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">Skinconcept Hagner · Bahnhofstrasse 67a · 54497 Morbach</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+    apiKey:"AIzaSyAdGdgPnS3Cw3Rpiubx6_s61FyfiTQxfFc",
+    authDomain:"skinconcept-tool.firebaseapp.com",
+    projectId:"skinconcept-tool",
+    storageBucket:"skinconcept-tool.firebasestorage.app",
+    messagingSenderId:"188823880943",
+    appId:"1:188823880943:web:ae87750be002cbe491071a"
+});
+var db = firebase.firestore();
+
+var currentStep = 0;
+var booking = { treatment: null, staff: null, date: null, time: null };
+var treatments = [];
+
+function getEaster(year) {
+    var a=year%19, b=Math.floor(year/100), c=year%100, d=Math.floor(b/4), e=b%4;
+    var f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+    var i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7;
+    var m=Math.floor((a+11*h+22*l)/451);
+    var month=Math.floor((h+l-7*m+114)/31), day=((h+l-7*m+114)%31)+1;
+    return new Date(year, month-1, day);
+}
+function getFeiertag(dateStr) {
+    var year = parseInt(dateStr.substring(0, 4));
+    var easter = getEaster(year);
+    var e = function(offset) { var d = new Date(easter); d.setDate(d.getDate() + offset); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+    var ft = { [year+'-01-01']:'Neujahr',[e(-2)]:'Karfreitag',[e(1)]:'Ostermontag',[year+'-05-01']:'Tag der Arbeit',[e(39)]:'Christi Himmelfahrt',[e(50)]:'Pfingstmontag',[e(60)]:'Fronleichnam',[year+'-10-03']:'Tag der Deutschen Einheit',[year+'-11-01']:'Allerheiligen',[year+'-12-25']:'1. Weihnachtstag',[year+'-12-26']:'2. Weihnachtstag' };
+    return ft[dateStr] || null;
+}
+
+function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function tomorrowStr() {
+    var d = new Date();
+    d.setDate(d.getDate() + 1);
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+async function init() {
+    document.getElementById('bookDate').min = tomorrowStr();
+    document.getElementById('bookDate').value = tomorrowStr();
+
+    try {
+        var snap = await db.collection('treatments').orderBy('category').get();
+        snap.forEach(function(doc) { treatments.push({ id: doc.id, ...doc.data() }); });
+    } catch(e) { console.error(e); }
+
+    if (treatments.length === 0) {
+        treatments = [
+            { id: 't1', name: 'Noon Premium Facial', category: 'Noon Aesthetics', duration: 90, price: 189 },
+            { id: 't2', name: 'Noon Skin Renewal', category: 'Noon Aesthetics', duration: 75, price: 159 },
+            { id: 't3', name: 'Classic Facial', category: 'Facial', duration: 60, price: 99 },
+            { id: 't4', name: 'Microneedling', category: 'Noon Aesthetics', duration: 60, price: 149 },
+            { id: 't5', name: 'Fruchtsaeure Peeling', category: 'Peeling', duration: 60, price: 119 },
+        ];
+    }
+
+    var list = document.getElementById('treatmentList');
+    var categories = {};
+    treatments.forEach(function(t) {
+        var cat = t.category || 'Sonstiges';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(t);
+    });
+    var html = '';
+    Object.keys(categories).forEach(function(cat) {
+        html += '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:600;margin:16px 0 8px;padding-left:2px;">' + esc(cat) + '</div>';
+        categories[cat].forEach(function(t) {
+            html += '<div class="treatment-card" onclick="selectTreatment(\'' + t.id + '\', this)">' +
+                '<div><div class="tc-name">' + esc(t.name) + '</div><div class="tc-info">' + (t.duration || '?') + ' Min.</div></div>' +
+                '<div class="tc-price">' + (t.price ? t.price.toLocaleString('de-DE', {minimumFractionDigits:2}) + ' EUR' : 'Auf Anfrage') + '</div></div>';
+        });
+    });
+    list.innerHTML = html;
+}
+
+function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function selectTreatment(id, el) {
+    booking.treatment = treatments.find(function(t) { return t.id === id; });
+    document.querySelectorAll('.treatment-card').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById('btnNext0').disabled = false;
+}
+
+function selectStaff(staff, el) {
+    booking.staff = staff;
+    document.querySelectorAll('.staff-btn, .no-pref').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById('btnNext1').disabled = false;
+}
+
+function nextStep() {
+    if (currentStep === 3) {
+        var fn = document.getElementById('bookFirstName').value.trim();
+        var ln = document.getElementById('bookLastName').value.trim();
+        var em = document.getElementById('bookEmail').value.trim();
+        if (!fn || !ln) { alert('Bitte Vor- und Nachname eingeben'); return; }
+        if (!em || !em.includes('@')) { alert('Bitte gueltige E-Mail-Adresse eingeben'); return; }
+        renderSummary();
+    }
+    showStep(currentStep + 1);
+}
+
+function prevStep() { showStep(currentStep - 1); }
+
+function showStep(n) {
+    document.querySelectorAll('.step').forEach(function(s) { s.classList.remove('active'); });
+    document.getElementById('step' + n).classList.add('active');
+    for (var i = 0; i < 5; i++) {
+        var dot = document.getElementById('dot' + i);
+        dot.className = 'step-dot' + (i === n ? ' active' : (i < n ? ' done' : ''));
+    }
+    currentStep = n;
+    window.scrollTo(0, 0);
+}
+
+async function loadSlots() {
+    var date = document.getElementById('bookDate').value;
+    if (!date) return;
+    booking.date = date;
+    booking.time = null;
+    document.getElementById('btnNext2').disabled = true;
+    document.getElementById('slotsContainer').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;"><span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(42,37,32,0.1);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px;"></span>Verfuegbare Zeiten werden geladen...</div>';
+
+    var d = new Date(date + 'T00:00:00');
+    var feiertag = getFeiertag(date);
+    if (d.getDay() === 0 || d.getDay() === 6 || feiertag) {
+        document.getElementById('slotsContainer').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">' + (feiertag ? feiertag + ' — Studio geschlossen.' : 'Samstag und Sonntag geschlossen.') + ' Bitte einen Werktag waehlen.</div>';
+        return;
+    }
+
+    var isFriday = d.getDay() === 5;
+    var endH = isFriday ? 16 : 18;
+    var duration = booking.treatment ? booking.treatment.duration || 60 : 60;
+
+    var booked = [];
+    try {
+        var snap = await db.collection('appointments').where('date', '==', date).get();
+        snap.forEach(function(doc) {
+            var a = doc.data();
+            if (booking.staff !== 'egal' && a.staff !== booking.staff) return;
+            var p = (a.time||'').split(':').map(Number);
+            booked.push({ start: p[0]*60+p[1], end: p[0]*60+p[1]+(a.duration||60) });
+        });
+    } catch(e) {}
+
+    var slots = [];
+    for (var h = 9; h < endH; h++) {
+        for (var m = 0; m < 60; m += 30) {
+            var startMin = h * 60 + m;
+            var endMin = startMin + duration;
+            if (endMin > endH * 60 + (isFriday ? 30 : 30)) continue;
+            var BUFFER = 15;
+        var conflict = booked.some(function(b) { return startMin < (b.end + BUFFER) && endMin > (b.start - BUFFER); });
+            var timeStr = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+            slots.push({ time: timeStr, available: !conflict });
+        }
+    }
+
+    document.getElementById('slotsContainer').innerHTML = '<div class="step-title" style="margin-top:16px;">Verfuegbare Zeiten</div>' +
+        '<div class="time-grid">' + slots.map(function(s) {
+            return '<div class="time-slot' + (!s.available ? ' disabled' : '') + '" onclick="' + (s.available ? "selectTime('" + s.time + "', this)" : '') + '">' + s.time + '</div>';
+        }).join('') + '</div>';
+}
+
+function selectTime(time, el) {
+    booking.time = time;
+    document.querySelectorAll('.time-slot').forEach(function(s) { s.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById('btnNext2').disabled = false;
+}
+
+function renderSummary() {
+    var t = booking.treatment || {};
+    var staff = booking.staff === 'egal' ? 'Keine Praeferenz' : booking.staff === 'tamara' ? 'Tamara' : 'Elena';
+    var d = new Date(booking.date + 'T00:00:00');
+    var dateStr = d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('summaryCard').innerHTML =
+        '<div class="summary-row"><span class="label">Behandlung</span><span class="value">' + esc(t.name) + '</span></div>' +
+        '<div class="summary-row"><span class="label">Dauer</span><span class="value">' + (t.duration || '?') + ' Minuten</span></div>' +
+        '<div class="summary-row"><span class="label">Preis</span><span class="value">' + (t.price ? t.price.toLocaleString('de-DE',{minimumFractionDigits:2}) + ' EUR' : 'Auf Anfrage') + '</span></div>' +
+        '<div class="summary-row"><span class="label">Mitarbeiterin</span><span class="value">' + staff + '</span></div>' +
+        '<div class="summary-row"><span class="label">Datum</span><span class="value">' + dateStr + '</span></div>' +
+        '<div class="summary-row"><span class="label">Uhrzeit</span><span class="value">' + booking.time + ' Uhr</span></div>' +
+        '<div class="summary-row"><span class="label">Name</span><span class="value">' + esc(document.getElementById('bookFirstName').value) + ' ' + esc(document.getElementById('bookLastName').value) + '</span></div>' +
+        '<div class="summary-row"><span class="label">E-Mail</span><span class="value">' + esc(document.getElementById('bookEmail').value) + '</span></div>';
+}
+
+async function submitBooking() {
+    if (!document.getElementById('agbCheck').checked) {
+        alert('Bitte akzeptieren Sie die Buchungsbedingungen.');
+        return;
+    }
+    var t = booking.treatment || {};
+    var staff = booking.staff === 'egal' ? 'tamara' : booking.staff;
+    var fn = document.getElementById('bookFirstName').value.trim();
+    var ln = document.getElementById('bookLastName').value.trim();
+
+    try {
+        var manageToken = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+        await db.collection('appointments').add({
+            manageToken: manageToken,
+            client: fn + ' ' + ln,
+            treatment: t.name || '',
+            category: t.category || '',
+            staff: staff,
+            date: booking.date,
+            time: booking.time,
+            duration: t.duration || 60,
+            phone: document.getElementById('bookPhone').value.trim(),
+            notes: document.getElementById('bookNotes').value.trim(),
+            email: document.getElementById('bookEmail').value.trim(),
+            source: 'online',
+            status: 'bestaetigt',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('successMsg').innerHTML = 'Sie erhalten in Kuerze eine Bestaetigungsmail.<br><br>' +
+            '<a href="termin.html?token=' + manageToken + '" style="color:var(--gold);font-weight:600;text-decoration:none;">Termin verwalten (umbuchen / absagen)</a><br><br>' +
+            'Wir freuen uns auf Ihren Besuch!';
+        showStep(5);
+    } catch(e) {
+        console.error(e);
+        alert('Fehler bei der Buchung. Bitte versuchen Sie es erneut oder rufen Sie uns an: +49 176 61742511');
+    }
+}
+
+init();
+</script>
+</body>
+</html>

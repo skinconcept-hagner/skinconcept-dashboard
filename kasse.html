@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <script src="auth-gate.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FCFAF6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Skinconcept">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <title>Skinconcept Hagner — Kasse</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="jspdf.min.js"></script>
+    <style>
+/* ============================================================
+   KASSE — Point of Sale
+   ============================================================ */
+
+.page-header h2 { font-family: inherit !important; font-size: 28px !important; font-weight: 700 !important; }
+.kasse-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; min-height: calc(100vh - 200px); }
+
+/* ============ LINKE SEITE: Positionen ============ */
+.kasse-main { display: flex; flex-direction: column; }
+
+.kasse-client-bar {
+    display: flex; align-items: center; gap: 16px; padding: 18px 22px;
+    background: linear-gradient(135deg, #1F1B17, #3A332C); border-radius: 14px;
+    color: #FCFAF6; margin-bottom: 20px;
+}
+.kasse-client-avatar {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(184,151,99,0.2); display: flex; align-items: center;
+    justify-content: center; font-size: 18px; font-weight: 600; color: #DCC79A;
+    flex-shrink: 0;
+}
+.kasse-client-info { flex: 1; min-width: 0; }
+.kasse-client-name { font-size: 17px; font-weight: 600; }
+.kasse-client-sub { font-size: 12px; color: rgba(252,250,246,0.6); margin-top: 2px; }
+.kasse-client-change {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+    background: transparent; color: rgba(255,255,255,0.7); font-size: 12px;
+    cursor: pointer; font-family: inherit; transition: all 0.2s;
+}
+.kasse-client-change:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.kasse-section-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-muted); font-weight: 500; margin-bottom: 12px; margin-top: 8px;
+}
+
+/* Positions-Liste */
+.kasse-items { flex: 1; }
+.kasse-item {
+    display: flex; align-items: center; gap: 14px; padding: 16px 18px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    margin-bottom: 8px; transition: all 0.2s;
+}
+.kasse-item:hover { border-color: var(--border-strong); }
+.kasse-item-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+}
+.kasse-item-icon.treatment { background: rgba(184,151,99,0.12); color: var(--accent); }
+.kasse-item-icon.product { background: rgba(61,139,95,0.1); color: var(--success); }
+.kasse-item-body { flex: 1; min-width: 0; }
+.kasse-item-name { font-size: 14px; font-weight: 600; color: var(--primary-dark); }
+.kasse-item-detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.kasse-item-qty {
+    display: flex; align-items: center; gap: 6px;
+}
+.kasse-qty-btn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-subtle); cursor: pointer; font-size: 16px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; color: var(--text-secondary);
+    transition: all 0.15s;
+}
+.kasse-qty-btn:hover { border-color: var(--accent); color: var(--accent); }
+.kasse-qty-val { font-size: 14px; font-weight: 600; min-width: 20px; text-align: center; }
+.kasse-item-price { font-size: 15px; font-weight: 700; color: var(--primary-dark); min-width: 70px; text-align: right; }
+.kasse-item-remove {
+    width: 28px; height: 28px; border-radius: 7px; border: none;
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+}
+.kasse-item-remove:hover { background: var(--danger-light); color: var(--danger); }
+
+/* Produkt hinzufuegen */
+.kasse-add-row {
+    display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+}
+.kasse-add-row select, .kasse-add-row input {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+    font-size: 13px; font-family: inherit; background: var(--bg-card);
+}
+.kasse-add-row select { flex: 1; }
+.kasse-add-row .add-btn {
+    padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg-card); cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--accent); font-family: inherit; transition: all 0.2s;
+    white-space: nowrap;
+}
+.kasse-add-row .add-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ============ RECHTE SEITE: Zusammenfassung + Bezahlung ============ */
+.kasse-sidebar {
+    display: flex; flex-direction: column; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+}
+.kasse-summary { flex: 1; padding: 24px; }
+.kasse-summary-title {
+    font-family: inherit;
+    font-size: 22px; font-weight: 500; color: var(--primary-dark);
+    margin-bottom: 20px;
+}
+.kasse-line {
+    display: flex; justify-content: space-between; padding: 6px 0;
+    font-size: 14px; color: var(--text-secondary);
+}
+.kasse-line.mwst { font-size: 13px; color: var(--text-muted); }
+.kasse-line.total {
+    font-size: 20px; font-weight: 700; color: var(--primary-dark);
+    padding-top: 14px; margin-top: 8px; border-top: 2px solid var(--primary-dark);
+    font-family: inherit;
+}
+.kasse-line.total span:last-child { font-size: 24px; }
+
+/* Rabatt */
+.kasse-discount {
+    display: flex; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);
+}
+.kasse-discount input {
+    flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; font-family: inherit; text-align: center;
+}
+.kasse-discount select {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; font-family: inherit;
+}
+
+/* Zahlungsart */
+.kasse-pay { padding: 0 24px 24px; }
+.kasse-pay-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-muted); font-weight: 500; margin-bottom: 10px;
+}
+.kasse-pay-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.kasse-pay-btn {
+    padding: 16px 12px; border-radius: 12px; border: 2px solid var(--border);
+    background: var(--bg-card); cursor: pointer; text-align: center;
+    font-family: inherit; transition: all 0.2s;
+}
+.kasse-pay-btn:hover { border-color: var(--accent); }
+.kasse-pay-btn.active { border-color: var(--primary-dark); background: rgba(42,37,32,0.04); }
+.kasse-pay-btn .pay-icon { font-size: 24px; margin-bottom: 4px; display: block; }
+.kasse-pay-btn .pay-label { font-size: 12px; font-weight: 600; color: var(--primary-dark); }
+.kasse-pay-btn .pay-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* Abschliessen Button */
+.kasse-checkout-btn {
+    width: 100%; padding: 18px; border: none; border-radius: 12px;
+    background: var(--primary-dark); color: #FCFAF6; font-size: 16px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: all 0.2s; min-height: 56px;
+}
+.kasse-checkout-btn:hover { background: #1F1B17; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(31,27,23,0.25); }
+.kasse-checkout-btn:active { transform: translateY(0); }
+.kasse-checkout-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.kasse-checkout-btn .amount { font-family: inherit; font-size: 22px; }
+
+/* ============ TAGESABSCHLUSS ============ */
+.kasse-tages {
+    margin-top: 24px; padding: 24px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 14px;
+}
+.kasse-tages-title {
+    font-family: inherit;
+    font-size: 22px; font-weight: 500; color: var(--primary-dark);
+    margin-bottom: 16px;
+}
+.kasse-tages-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.kasse-tages-card {
+    padding: 16px; background: var(--bg-subtle); border-radius: 10px; text-align: center;
+}
+.kasse-tages-val {
+    font-family: inherit;
+    font-size: 26px; font-weight: 500; color: var(--primary-dark);
+}
+.kasse-tages-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-top: 4px; }
+.kasse-tages-list { margin-top: 12px; }
+.kasse-tages-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.kasse-tages-item:last-child { border-bottom: none; }
+.kasse-tages-item .t-time { color: var(--text-muted); min-width: 50px; }
+.kasse-tages-item .t-client { flex: 1; font-weight: 500; }
+.kasse-tages-item .t-method { font-size: 11px; padding: 2px 8px; border-radius: 6px; }
+.kasse-tages-item .t-method.bar { background: var(--warning-light); color: var(--warning); }
+.kasse-tages-item .t-method.karte { background: var(--info-light); color: var(--info); }
+.kasse-tages-item .t-amount { font-weight: 700; min-width: 70px; text-align: right; }
+
+/* ============ ERFOLGS-OVERLAY ============ */
+.kasse-success-overlay {
+    display: none; position: fixed; inset: 0; z-index: 600;
+    background: rgba(31,27,23,0.5); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+}
+.kasse-success-overlay.open { display: flex; }
+.kasse-success-card {
+    background: var(--bg-card); border-radius: 20px; padding: 48px 40px;
+    text-align: center; max-width: 400px; width: 90%;
+    box-shadow: 0 24px 64px rgba(31,27,23,0.2);
+    animation: kalModalUp 0.3s var(--ease);
+}
+.kasse-success-check {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--success-light); color: var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin: 0 auto 20px;
+}
+.kasse-success-amount {
+    font-family: inherit;
+    font-size: 36px; font-weight: 500; color: var(--primary-dark);
+    margin-bottom: 8px;
+}
+.kasse-success-text { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+.kasse-success-actions { display: flex; gap: 10px; justify-content: center; }
+
+@keyframes kalModalUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ============ ANIMATIONS ============ */
+.kasse-item { animation: itemSlideIn 0.25s ease-out; }
+@keyframes itemSlideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+.kasse-success-card { animation: successPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes successPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.kasse-checkout-btn:active { transform: scale(0.97); transition: transform 0.1s; }
+.kasse-pay-btn:active { transform: scale(0.96); }
+.kasse-qty-btn:active { transform: scale(0.9); }
+
+/* Kunden-Picker */
+.cp-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    border-radius: 10px; cursor: pointer; transition: background 0.15s;
+    border: 1px solid transparent; margin-bottom: 4px;
+}
+.cp-item:hover { background: var(--bg-subtle); border-color: var(--border); }
+.cp-item .cp-avatar {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--accent-glow); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+}
+.cp-item .cp-name { font-size: 14px; font-weight: 500; color: var(--primary-dark); }
+.cp-item .cp-info { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* ============ MOBILE ============ */
+@media (max-width: 900px) {
+    .kasse-layout { grid-template-columns: 1fr; }
+    .kasse-sidebar { position: sticky; bottom: 0; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 24px rgba(0,0,0,0.08); }
+    .kasse-summary { padding: 18px; }
+    .kasse-pay { padding: 0 18px 18px; }
+    .kasse-tages-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .kasse-tages-val { font-size: 20px; }
+    .kasse-client-bar { padding: 14px 16px; }
+}
+@media (max-width: 600px) {
+    .kasse-pay-btns { grid-template-columns: 1fr 1fr; }
+    .kasse-tages-grid { grid-template-columns: 1fr; }
+    .kasse-item { padding: 12px 14px; gap: 10px; }
+}
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle" aria-label="Menue">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main" style="padding-top: 24px;">
+
+        <div class="page-header" style="margin-bottom: 24px;">
+            <h2>Kasse</h2>
+            <p>Behandlung abschliessen und kassieren</p>
+        </div>
+
+        <div class="kasse-layout">
+
+            <!-- LINKE SEITE: Positionen -->
+            <div class="kasse-main">
+
+                <!-- Kundin -->
+                <div class="kasse-client-bar" id="clientBar">
+                    <div class="kasse-client-avatar" id="clientAvatar">MS</div>
+                    <div class="kasse-client-info">
+                        <div class="kasse-client-name" id="clientName">Maria Schneider</div>
+                        <div class="kasse-client-sub" id="clientSub">Noon Premium Facial · 09:00 - 10:30</div>
+                    </div>
+                    <button class="kasse-client-change" onclick="openClientPicker()">Wechseln</button>
+                </div>
+
+                <!-- Kunden-Picker (versteckt, wird per JS eingeblendet) -->
+                <div id="clientPicker" style="display:none;margin-bottom:20px;">
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                            <div style="font-size:15px;font-weight:600;color:var(--primary-dark);">Kundin waehlen</div>
+                            <button onclick="closeClientPicker()" style="border:none;background:none;font-size:20px;color:var(--text-muted);cursor:pointer;">&times;</button>
+                        </div>
+                        <input type="text" id="clientSearch" placeholder="Name suchen..." oninput="filterClients()" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;margin-bottom:10px;">
+                        <button onclick="selectLaufkundschaft()" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-subtle);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:10px;text-align:left;display:flex;align-items:center;gap:10px;">
+                            <span style="width:36px;height:36px;border-radius:10px;background:var(--warning-light);color:var(--warning);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">&#9733;</span>
+                            Laufkundschaft (ohne Kundenkonto)
+                        </button>
+                        <div id="clientResults" style="max-height:240px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+
+                <!-- Positionen -->
+                <div class="kasse-section-title">Positionen</div>
+                <div class="kasse-items" id="kasseItems"></div>
+
+                <!-- Produkt hinzufuegen -->
+                <div class="kasse-add-row">
+                    <select id="addTreatmentSelect">
+                        <option value="">Behandlung hinzufuegen...</option>
+                    </select>
+                    <button class="add-btn" onclick="addTreatmentItem()">+ Behandlung</button>
+                </div>
+                <div class="kasse-add-row" style="margin-top:8px;">
+                    <select id="addProductSelect">
+                        <option value="">Produkt hinzufuegen...</option>
+                    </select>
+                    <button class="add-btn" onclick="addProduct()">+ Produkt</button>
+                </div>
+
+                <!-- Tagesabschluss -->
+                <div class="kasse-tages" id="tagesSection">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <div class="kasse-tages-title" style="margin-bottom:0;">Tagesabschluss</div>
+                        <button class="btn btn-secondary" style="font-size:12px;padding:8px 14px;" onclick="exportTagesReport()">PDF Export</button>
+                    </div>
+                    <div class="kasse-tages-grid" style="grid-template-columns:repeat(4,1fr);">
+                        <div class="kasse-tages-card">
+                            <div class="kasse-tages-val" id="tagesGesamt">0,00 EUR</div>
+                            <div class="kasse-tages-lbl">Gesamt</div>
+                        </div>
+                        <div class="kasse-tages-card">
+                            <div class="kasse-tages-val" id="tagesBar">0,00 EUR</div>
+                            <div class="kasse-tages-lbl">Bar</div>
+                        </div>
+                        <div class="kasse-tages-card">
+                            <div class="kasse-tages-val" id="tagesKarte">0,00 EUR</div>
+                            <div class="kasse-tages-lbl">Karte</div>
+                        </div>
+                        <div class="kasse-tages-card">
+                            <div class="kasse-tages-val" id="tagesTip">0,00 EUR</div>
+                            <div class="kasse-tages-lbl">Trinkgeld</div>
+                        </div>
+                    </div>
+                    <div class="kasse-section-title" style="margin-top:16px;">Heutige Transaktionen</div>
+                    <div class="kasse-tages-list" id="tagesList"></div>
+                </div>
+
+            </div>
+
+            <!-- RECHTE SEITE: Zusammenfassung -->
+            <div class="kasse-sidebar">
+                <div class="kasse-summary">
+                    <div class="kasse-summary-title">Zusammenfassung</div>
+                    <div id="summaryLines"></div>
+
+                    <div class="kasse-discount">
+                        <input type="number" id="discountVal" placeholder="0" min="0" oninput="recalc()">
+                        <select id="discountType" onchange="recalc()">
+                            <option value="pct">% Rabatt</option>
+                            <option value="eur">EUR Rabatt</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+                        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:500;margin-bottom:8px;">Gutschein einloesen</div>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="voucherCode" placeholder="Code eingeben..." style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;text-transform:uppercase;">
+                            <button onclick="redeemVoucher()" style="padding:10px 14px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;white-space:nowrap;">Einloesen</button>
+                        </div>
+                        <div id="voucherStatus" style="display:none;margin-top:8px;padding:8px 12px;border-radius:8px;font-size:12px;"></div>
+                    </div>
+                </div>
+
+                <div class="kasse-pay">
+                    <div class="kasse-pay-title">Zahlungsart</div>
+                    <div class="kasse-pay-btns">
+                        <button class="kasse-pay-btn active" onclick="setPayMethod('karte', this)">
+                            <span class="pay-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </span>
+                            <span class="pay-label">Karte</span>
+                            <span class="pay-sub">SumUp Terminal</span>
+                        </button>
+                        <button class="kasse-pay-btn" onclick="setPayMethod('bar', this)">
+                            <span class="pay-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </span>
+                            <span class="pay-label">Bar</span>
+                            <span class="pay-sub">Bargeld</span>
+                        </button>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:500;margin-bottom:6px;">Trinkgeld (optional)</div>
+                        <div style="display:flex;gap:6px;">
+                            <button class="tip-btn" onclick="setTip(0, this)" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-muted);transition:all 0.15s;">Kein</button>
+                            <button class="tip-btn" onclick="setTip(2, this)" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-secondary);transition:all 0.15s;">2 EUR</button>
+                            <button class="tip-btn" onclick="setTip(5, this)" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-secondary);transition:all 0.15s;">5 EUR</button>
+                            <button class="tip-btn" onclick="setTip(10, this)" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);cursor:pointer;font-family:inherit;font-size:13px;color:var(--text-secondary);transition:all 0.15s;">10 EUR</button>
+                            <input type="number" id="tipCustom" placeholder="..." min="0" step="1" oninput="setTipCustom()" style="width:60px;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;text-align:center;">
+                        </div>
+                    </div>
+
+                    <button class="kasse-checkout-btn" id="checkoutBtn" onclick="checkout()">
+                        Bezahlen · <span class="amount" id="checkoutAmount">0,00 EUR</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Erfolgs-Overlay -->
+<div class="kasse-success-overlay" id="successOverlay">
+    <div class="kasse-success-card">
+        <div class="kasse-success-check">&#10003;</div>
+        <div class="kasse-success-amount" id="successAmount">189,00 EUR</div>
+        <div class="kasse-success-text" id="successText">Zahlung erfolgreich (Karte)</div>
+        <div class="kasse-success-actions" style="flex-direction:column;gap:8px;width:100%;">
+            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="printReceipt()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Beleg als PDF herunterladen
+            </button>
+            <button class="btn" style="width:100%;justify-content:center;background:var(--info);color:#fff;" onclick="sendReceiptMail()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Beleg per E-Mail senden
+            </button>
+            <button class="btn btn-secondary" style="width:100%;justify-content:center;" onclick="closeSuccess()">Fertig — kein Beleg</button>
+            <button class="btn" style="width:100%;justify-content:center;background:transparent;color:var(--accent);border:1px solid var(--accent);margin-top:4px;" onclick="loadNextClient()">Naechste Kundin</button>
+            <a href="kalender.html" class="btn" style="width:100%;justify-content:center;background:transparent;color:var(--text-muted);border:1px solid var(--border);text-decoration:none;margin-top:4px;">Zurueck zum Kalender</a>
+        </div>
+        <div id="mailSendStatus" style="display:none;margin-top:12px;font-size:13px;text-align:center;"></div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+function roundCent(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+function fmtEUR(n) { return (n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR'; }
+function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+let PRODUCTS = [
+    { id: 'p1', name: 'Advanced Recovery Serum', brand: 'Noon', price: 149.00 },
+    { id: 'p2', name: 'Hydrating Cleanser', brand: 'Noon', price: 59.00 },
+    { id: 'p3', name: 'SPF 50 Sunscreen', brand: 'Noon', price: 45.00 },
+    { id: 'p4', name: 'Eye Contour Cream', brand: 'Noon', price: 89.00 },
+    { id: 'p5', name: 'Vitamin C Booster', brand: 'Noon', price: 79.00 },
+];
+
+async function loadFirestoreProducts() {
+    try {
+        var snap = await db.collection('products').get();
+        if (snap.size > 0) {
+            PRODUCTS = [];
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                PRODUCTS.push({ id: doc.id, name: d.name || '', brand: d.brand || '', price: d.price || 0 });
+            });
+        }
+    } catch(e) { console.error('Products load:', e); }
+    var sel = document.getElementById('addProductSelect');
+    sel.innerHTML = '<option value="">Produkt hinzufuegen...</option>' +
+        PRODUCTS.map(function(p) { return '<option value="' + p.id + '">' + escHtml(p.name) + ' (' + escHtml(p.brand) + ') — ' + fmtEUR(p.price) + '</option>'; }).join('');
+}
+
+let items = [];
+let payMethod = 'karte';
+
+function loadTodayTxLocal() {
+    try {
+        var key = 'sc_kasse_tx_' + todayStr();
+        var s = localStorage.getItem(key);
+        return s ? JSON.parse(s) : [];
+    } catch(e) { return []; }
+}
+function saveTodayTx() {
+    try { localStorage.setItem('sc_kasse_tx_' + todayStr(), JSON.stringify(todayTransactions)); } catch(e) {}
+}
+let todayTransactions = [];
+
+async function loadTodayTxFromFirestore() {
+    try {
+        var today = todayStr();
+        var snap = await db.collection('transactions').where('date', '==', today).get();
+        if (snap.size > 0) {
+            todayTransactions = [];
+            snap.forEach(function(doc) { todayTransactions.push(doc.data()); });
+            saveTodayTx();
+            renderTagesabschluss();
+            return;
+        }
+    } catch(e) { console.error('Firestore tx load:', e); }
+    todayTransactions = loadTodayTxLocal();
+}
+
+let TREATMENT_PRICES = {};
+
+var dashApp = firebase.initializeApp({
+  apiKey:"AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+  authDomain:"skinconcept-hagner.firebaseapp.com",
+  databaseURL:"https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"skinconcept-hagner",
+  storageBucket:"skinconcept-hagner.firebasestorage.app",
+  messagingSenderId:"101205413833",
+  appId:"1:101205413833:web:9734e0906dd71d1a9d2218"
+}, 'dashboard');
+var dashDb = dashApp.database();
+var DASH_VAULT = 'v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
+
+var ALL_TREATMENTS = [];
+
+async function loadFirestoreTreatmentPrices() {
+    try {
+        var snap = await db.collection('treatments').get();
+        ALL_TREATMENTS = [];
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            if (d.name) {
+                TREATMENT_PRICES[d.name] = d.price || 0;
+                ALL_TREATMENTS.push({ id: doc.id, name: d.name, price: d.price || 0, duration: d.duration || 60, category: d.category || '' });
+            }
+        });
+        var sel = document.getElementById('addTreatmentSelect');
+        if (sel && ALL_TREATMENTS.length > 0) {
+            sel.innerHTML = '<option value="">Behandlung hinzufuegen...</option>' +
+                ALL_TREATMENTS.map(function(t) {
+                    return '<option value="' + t.id + '">' + escHtml(t.name) + ' — ' + fmtEUR(t.price) + '</option>';
+                }).join('');
+        }
+    } catch(e) { console.error('Treatment prices load:', e); }
+    if (Object.keys(TREATMENT_PRICES).length === 0) {
+        TREATMENT_PRICES = {
+            'Noon Premium Facial': 189, 'Noon Skin Renewal': 159, 'Noon Eye Treatment': 89,
+            'Microneedling': 149, 'Classic Facial': 99, 'Fruchtsaeure Peeling': 119,
+            'Waxing Beine komplett': 65, 'Waxing Achseln': 25, 'Hautanalyse + Beratung': 0
+        };
+        ALL_TREATMENTS = Object.keys(TREATMENT_PRICES).map(function(name, i) {
+            return { id: 'demo' + i, name: name, price: TREATMENT_PRICES[name], duration: 60, category: '' };
+        });
+        var sel = document.getElementById('addTreatmentSelect');
+        if (sel) {
+            sel.innerHTML = '<option value="">Behandlung hinzufuegen...</option>' +
+                ALL_TREATMENTS.map(function(t) { return '<option value="' + t.id + '">' + escHtml(t.name) + ' — ' + fmtEUR(t.price) + '</option>'; }).join('');
+        }
+    }
+}
+
+function addTreatmentItem() {
+    var sel = document.getElementById('addTreatmentSelect');
+    var treat = ALL_TREATMENTS.find(function(t) { return t.id === sel.value; });
+    if (!treat) return;
+    var existing = items.find(function(i) { return i.name === treat.name; });
+    if (existing) { existing.qty++; }
+    else { items.push({ id: 't' + Date.now(), type: 'treatment', name: treat.name, detail: treat.duration + ' Min. · ' + treat.category, price: treat.price, qty: 1 }); }
+    sel.value = '';
+    renderItems();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    loadFirestoreProducts();
+    loadClientsFromKartei();
+
+    await loadFirestoreTreatmentPrices();
+
+    const params = new URLSearchParams(window.location.search);
+    const clientName = params.get('client');
+    if (clientName) {
+        currentClientName = clientName;
+        currentClientId = allClients.find(c => c.name === clientName)?.id || null;
+        document.getElementById('clientName').textContent = clientName;
+        document.getElementById('clientAvatar').textContent = clientName.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+        const treatment = params.get('treatment') || '';
+        const staff = params.get('staff') || '';
+        const duration = params.get('duration') || '';
+        const time = params.get('time') || '';
+        document.getElementById('clientSub').textContent = treatment + (time ? ' · ' + time : '') + (staff ? ' · ' + staff.charAt(0).toUpperCase() + staff.slice(1) : '');
+        const price = TREATMENT_PRICES[treatment] || 0;
+        if (treatment) {
+            items = [{ id: 'i1', type: 'treatment', name: treatment, detail: (duration ? duration + ' Min.' : '') + (staff ? ' · ' + staff.charAt(0).toUpperCase() + staff.slice(1) : ''), price: price, qty: 1 }];
+        }
+    } else {
+        currentClientName = '';
+        currentClientId = null;
+        document.getElementById('clientName').textContent = 'Kundin waehlen';
+        document.getElementById('clientAvatar').textContent = '?';
+        document.getElementById('clientSub').textContent = 'Bitte Kundin auswaehlen oder Laufkundschaft';
+        items = [];
+    }
+
+    renderItems();
+    loadTodayTxFromFirestore().then(function() { renderTagesabschluss(); });
+});
+
+function renderItems() {
+    const container = document.getElementById('kasseItems');
+    if (items.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--text-muted);font-size:13px;"><div style="font-size:15px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">Keine Positionen</div>Behandlung oder Produkt hinzufuegen um zu kassieren.</div>';
+        recalc();
+        return;
+    }
+    container.innerHTML = items.map((item, idx) => `
+        <div class="kasse-item">
+            <div class="kasse-item-icon ${item.type}">${item.type === 'treatment' ? '&#9734;' : '&#9679;'}</div>
+            <div class="kasse-item-body">
+                <div class="kasse-item-name">${escHtml(item.name)}</div>
+                <div class="kasse-item-detail">${escHtml(item.detail || '')}</div>
+            </div>
+            ${item.type === 'product' ? `
+            <div class="kasse-item-qty">
+                <button class="kasse-qty-btn" onclick="changeQty(${idx}, -1)">-</button>
+                <span class="kasse-qty-val">${item.qty}</span>
+                <button class="kasse-qty-btn" onclick="changeQty(${idx}, 1)">+</button>
+            </div>` : ''}
+            <div class="kasse-item-price">${fmtEUR(roundCent(item.price * item.qty))}</div>
+            <button class="kasse-item-remove" onclick="removeItem(${idx})" title="Entfernen">&times;</button>
+        </div>
+    `).join('');
+    recalc();
+}
+
+function changeQty(idx, delta) {
+    items[idx].qty = Math.max(1, items[idx].qty + delta);
+    renderItems();
+}
+
+function removeItem(idx) {
+    items.splice(idx, 1);
+    renderItems();
+}
+
+function addProduct() {
+    const sel = document.getElementById('addProductSelect');
+    const prod = PRODUCTS.find(p => p.id === sel.value);
+    if (!prod) return;
+    const existing = items.find(i => i.id === prod.id);
+    if (existing) { existing.qty++; }
+    else { items.push({ id: prod.id, type: 'product', name: prod.name, detail: prod.brand, price: prod.price, qty: 1 }); }
+    sel.value = '';
+    renderItems();
+}
+
+function recalc() {
+    let subtotal = 0;
+    items.forEach(i => { subtotal += roundCent(i.price * i.qty); });
+    subtotal = roundCent(subtotal);
+
+    const discVal = Number(document.getElementById('discountVal').value) || 0;
+    const discType = document.getElementById('discountType').value;
+    let discount = 0;
+    if (discVal > 0) {
+        discount = discType === 'pct' ? roundCent(subtotal * discVal / 100) : roundCent(Math.min(discVal, subtotal));
+    }
+
+    const total = roundCent(subtotal - discount);
+    const netto = roundCent(total / 1.19);
+    const mwst = roundCent(total - netto);
+
+    let html = `<div class="kasse-line"><span>Zwischensumme</span><span>${fmtEUR(subtotal)}</span></div>`;
+    if (discount > 0) {
+        html += `<div class="kasse-line" style="color:var(--danger);"><span>Rabatt ${discType === 'pct' ? discVal + '%' : ''}</span><span>-${fmtEUR(discount)}</span></div>`;
+    }
+    html += `<div class="kasse-line mwst"><span>Netto</span><span>${fmtEUR(netto)}</span></div>`;
+    html += `<div class="kasse-line mwst"><span>MwSt. 19%</span><span>${fmtEUR(mwst)}</span></div>`;
+    if (currentTip > 0) {
+        html += `<div class="kasse-line" style="color:var(--success);"><span>Trinkgeld</span><span>+${fmtEUR(currentTip)}</span></div>`;
+    }
+    var grandTotal = roundCent(total + currentTip);
+    html += `<div class="kasse-line total"><span>Gesamt</span><span>${fmtEUR(grandTotal)}</span></div>`;
+    document.getElementById('summaryLines').innerHTML = html;
+    document.getElementById('checkoutAmount').textContent = fmtEUR(grandTotal);
+    document.getElementById('checkoutBtn').disabled = items.length === 0;
+}
+
+var currentTip = 0;
+
+function setTip(amount, btn) {
+    currentTip = amount;
+    document.getElementById('tipCustom').value = '';
+    document.querySelectorAll('.tip-btn').forEach(function(b) { b.style.borderColor = 'var(--border)'; b.style.background = 'var(--bg-card)'; });
+    if (btn) { btn.style.borderColor = 'var(--accent)'; btn.style.background = 'var(--accent-glow)'; }
+    recalc();
+}
+
+function setTipCustom() {
+    currentTip = Number(document.getElementById('tipCustom').value) || 0;
+    document.querySelectorAll('.tip-btn').forEach(function(b) { b.style.borderColor = 'var(--border)'; b.style.background = 'var(--bg-card)'; });
+    recalc();
+}
+
+function setPayMethod(method, btn) {
+    payMethod = method;
+    document.querySelectorAll('.kasse-pay-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+let currentClientId = null;
+let currentClientName = '';
+let allClients = [];
+
+allClients = [];
+
+async function loadClientsFromKartei() {
+    try {
+        var snap = await dashDb.ref(DASH_VAULT + '/kartei_data').once('value');
+        var data = snap.val();
+        if (data && typeof data === 'object') {
+            allClients = [];
+            for (var id in data) {
+                if (id.startsWith('_')) continue;
+                var raw = data[id];
+                var fn = (raw.fn || '').trim();
+                var ln = (raw.ln || '').trim();
+                var name = (raw.name || (fn + ' ' + ln)).trim();
+                if (!name) continue;
+                allClients.push({
+                    id: id,
+                    name: name,
+                    phone: raw.ph || '',
+                    email: raw.em || '',
+                    visits: typeof raw.visits === 'number' ? raw.visits : 0
+                });
+            }
+            allClients.sort(function(a, b) { return a.name.localeCompare(b.name, 'de'); });
+        }
+    } catch(e) { console.error('Kunden laden:', e); }
+    if (allClients.length === 0) {
+        allClients = [
+            { id: 'demo1', name: 'Maria Schneider', phone: '0171 234 5678', visits: 12 },
+            { id: 'demo2', name: 'Laura Weber', phone: '0176 987 6543', visits: 8 },
+        ];
+    }
+}
+
+function openClientPicker() {
+    document.getElementById('clientBar').style.display = 'none';
+    document.getElementById('clientPicker').style.display = 'block';
+    document.getElementById('clientSearch').value = '';
+    filterClients();
+    document.getElementById('clientSearch').focus();
+}
+
+function closeClientPicker() {
+    document.getElementById('clientPicker').style.display = 'none';
+    document.getElementById('clientBar').style.display = 'flex';
+}
+
+function filterClients() {
+    const q = document.getElementById('clientSearch').value.toLowerCase().trim();
+    const filtered = q ? allClients.filter(c => c.name.toLowerCase().includes(q)) : allClients;
+    const container = document.getElementById('clientResults');
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">Keine Kundin gefunden</div>';
+        return;
+    }
+    container.innerHTML = filtered.map(c => `
+        <div class="cp-item" onclick="selectClient('${c.id}', '${escHtml(c.name)}')">
+            <div class="cp-avatar">${c.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase()}</div>
+            <div>
+                <div class="cp-name">${escHtml(c.name)}</div>
+                <div class="cp-info">${c.visits || 0} Besuche${c.phone ? ' · ' + escHtml(c.phone) : ''}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function selectClient(id, name) {
+    currentClientId = id;
+    currentClientName = name;
+    document.getElementById('clientName').textContent = name;
+    document.getElementById('clientAvatar').textContent = name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('clientSub').textContent = 'Produktverkauf';
+    items = [];
+    renderItems();
+    closeClientPicker();
+}
+
+function selectLaufkundschaft() {
+    currentClientId = null;
+    currentClientName = 'Laufkundschaft';
+    document.getElementById('clientName').textContent = 'Laufkundschaft';
+    document.getElementById('clientAvatar').textContent = 'LK';
+    document.getElementById('clientSub').textContent = 'Ohne Kundenkonto';
+    items = [];
+    renderItems();
+    closeClientPicker();
+}
+
+function savePurchaseToHistory(clientId, clientName, itemsList, total, method) {
+    var txData = {
+        clientId: clientId || null,
+        clientName: clientName,
+        items: itemsList.map(function(i) { return { name: i.name, qty: i.qty, price: i.price, type: i.type }; }),
+        total: total,
+        method: method,
+        date: todayStr(),
+        time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    try {
+        db.collection('transactions').add(txData);
+    } catch(e) { console.error('Transaction save:', e); }
+    try {
+        var key = 'sc_kasse_history';
+        var history = JSON.parse(localStorage.getItem(key) || '[]');
+        history.push(txData);
+        localStorage.setItem(key, JSON.stringify(history));
+    } catch(e) {}
+}
+
+function checkout() {
+    if (items.length === 0) return;
+    let subtotal = 0;
+    items.forEach(i => { subtotal += roundCent(i.price * i.qty); });
+    const discVal = Number(document.getElementById('discountVal').value) || 0;
+    const discType = document.getElementById('discountType').value;
+    let discount = discType === 'pct' ? roundCent(subtotal * discVal / 100) : roundCent(Math.min(discVal, subtotal));
+    const total = roundCent(subtotal - discount);
+
+    var grandTotal = roundCent(total + currentTip);
+    const tx = {
+        time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+        client: document.getElementById('clientName').textContent,
+        amount: grandTotal,
+        tip: currentTip,
+        method: payMethod,
+        items: items.map(i => i.name).join(', ')
+    };
+    todayTransactions.push(tx);
+    saveTodayTx();
+    savePurchaseToHistory(currentClientId, document.getElementById('clientName').textContent, items, total, payMethod);
+
+    var apptId = new URLSearchParams(window.location.search).get('apptId');
+    if (apptId) {
+        try { db.collection('appointments').doc(apptId).update({ status: 'abkassiert' }); } catch(e) {}
+    }
+    if (appliedVoucher) {
+        try {
+            db.collection('office_invoices').doc(appliedVoucher.id).update({
+                voucherRedeemed: true,
+                redeemedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                redeemedBy: document.getElementById('clientName').textContent
+            });
+        } catch(e) {}
+        appliedVoucher = null;
+    }
+
+    window._lastReceipt = {
+        client: document.getElementById('clientName').textContent,
+        items: items.map(function(i) { return { name: i.name, qty: i.qty, price: i.price, type: i.type }; }),
+        subtotal: subtotal,
+        discount: discount,
+        discountType: discType,
+        discountVal: discVal,
+        total: total,
+        netto: roundCent(total / 1.19),
+        mwst: roundCent(total - roundCent(total / 1.19)),
+        method: payMethod,
+        date: todayStr(),
+        time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+        nr: 'B-' + Date.now().toString(36).toUpperCase()
+    };
+
+    document.getElementById('successAmount').textContent = fmtEUR(total);
+    document.getElementById('successText').textContent = `Zahlung erfolgreich (${payMethod === 'karte' ? 'Karte / SumUp' : 'Bar'})`;
+    document.getElementById('successOverlay').classList.add('open');
+
+    renderTagesabschluss();
+}
+
+function closeSuccess() {
+    document.getElementById('successOverlay').classList.remove('open');
+    items = [];
+    document.getElementById('discountVal').value = '';
+    document.getElementById('voucherCode').value = '';
+    document.getElementById('voucherStatus').style.display = 'none';
+    document.getElementById('mailSendStatus').style.display = 'none';
+    currentTip = 0;
+    document.getElementById('tipCustom').value = '';
+    document.querySelectorAll('.tip-btn').forEach(function(b) { b.style.borderColor = 'var(--border)'; b.style.background = 'var(--bg-card)'; });
+    renderItems();
+}
+
+function printReceipt() {
+    var r = window._lastReceipt;
+    if (!r) { toast('Kein Beleg vorhanden'); return; }
+    try {
+        var jsPDF = window.jspdf.jsPDF;
+        var doc = new jsPDF({ unit: 'mm', format: [80, 200], orientation: 'portrait' });
+        var w = 80, ml = 6, mr = 6, cw = w - ml - mr;
+        var y = 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('SKINCONCEPT HAGNER', w / 2, y, { align: 'center' }); y += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.text('Bahnhofstrasse 67a, 54497 Morbach', w / 2, y, { align: 'center' }); y += 3;
+        doc.text('Tel: +49 176 61742511', w / 2, y, { align: 'center' }); y += 5;
+
+        doc.setDrawColor(180);
+        doc.line(ml, y, w - mr, y); y += 4;
+
+        doc.setFontSize(8);
+        doc.text('Beleg-Nr: ' + r.nr, ml, y); y += 3.5;
+        doc.text('Datum: ' + r.date + ' ' + r.time, ml, y); y += 3.5;
+        doc.text('Kundin: ' + r.client, ml, y); y += 3.5;
+        doc.text('Zahlung: ' + (r.method === 'bar' ? 'Bar' : 'Karte / SumUp'), ml, y); y += 5;
+
+        doc.line(ml, y, w - mr, y); y += 4;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.text('Pos.', ml, y);
+        doc.text('Anz.', ml + 38, y, { align: 'center' });
+        doc.text('Betrag', w - mr, y, { align: 'right' });
+        y += 1; doc.line(ml, y, w - mr, y); y += 3.5;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        r.items.forEach(function(item) {
+            var name = item.name.length > 28 ? item.name.substring(0, 26) + '..' : item.name;
+            doc.text(name, ml, y);
+            doc.text(String(item.qty), ml + 38, y, { align: 'center' });
+            doc.text(fmtEUR(roundCent(item.price * item.qty)), w - mr, y, { align: 'right' });
+            y += 3.5;
+        });
+
+        y += 1; doc.line(ml, y, w - mr, y); y += 4;
+
+        doc.setFontSize(7.5);
+        if (r.discount > 0) {
+            doc.text('Zwischensumme:', ml, y);
+            doc.text(fmtEUR(r.subtotal), w - mr, y, { align: 'right' }); y += 3.5;
+            doc.text('Rabatt' + (r.discountType === 'pct' ? ' ' + r.discountVal + '%' : '') + ':', ml, y);
+            doc.text('-' + fmtEUR(r.discount), w - mr, y, { align: 'right' }); y += 3.5;
+        }
+        doc.text('Netto:', ml, y);
+        doc.text(fmtEUR(r.netto), w - mr, y, { align: 'right' }); y += 3.5;
+        doc.text('MwSt. 19%:', ml, y);
+        doc.text(fmtEUR(r.mwst), w - mr, y, { align: 'right' }); y += 4;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text('GESAMT:', ml, y);
+        doc.text(fmtEUR(r.total), w - mr, y, { align: 'right' }); y += 6;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(120);
+        doc.text('Vielen Dank fuer Ihren Besuch!', w / 2, y, { align: 'center' }); y += 3;
+        doc.text('Skinconcept Hagner · Tamara Hagner', w / 2, y, { align: 'center' }); y += 3;
+        doc.text('StNr: 43/058/411/46', w / 2, y, { align: 'center' });
+
+        doc.save('Beleg_' + r.nr + '.pdf');
+        toast('Beleg als PDF heruntergeladen');
+    } catch(e) {
+        console.error('Beleg PDF:', e);
+        toast('Fehler beim Erstellen des Belegs');
+    }
+    closeSuccess();
+}
+
+function sendReceiptMail() {
+    var r = window._lastReceipt;
+    if (!r) { toast('Kein Beleg vorhanden'); return; }
+
+    var clientEmail = '';
+    if (currentClientId) {
+        var client = allClients.find(function(c) { return c.id === currentClientId; });
+        if (client && client.email) clientEmail = client.email;
+    }
+
+    var email = prompt('Beleg per E-Mail senden an:', clientEmail);
+    if (!email || !email.includes('@')) { toast('Keine gueltige E-Mail-Adresse'); return; }
+
+    var statusEl = document.getElementById('mailSendStatus');
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--info)';
+    statusEl.textContent = 'Sende Beleg an ' + email + '...';
+
+    var mailBody = buildReceiptMailHtml(r);
+
+    fetch('/api/mail/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            to: email,
+            subject: 'Ihr Beleg von Skinconcept Hagner — ' + r.nr,
+            html: mailBody
+        })
+    }).then(function(res) {
+        if (res.ok) {
+            statusEl.style.color = 'var(--success)';
+            statusEl.textContent = 'Beleg erfolgreich an ' + email + ' gesendet';
+            toast('Beleg per Mail gesendet');
+        } else {
+            throw new Error('Mail-Versand nicht verfuegbar — Resend API-Key wird benoetigt');
+        }
+    }).catch(function(e) {
+        statusEl.style.color = 'var(--warning)';
+        statusEl.textContent = 'Mail-Versand noch nicht aktiv (Resend-Key fehlt). PDF wurde heruntergeladen.';
+        printReceipt();
+    });
+}
+
+function buildReceiptMailHtml(r) {
+    var itemRows = r.items.map(function(i) {
+        return '<tr><td style="padding:8px 0;border-bottom:1px solid #EEE7D9;font-size:14px;">' +
+            i.name + '</td><td style="padding:8px 0;border-bottom:1px solid #EEE7D9;text-align:center;font-size:14px;">' +
+            i.qty + '</td><td style="padding:8px 0;border-bottom:1px solid #EEE7D9;text-align:right;font-size:14px;font-weight:600;">' +
+            fmtEUR(roundCent(i.price * i.qty)) + '</td></tr>';
+    }).join('');
+
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"></head>' +
+        '<body style="margin:0;padding:0;background:#F8F4EC;font-family:-apple-system,Helvetica,Arial,sans-serif;">' +
+        '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F4EC;"><tr><td align="center" style="padding:40px 16px;">' +
+        '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fff;border-radius:8px;">' +
+        '<tr><td style="padding:32px 32px 24px;text-align:center;border-bottom:1px solid #EEE7D9;">' +
+        '<div style="font-size:20px;letter-spacing:6px;color:#2A2520;font-weight:400;">SKINCONCEPT</div>' +
+        '<div style="font-size:10px;letter-spacing:3px;color:#B89763;margin-top:6px;">HAGNER · MORBACH</div>' +
+        '</td></tr>' +
+        '<tr><td style="padding:28px 32px;">' +
+        '<div style="font-size:13px;color:#8C857A;margin-bottom:4px;">Beleg-Nr: ' + r.nr + '</div>' +
+        '<div style="font-size:13px;color:#8C857A;margin-bottom:16px;">' + r.date + ' · ' + r.time + ' Uhr</div>' +
+        '<table width="100%" cellpadding="0" cellspacing="0">' +
+        '<tr style="border-bottom:2px solid #EEE7D9;"><th style="text-align:left;padding:8px 0;font-size:11px;color:#8C857A;text-transform:uppercase;letter-spacing:1px;">Position</th>' +
+        '<th style="text-align:center;padding:8px 0;font-size:11px;color:#8C857A;text-transform:uppercase;letter-spacing:1px;">Anz.</th>' +
+        '<th style="text-align:right;padding:8px 0;font-size:11px;color:#8C857A;text-transform:uppercase;letter-spacing:1px;">Betrag</th></tr>' +
+        itemRows +
+        '</table>' +
+        (r.discount > 0 ? '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#C0544F;"><span>Rabatt</span><span>-' + fmtEUR(r.discount) + '</span></div>' : '') +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#8C857A;"><span>Netto</span><span>' + fmtEUR(r.netto) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#8C857A;"><span>MwSt. 19%</span><span>' + fmtEUR(r.mwst) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:12px 0 0;margin-top:8px;border-top:2px solid #2A2520;font-size:18px;font-weight:700;color:#2A2520;"><span>Gesamt</span><span>' + fmtEUR(r.total) + '</span></div>' +
+        '<div style="margin-top:8px;font-size:12px;color:#8C857A;">Bezahlt: ' + (r.method === 'bar' ? 'Bar' : 'Karte / SumUp') + '</div>' +
+        '</td></tr>' +
+        '<tr><td style="padding:24px 32px;border-top:1px solid #EEE7D9;text-align:center;">' +
+        '<div style="font-size:13px;color:#8C857A;">Vielen Dank fuer Ihren Besuch!</div>' +
+        '<div style="font-size:11px;color:#B8B0A8;margin-top:8px;">Skinconcept Hagner · Bahnhofstrasse 67a · 54497 Morbach<br>StNr: 43/058/411/46</div>' +
+        '</td></tr></table></td></tr></table></body></html>';
+}
+
+var appliedVoucher = null;
+
+async function redeemVoucher() {
+    var code = document.getElementById('voucherCode').value.trim().toUpperCase();
+    var statusEl = document.getElementById('voucherStatus');
+    if (!code) { toast('Bitte Gutschein-Code eingeben'); return; }
+
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'var(--info-light)';
+    statusEl.style.color = 'var(--info)';
+    statusEl.textContent = 'Pruefe Code...';
+
+    try {
+        var snap = await db.collection('office_invoices').where('voucherCode', '==', code).get();
+        if (snap.empty) {
+            statusEl.style.background = 'var(--danger-light)';
+            statusEl.style.color = 'var(--danger)';
+            statusEl.textContent = 'Gutschein-Code nicht gefunden';
+            return;
+        }
+        var voucher = null;
+        snap.forEach(function(doc) { if (!voucher) voucher = { id: doc.id, ...doc.data() }; });
+
+        if (voucher.voucherRedeemed) {
+            statusEl.style.background = 'var(--warning-light)';
+            statusEl.style.color = 'var(--warning)';
+            statusEl.textContent = 'Gutschein wurde bereits eingeloest am ' + (voucher.redeemedAt ? new Date(voucher.redeemedAt.seconds * 1000).toLocaleDateString('de-DE') : '?');
+            return;
+        }
+
+        var value = voucher.total || voucher.voucherValue || 0;
+        appliedVoucher = { id: voucher.id, code: code, value: value };
+
+        document.getElementById('discountType').value = 'eur';
+        document.getElementById('discountVal').value = value;
+        recalc();
+
+        statusEl.style.background = 'var(--success-light)';
+        statusEl.style.color = 'var(--success)';
+        statusEl.textContent = 'Gutschein ' + code + ' eingeloest — ' + fmtEUR(value) + ' Guthaben angewendet';
+        toast('Gutschein eingeloest: ' + fmtEUR(value));
+    } catch(e) {
+        console.error('Voucher redeem:', e);
+        statusEl.style.background = 'var(--danger-light)';
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = 'Fehler beim Pruefen des Gutscheins';
+    }
+}
+
+function exportTagesReport() {
+    if (todayTransactions.length === 0) { toast('Keine Transaktionen heute'); return; }
+    try {
+        var jsPDF = window.jspdf.jsPDF;
+        var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        var w = 210, ml = 20, mr = 20, y = 20;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text('SKINCONCEPT HAGNER', w / 2, y, { align: 'center' }); y += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(120);
+        doc.text('Tagesabschluss — ' + todayStr(), w / 2, y, { align: 'center' }); y += 12;
+        doc.setTextColor(0);
+
+        var gesamt = 0, bar = 0, karte = 0, netto = 0, mwst = 0;
+        todayTransactions.forEach(function(t) {
+            gesamt += t.amount || 0;
+            if (t.method === 'bar') bar += t.amount || 0; else karte += t.amount || 0;
+        });
+        netto = roundCent(gesamt / 1.19);
+        mwst = roundCent(gesamt - netto);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('Zusammenfassung', ml, y); y += 8;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text('Umsatz gesamt (brutto):', ml, y); doc.text(fmtEUR(gesamt), w - mr, y, { align: 'right' }); y += 6;
+        doc.text('davon Bar:', ml + 6, y); doc.text(fmtEUR(bar), w - mr, y, { align: 'right' }); y += 5;
+        doc.text('davon Karte:', ml + 6, y); doc.text(fmtEUR(karte), w - mr, y, { align: 'right' }); y += 6;
+        doc.text('Netto:', ml, y); doc.text(fmtEUR(netto), w - mr, y, { align: 'right' }); y += 5;
+        doc.text('MwSt. 19%:', ml, y); doc.text(fmtEUR(mwst), w - mr, y, { align: 'right' }); y += 5;
+        doc.text('Transaktionen:', ml, y); doc.text(String(todayTransactions.length), w - mr, y, { align: 'right' }); y += 12;
+
+        doc.setDrawColor(200);
+        doc.line(ml, y, w - mr, y); y += 8;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('Einzelne Transaktionen', ml, y); y += 8;
+
+        doc.setFontSize(8);
+        doc.setTextColor(120);
+        doc.text('ZEIT', ml, y);
+        doc.text('KUNDIN', ml + 20, y);
+        doc.text('POSITIONEN', ml + 75, y);
+        doc.text('ZAHLUNG', w - mr - 30, y);
+        doc.text('BETRAG', w - mr, y, { align: 'right' });
+        y += 2; doc.line(ml, y, w - mr, y); y += 5;
+
+        doc.setTextColor(0);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        todayTransactions.forEach(function(t) {
+            if (y > 270) { doc.addPage(); y = 20; }
+            doc.text(t.time || '', ml, y);
+            doc.text((t.client || '').substring(0, 22), ml + 20, y);
+            doc.text((t.items || '').substring(0, 30), ml + 75, y);
+            doc.text(t.method === 'bar' ? 'Bar' : 'Karte', w - mr - 30, y);
+            doc.text(fmtEUR(t.amount || 0), w - mr, y, { align: 'right' });
+            y += 6;
+        });
+
+        y += 8;
+        doc.setFontSize(7);
+        doc.setTextColor(150);
+        doc.text('Skinconcept Hagner · Bahnhofstrasse 67a · 54497 Morbach · StNr: 43/058/411/46', w / 2, y, { align: 'center' });
+        y += 4;
+        doc.text('Erstellt am ' + new Date().toLocaleString('de-DE'), w / 2, y, { align: 'center' });
+
+        doc.save('Tagesabschluss_' + todayStr() + '.pdf');
+        toast('Tagesabschluss als PDF heruntergeladen');
+    } catch(e) {
+        console.error('Tagesabschluss PDF:', e);
+        toast('Fehler beim PDF-Export');
+    }
+}
+
+async function loadNextClient() {
+    closeSuccess();
+    try {
+        var today = todayStr();
+        var snap = await db.collection('appointments').where('date', '==', today).get();
+        var pending = [];
+        snap.forEach(function(doc) {
+            var a = doc.data();
+            if (a.status !== 'abkassiert' && a.status !== 'abgesagt' && a.status !== 'no-show' && !a.isBlocker) {
+                pending.push(a);
+            }
+        });
+        pending.sort(function(a, b) { return (a.time || '').localeCompare(b.time || ''); });
+        if (pending.length > 0) {
+            var next = pending[0];
+            var price = TREATMENT_PRICES[next.treatment] || 0;
+            currentClientName = next.client;
+            currentClientId = allClients.find(function(c) { return c.name === next.client; })?.id || null;
+            document.getElementById('clientName').textContent = next.client;
+            document.getElementById('clientAvatar').textContent = next.client.split(' ').map(function(w) { return w[0]; }).join('').substring(0,2).toUpperCase();
+            document.getElementById('clientSub').textContent = next.treatment + ' · ' + next.time;
+            items = [{ id: 'i' + Date.now(), type: 'treatment', name: next.treatment, detail: (next.duration || 60) + ' Min.', price: price, qty: 1 }];
+            renderItems();
+            toast('Naechste Kundin: ' + next.client);
+        } else {
+            toast('Keine weiteren Termine heute');
+            openClientPicker();
+        }
+    } catch(e) {
+        console.error(e);
+        openClientPicker();
+    }
+}
+
+function renderTagesabschluss() {
+    let gesamt = 0, bar = 0, karte = 0;
+    todayTransactions.forEach(t => {
+        gesamt += t.amount;
+        if (t.method === 'bar') bar += t.amount; else karte += t.amount;
+    });
+    var tips = 0;
+    todayTransactions.forEach(function(t) { tips += t.tip || 0; });
+    document.getElementById('tagesGesamt').textContent = fmtEUR(roundCent(gesamt));
+    document.getElementById('tagesBar').textContent = fmtEUR(roundCent(bar));
+    document.getElementById('tagesKarte').textContent = fmtEUR(roundCent(karte));
+    document.getElementById('tagesTip').textContent = fmtEUR(roundCent(tips));
+
+    const list = document.getElementById('tagesList');
+    if (todayTransactions.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Noch keine Transaktionen heute</div>';
+        return;
+    }
+    list.innerHTML = todayTransactions.map(t => `
+        <div class="kasse-tages-item">
+            <span class="t-time">${t.time}</span>
+            <span class="t-client">${escHtml(t.client)}</span>
+            <span class="t-method ${t.method}">${t.method === 'bar' ? 'Bar' : 'Karte'}</span>
+            <span class="t-amount">${fmtEUR(t.amount)}</span>
+        </div>
+    `).join('');
+}
+</script>
+</body>
+</html>

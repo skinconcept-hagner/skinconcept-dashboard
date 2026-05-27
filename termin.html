@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mein Termin — Skinconcept Hagner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --ink: #2A2520; --gold: #B89763; --cream: #FCFAF6; --muted: #8C857A; --border: rgba(42,37,32,0.08); --success: #3D8B5F; --danger: #C0544F; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { max-width: 440px; width: 100%; background: #fff; border-radius: 20px; padding: 40px 32px; box-shadow: 0 8px 32px rgba(74,55,40,0.08); border: 1px solid var(--border); }
+        .brand { text-align: center; margin-bottom: 28px; }
+        .brand h1 { font-size: 20px; letter-spacing: 6px; color: var(--ink); }
+        .brand .sub { font-size: 10px; letter-spacing: 3px; color: var(--gold); margin-top: 4px; }
+        .title { font-size: 18px; font-weight: 600; margin-bottom: 20px; text-align: center; }
+        .detail { margin-bottom: 20px; }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-row .label { color: var(--muted); }
+        .detail-row .value { font-weight: 600; text-align: right; }
+        .status { text-align: center; margin: 16px 0; }
+        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+        .status-badge.confirmed { background: rgba(61,139,95,0.1); color: var(--success); }
+        .status-badge.cancelled { background: rgba(192,84,79,0.1); color: var(--danger); }
+        .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+        .btn { padding: 14px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; text-align: center; transition: all 0.2s; }
+        .btn-cancel { background: transparent; color: var(--danger); border: 1px solid rgba(192,84,79,0.3); }
+        .btn-cancel:hover { background: rgba(192,84,79,0.05); }
+        .btn-call { background: var(--ink); color: var(--cream); }
+        .btn-call:hover { background: #1F1B17; }
+        .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: var(--muted); }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="brand"><h1>SKINCONCEPT</h1><div class="sub">HAGNER · MORBACH</div></div>
+    <div id="content"><div class="loading">Lade Termin...</div></div>
+    <div class="footer">Skinconcept Hagner · Bahnhofstrasse 67a · 54497 Morbach<br>+49 176 61742511</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+    apiKey:"AIzaSyAdGdgPnS3Cw3Rpiubx6_s61FyfiTQxfFc",
+    authDomain:"skinconcept-tool.firebaseapp.com",
+    projectId:"skinconcept-tool",
+    storageBucket:"skinconcept-tool.firebasestorage.app",
+    messagingSenderId:"188823880943",
+    appId:"1:188823880943:web:ae87750be002cbe491071a"
+});
+var db = firebase.firestore();
+var apptId = null;
+var apptData = null;
+
+async function init() {
+    var token = new URLSearchParams(window.location.search).get('token');
+    if (!token) { showError('Kein gueltiger Termin-Link'); return; }
+
+    try {
+        var snap = await db.collection('appointments').where('manageToken', '==', token).get();
+        if (snap.empty) { showError('Termin nicht gefunden oder abgelaufen'); return; }
+        snap.forEach(function(doc) { apptId = doc.id; apptData = doc.data(); });
+        renderAppointment();
+    } catch(e) {
+        console.error(e);
+        showError('Fehler beim Laden des Termins');
+    }
+}
+
+function showError(msg) {
+    document.getElementById('content').innerHTML = '<div class="title">' + msg + '</div>' +
+        '<div style="text-align:center;margin-top:16px;"><a href="tel:+4917661742511" class="btn btn-call" style="display:inline-block;text-decoration:none;padding:14px 28px;">Anrufen: +49 176 61742511</a></div>';
+}
+
+function renderAppointment() {
+    var a = apptData;
+    var d = new Date(a.date + 'T00:00:00');
+    var dateStr = d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    var staffName = a.staff === 'tamara' ? 'Tamara' : a.staff === 'elena' ? 'Elena' : a.staff;
+    var isCancelled = a.status === 'abgesagt';
+
+    var endMin = 0;
+    if (a.time) { var p = a.time.split(':').map(Number); endMin = p[0]*60+p[1]+(a.duration||60); }
+    var endTime = String(Math.floor(endMin/60)).padStart(2,'0') + ':' + String(endMin%60).padStart(2,'0');
+
+    document.getElementById('content').innerHTML =
+        '<div class="title">Ihr Termin</div>' +
+        '<div class="status"><span class="status-badge ' + (isCancelled ? 'cancelled' : 'confirmed') + '">' + (isCancelled ? 'Abgesagt' : 'Bestaetigt') + '</span></div>' +
+        '<div class="detail">' +
+            '<div class="detail-row"><span class="label">Behandlung</span><span class="value">' + esc(a.treatment) + '</span></div>' +
+            '<div class="detail-row"><span class="label">Datum</span><span class="value">' + dateStr + '</span></div>' +
+            '<div class="detail-row"><span class="label">Uhrzeit</span><span class="value">' + (a.time||'') + ' - ' + endTime + ' Uhr</span></div>' +
+            '<div class="detail-row"><span class="label">Mitarbeiterin</span><span class="value">' + esc(staffName) + '</span></div>' +
+        '</div>' +
+        (isCancelled ? '' :
+        '<div class="actions">' +
+            '<button class="btn btn-cancel" onclick="cancelAppointment()">Termin absagen</button>' +
+            '<a href="tel:+4917661742511" class="btn btn-call" style="text-decoration:none;">Umbuchen — Studio anrufen</a>' +
+        '</div>');
+}
+
+async function cancelAppointment() {
+    if (!confirm('Termin wirklich absagen?')) return;
+    try {
+        await db.collection('appointments').doc(apptId).update({ status: 'abgesagt' });
+        apptData.status = 'abgesagt';
+        renderAppointment();
+    } catch(e) {
+        alert('Fehler beim Absagen. Bitte rufen Sie uns an: +49 176 61742511');
+    }
+}
+
+function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+init();
+</script>
+</body>
+</html>
