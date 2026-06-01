@@ -87,6 +87,10 @@ body.client-open .back-btn{display:inline-flex}
 .sb-right{text-align:right;flex-shrink:0}
 .sb-days{font-family:inherit;font-size:18px;font-weight:600}
 .sb-status{font-size:9px;text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.sb-tw-badge{display:inline-block;font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:1px;letter-spacing:0.3px}
+.sb-cb{width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:var(--gold)}
+.sb-item.bulk-selected{background:#fff8e1;border-left:3px solid #ffa000}
+.sb-bulk-bar{display:none;padding:8px 14px;border-bottom:1px solid var(--border);gap:6px;flex-wrap:wrap;background:#fffbf0}
 
 /* KARTEI EMPTY STATE */
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);text-align:center;padding:48px}
@@ -533,6 +537,7 @@ body.client-open .back-btn{display:inline-flex}
     </div>
     <div class="sb-filters" id="sbFilters"></div>
     <div class="sb-stats" id="sbStats"></div>
+    <div class="sb-bulk-bar" id="sbBulkBar"></div>
     <div class="sb-list" id="sbList"></div>
   </div>
 
@@ -681,6 +686,12 @@ function getStatus(days,cid){
   return base;
 }
 function getSegment(c){const d=c.days;const v=c.visits||0;if(d>182)return{seg:'verloren',label:'Verloren',cls:'seg-verloren'};if(d>42)return{seg:'schlafend',label:'Schlafend',cls:'seg-schlafend'};if(v>=8)return{seg:'vip',label:'VIP',cls:'seg-vip'};if(v>=4)return{seg:'stamm',label:'Stammkunde',cls:'seg-stamm'};if(v>=1)return{seg:'aktiv',label:'Aktiv',cls:'seg-aktiv'};return{seg:'neu',label:'Neu',cls:'seg-neu'}}
+// Lead-Erkennung: Treatwell-Kontakt ohne Buchungen ODER nur in Trello und keinerlei Spuren (kein Besuch, keine Anamnese, keine Behandlung)
+function isLead(c){
+  if(c.twBookings===0)return true;       // explizit in Treatwell aber 0 Buchungen
+  if(c.source==='trello'&&(c.visits||0)===0&&!c.lv)return true; // nur Trello und nie gesehen
+  return false;
+}
 function formatPhone(ph){if(!ph)return'';return ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'')}
 function getWaUrl(ph,msg){const n=formatPhone(ph);if(!n)return'';return msg?'https://wa.me/'+n+'?text='+encodeURIComponent(msg):'https://wa.me/'+n}
 function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
@@ -1513,6 +1524,11 @@ function initClients(){
       if(!c.em&&tw.em)c.em=tw.em;
       if(!c.bd&&tw.bd){const parts=tw.bd.split('-');if(parts.length===3){c.bd=parts[0]+'.'+parts[1]+'.'+parts[2];c.gebDate=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]))}}
       if(tw.b>0)c.visits=Math.max(c.visits||0,tw.b);
+      c.twBookings=tw.b||0;          // Treatwell-Buchungen für Aufräum-Badge
+      c.source='treatwell';
+    }else{
+      c.twBookings=null;             // nicht in Treatwell
+      c.source='trello';
     }
     const kd=karteiData[c.id];
     if(kd&&kd.treatments&&kd.treatments.length){
@@ -2013,12 +2029,12 @@ function printHeimtherapie(){
 // ── SIDEBAR ──
 function renderSidebar(){
   const q=(document.getElementById('sbSearch').value||'').toLowerCase().trim();
-  const counts={all:clients.length,g:0,y:0,o:0,r:0,n:0,k:0};
-  clients.forEach(c=>{const s=getStatus(c.days,c.id);counts[s.key]++;if(s.contacted)counts.k++});
+  const counts={all:clients.length,g:0,y:0,o:0,r:0,n:0,k:0,lead:0};
+  clients.forEach(c=>{const s=getStatus(c.days,c.id);counts[s.key]++;if(s.contacted)counts.k++;if(isLead(c))counts.lead++});
 
   document.getElementById('sbFilters').innerHTML=
-    [{k:'all',l:'Alle '+counts.all},{k:'n',l:'Neu '+counts.n,c:'var(--text-muted)'},{k:'g',l:'Aktiv '+counts.g,c:'var(--green)'},{k:'y',l:'Achtung '+counts.y,c:'var(--yellow)'},{k:'o',l:'Überfällig '+counts.o,c:'var(--orange)'},{k:'r',l:'Verloren '+counts.r,c:'var(--red)'},{k:'k',l:'Kontaktiert '+counts.k,c:'var(--blue)'}]
-    .map(f=>`<button class="sf${sidebarFilter===f.k?' on':''}" onclick="sidebarFilter='${f.k}';renderSidebar()">${f.l}</button>`).join('');
+    [{k:'all',l:'Alle '+counts.all},{k:'n',l:'Neu '+counts.n,c:'var(--text-muted)'},{k:'g',l:'Aktiv '+counts.g,c:'var(--green)'},{k:'y',l:'Achtung '+counts.y,c:'var(--yellow)'},{k:'o',l:'Überfällig '+counts.o,c:'var(--orange)'},{k:'r',l:'Verloren '+counts.r,c:'var(--red)'},{k:'lead',l:'Leads '+counts.lead,c:'var(--text-muted)'},{k:'k',l:'Kontaktiert '+counts.k,c:'var(--blue)'}]
+    .map(f=>`<button class="sf${sidebarFilter===f.k?' on':''}" onclick="sidebarFilter='${f.k}';selectedForBulk.clear();renderSidebar()">${f.l}</button>`).join('');
 
   document.getElementById('sbStats').innerHTML=`
     <span class="sb-stat"><span class="dot" style="background:var(--text-muted)"></span>${counts.n} neu</span>
@@ -2031,8 +2047,22 @@ function renderSidebar(){
 
   let list=clients;
   if(sidebarFilter==='k')list=list.filter(c=>getStatus(c.days,c.id).contacted);
+  else if(sidebarFilter==='lead')list=list.filter(c=>isLead(c));
   else if(sidebarFilter!=='all')list=list.filter(c=>getStatus(c.days,c.id).key===sidebarFilter);
   if(q)list=list.filter(c=>(c.fn+' '+c.ln+' '+c.name+' '+c.ph+' '+c.em).toLowerCase().includes(q));
+
+  // Bulk-Bar nur im Lead-Filter zeigen
+  const bulkBar=document.getElementById('sbBulkBar');
+  if(bulkBar){
+    if(sidebarFilter==='lead'&&list.length>0){
+      bulkBar.style.display='flex';
+      const sel=selectedForBulk.size;
+      bulkBar.innerHTML=`<button class="sf" onclick="bulkSelectAll(${JSON.stringify(list.map(c=>c.id)).replace(/"/g,'&quot;')})">${sel===list.length&&sel>0?'Alle abwählen':'Alle '+list.length+' markieren'}</button>${sel>0?`<button class="sf" style="background:#fee;color:var(--red);border-color:var(--red)" onclick="bulkDeleteSelected()">${sel} markierte löschen</button>`:''}`;
+    }else{
+      bulkBar.style.display='none';
+      bulkBar.innerHTML='';
+    }
+  }
 
   const show=list;
   document.getElementById('sbList').innerHTML=show.length?show.map(c=>{
@@ -2040,10 +2070,21 @@ function renderSidebar(){
     const sg=getSegment(c);
     const initials=((c.fn||'?')[0]+(c.ln||'?')[0]).toUpperCase();
     const col=avatarColor(c.fn+c.ln);
-    return`<div class="sb-item${selectedClient&&selectedClient.id===c.id?' active':''}" onclick="selectClient('${c.id}')">
+    // Treatwell-Badge: ★N = N Buchungen, "0" = Treatwell ohne Buchungen, kein Badge = nur Trello
+    let twBadge='';
+    if(c.twBookings>0)twBadge=`<span class="sb-tw-badge" style="background:#e8f5e9;color:#1b5e20" title="${c.twBookings} Treatwell-Buchungen">★${c.twBookings}</span>`;
+    else if(c.twBookings===0)twBadge=`<span class="sb-tw-badge" style="background:#fff3e0;color:#bf6700" title="In Treatwell, aber 0 Buchungen">0</span>`;
+    else twBadge=`<span class="sb-tw-badge" style="background:#f5f5f5;color:#999" title="Nur in Trello, nicht in Treatwell">–</span>`;
+    // Bulk-Checkbox nur im Lead-Filter
+    const showCheckbox=sidebarFilter==='lead';
+    const checked=selectedForBulk.has(c.id);
+    const checkboxHtml=showCheckbox?`<input type="checkbox" class="sb-cb" ${checked?'checked':''} onclick="event.stopPropagation();toggleBulk('${c.id}')" />`:'';
+    const clickHandler=showCheckbox?`onclick="toggleBulk('${c.id}');event.stopPropagation()"`:`onclick="selectClient('${c.id}')"`;
+    return`<div class="sb-item${selectedClient&&selectedClient.id===c.id?' active':''}${checked?' bulk-selected':''}" ${clickHandler}>
+      ${checkboxHtml}
       <div class="sb-avatar" style="background:${col}20;color:${col}">${initials}</div>
       <div class="sb-info">
-        <div class="sb-name">${esc(c.fn||c.name)} ${esc(c.ln||'')}</div>
+        <div class="sb-name">${esc(c.fn||c.name)} ${esc(c.ln||'')} ${twBadge}</div>
         <div class="sb-detail">${c.ph?esc(c.ph):(c.em?esc(c.em):'Keine Kontaktdaten')}${c.bdSoon?' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/></svg>':''}${s.contacted?' <span style="color:var(--blue);font-weight:500">&#10003; kontaktiert</span>':''}</div>
       </div>
       <div class="sb-right">
@@ -2053,7 +2094,37 @@ function renderSidebar(){
     </div>`;
   }).join(''):'<div style="padding:40px;text-align:center;color:var(--muted)">Keine Kunden gefunden</div>';
 
-  if(list.length>100)document.getElementById('sbList').innerHTML+=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:11px">Zeige 100 von ${list.length}</div>`;
+  if(list.length>100)document.getElementById('sbList').innerHTML+=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:11px">Zeige ${Math.min(100,list.length)} von ${list.length}</div>`;
+}
+
+// Bulk-Selection für Lead-Aufräumung
+const selectedForBulk=new Set();
+function toggleBulk(id){if(selectedForBulk.has(id))selectedForBulk.delete(id);else selectedForBulk.add(id);renderSidebar()}
+function bulkSelectAll(ids){
+  const allSelected=ids.every(id=>selectedForBulk.has(id));
+  if(allSelected)ids.forEach(id=>selectedForBulk.delete(id));
+  else ids.forEach(id=>selectedForBulk.add(id));
+  renderSidebar();
+}
+function bulkDeleteSelected(){
+  const ids=[...selectedForBulk];
+  if(!ids.length)return;
+  if(!confirm(ids.length+' markierte Einträge endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.'))return;
+  ids.forEach(id=>{
+    const c=clients.find(x=>x.id===id);
+    if(!c)return;
+    markDeleted(id,c.name);
+    try{FB_DELETED_REF.child(id).set({deletedAt:Date.now(),deletedBy:'bulk-aufraeumen',name:c.name})}catch(e){}
+    try{FB_KARTEI_REF.child(id).remove()}catch(e){}
+    const d=loadKartei();
+    if(d[id])delete d[id];
+    if(Array.isArray(d.__newClients))d.__newClients=d.__newClients.filter(x=>x&&x.id!==id);
+    _karteiCache=d;idbKarteiSave(d);
+  });
+  clients=clients.filter(c=>!ids.includes(c.id));
+  selectedForBulk.clear();
+  renderSidebar();
+  toast(ids.length+' Einträge gelöscht');
 }
 
 // ── SELECT CLIENT ──
