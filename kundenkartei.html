@@ -673,7 +673,7 @@ function diffDays(dateStr){if(!dateStr)return 9999;const d=new Date(dateStr+'T00
 function formatDays(d){if(d===0)return'Heute';if(d===1)return'1 Tag';if(d<7)return d+' Tage';if(d<30)return Math.floor(d/7)+' Wo.';if(d<365)return Math.floor(d/30)+' Mon.';const y=Math.floor(d/365),m=Math.floor((d%365)/30);return y+' J.'+(m>0?' '+m+' M.':'')}
 function normalize(s){return s.toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/-/g,' ').trim()}
 function getStatus(days,cid){
-  const base=days<=42?{key:'g',label:'Aktiv',color:'green',badge:'badge-g'}:days<=84?{key:'y',label:'Aufmerksamkeit',color:'yellow',badge:'badge-y'}:days<=182?{key:'o',label:'Überfällig',color:'orange',badge:'badge-o'}:{key:'r',label:'Verloren?',color:'red',badge:'badge-r'};
+  const base=days>=9999?{key:'n',label:'Neu',color:'gray',badge:'badge-n'}:days<=42?{key:'g',label:'Aktiv',color:'green',badge:'badge-g'}:days<=84?{key:'y',label:'Aufmerksamkeit',color:'yellow',badge:'badge-y'}:days<=182?{key:'o',label:'Überfällig',color:'orange',badge:'badge-o'}:{key:'r',label:'Verloren?',color:'red',badge:'badge-r'};
   if(cid&&(base.key==='y'||base.key==='o'||base.key==='r')){
     const kd=loadKartei()[cid];
     if(kd&&kd.kontaktiert){base.contacted=true;base.kontaktiertDate=kd.kontaktiert;base.origLabel=base.label;base.origColor=base.color;base.origBadge=base.badge;base.label='Kontaktiert';base.color='blue';base.badge='badge-k'}
@@ -2013,14 +2013,15 @@ function printHeimtherapie(){
 // ── SIDEBAR ──
 function renderSidebar(){
   const q=(document.getElementById('sbSearch').value||'').toLowerCase().trim();
-  const counts={all:clients.length,g:0,y:0,o:0,r:0,k:0};
+  const counts={all:clients.length,g:0,y:0,o:0,r:0,n:0,k:0};
   clients.forEach(c=>{const s=getStatus(c.days,c.id);counts[s.key]++;if(s.contacted)counts.k++});
 
   document.getElementById('sbFilters').innerHTML=
-    [{k:'all',l:'Alle '+counts.all},{k:'g',l:'Aktiv '+counts.g,c:'var(--green)'},{k:'y',l:'Achtung '+counts.y,c:'var(--yellow)'},{k:'o',l:'Überfällig '+counts.o,c:'var(--orange)'},{k:'r',l:'Verloren '+counts.r,c:'var(--red)'},{k:'k',l:'Kontaktiert '+counts.k,c:'var(--blue)'}]
+    [{k:'all',l:'Alle '+counts.all},{k:'n',l:'Neu '+counts.n,c:'var(--text-muted)'},{k:'g',l:'Aktiv '+counts.g,c:'var(--green)'},{k:'y',l:'Achtung '+counts.y,c:'var(--yellow)'},{k:'o',l:'Überfällig '+counts.o,c:'var(--orange)'},{k:'r',l:'Verloren '+counts.r,c:'var(--red)'},{k:'k',l:'Kontaktiert '+counts.k,c:'var(--blue)'}]
     .map(f=>`<button class="sf${sidebarFilter===f.k?' on':''}" onclick="sidebarFilter='${f.k}';renderSidebar()">${f.l}</button>`).join('');
 
   document.getElementById('sbStats').innerHTML=`
+    <span class="sb-stat"><span class="dot" style="background:var(--text-muted)"></span>${counts.n} neu</span>
     <span class="sb-stat"><span class="dot" style="background:var(--green)"></span>${counts.g} aktiv</span>
     <span class="sb-stat"><span class="dot" style="background:var(--yellow)"></span>${counts.y} achtung</span>
     <span class="sb-stat"><span class="dot" style="background:var(--orange)"></span>${counts.o} überfällig</span>

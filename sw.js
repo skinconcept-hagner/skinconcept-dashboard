@@ -1,4 +1,4 @@
-const CACHE = 'skinconcept-v51';
+const CACHE = 'skinconcept-v52';
 
 const STATIC_ASSETS = [
   './style.css', './shared.js', './jspdf.min.js',
