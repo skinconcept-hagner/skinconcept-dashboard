@@ -1,8 +1,9 @@
-const CACHE = 'skinconcept-v53';
+const CACHE = 'skinconcept-v55';
 
 const STATIC_ASSETS = [
   './style.css', './shared.js', './jspdf.min.js',
-  './hautanalyse.js', './hautanalyse-pdf.js', './hautanalyse-docx.js'
+  './hautanalyse.js', './hautanalyse-pdf.js', './hautanalyse-docx.js',
+  './tw_contacts.js'
 ];
 
 self.addEventListener('install', e => {

@@ -329,9 +329,10 @@
 <!-- Shared Nav -->
 <script src="shared.js"></script>
 
-<!-- Trello Data -->
-<script>var alleKunden = [];</script>
+<!-- Trello + Treatwell Data (shared mit Kartei) -->
+<script>var alleKunden = []; var TW_CONTACTS = [];</script>
 <script src="./trello_all_kunden.js"></script>
+<script src="./tw_contacts.js"></script>
 
 <script>
 /* ═══════════════════════════════════════════════════════
@@ -456,8 +457,9 @@ function parseTrello(raw,i){
   if(gebM){const day=gebM[1].padStart(2,'0'),month=gebM[2].padStart(2,'0');let year=gebM[3];if(year.length===2)year=(parseInt(year)>50?'19':'20')+year;geburtsdatum=day+'.'+month+'.'+year;gebDate=new Date(parseInt(year),parseInt(month)-1,parseInt(day))}
   let name=(raw.name||'').trim(),fn='',ln='';
   if(name.includes(',')){const p=name.split(',');ln=p[0].trim();fn=p.slice(1).join(',').trim()}else{const p=name.split(' ');fn=p[0]||'';ln=p.slice(1).join(' ')||''}
-  const trelloDate=raw.lastActivity?raw.lastActivity.split('T')[0]:'';
-  return{id:raw.id||'t'+i,name,fn,ln,ph:telefon,em:email,bd:geburtsdatum,gebDate,lv:trelloDate,visits:0,visitDates:[]}
+  // WICHTIG: Trellos lastActivity ist das Karten-Bearbeitungsdatum, NICHT ein Besuch.
+  // lv (Letzter Besuch) wird NUR aus echten Quellen gesetzt: Behandlungen in Kartei, client_visits.
+  return{id:raw.id||'t'+i,name,fn,ln,ph:telefon,em:email,bd:geburtsdatum,gebDate,lv:'',visits:0,visitDates:[]}
 }
 
 // ── BUILD CLIENTS ──
@@ -468,11 +470,11 @@ let sortMode='days-desc';
 let quickFilter='';
 let collapsedSegments={m1:true}; // Gruene Kunden standardmaessig eingeklappt
 
-let TW_CONTACTS=[];
+// TW_CONTACTS wird global aus tw_contacts.js geladen
 let KB_VISITS=[];
 
 function loadExternalData(){
-  try{const c=localStorage.getItem('sc_tw_contacts');if(c)TW_CONTACTS=JSON.parse(c)}catch(e){}
+  // TW_CONTACTS kommt aus tw_contacts.js (global). KB_VISITS aus localStorage falls vorhanden.
   try{const c=localStorage.getItem('sc_kb_visits');if(c)KB_VISITS=JSON.parse(c)}catch(e){}
 }
 
@@ -497,49 +499,91 @@ function initClients(){
     let match=null;
     for(const key of Object.keys(kbMap)){const kn=normalize(key);if(kn===fullName||kn===nameRev||kn===nameOrig){match=kbMap[key];break}}
     if(!match){const fnLow=normalize(c.fn),lnLow=normalize(c.ln);for(const key of Object.keys(kbMap)){const parts=key.split(' ');const kfn=normalize(parts[0]);const kln=normalize(parts.slice(1).join(' '));if((kfn===fnLow&&kln===lnLow)||(kfn===lnLow&&kln===fnLow)){match=kbMap[key];break}}}
-    if(match){if(!c.lv||match.latest>c.lv)c.lv=match.latest;c.visits=Math.max(c.visits,match.count);c.visitDates=match.dates.sort().reverse()}
+    if(match){if(!c.lv||match.latest>c.lv)c.lv=match.latest;c.visits=Math.max(c.visits||0,match.count);c.visitDates=match.dates.sort().reverse()}
   });
 
-  // Treatwell merge
+  // Treatwell merge — Kontaktdaten + Stammkundinnen-Markierung
+  // WICHTIG: tw.b zählt NICHT als visits (war Quelle der Fake-Daten — die Zahl ist statisch).
+  // Stattdessen: twTotal als Hinweis "diese Kundin hatte X Buchungen in TW-Historie".
   const twMap={};
   TW_CONTACTS.forEach(tw=>{if(!tw.fn||tw.fn.length>40)return;const key=normalize(tw.fn+' '+tw.ln);if(key.length<3)return;if(!twMap[key]||tw.b>twMap[key].b)twMap[key]=tw;const keyRev=normalize(tw.ln+' '+tw.fn);if(!twMap[keyRev]||tw.b>twMap[keyRev].b)twMap[keyRev]=tw});
   clients.forEach(c=>{
     const tw=twMap[normalize(c.fn+' '+c.ln)]||twMap[normalize(c.ln+' '+c.fn)]||twMap[normalize(c.name)]||null;
-    if(tw){if(!c.ph&&tw.ph)c.ph=tw.ph;if(!c.em&&tw.em)c.em=tw.em;if(!c.bd&&tw.bd){const parts=tw.bd.split('-');if(parts.length===3){c.bd=parts[0]+'.'+parts[1]+'.'+parts[2];c.gebDate=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]))}}if(tw.b>0)c.visits=Math.max(c.visits||0,tw.b)}
+    if(tw){
+      if(!c.ph&&tw.ph)c.ph=tw.ph;
+      if(!c.em&&tw.em)c.em=tw.em;
+      if(!c.bd&&tw.bd){const parts=tw.bd.split('-');if(parts.length===3){c.bd=parts[0]+'.'+parts[1]+'.'+parts[2];c.gebDate=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]))}}
+      c.twTotal=tw.b||0;            // Treatwell-Historie (Hinweis, KEIN visits-Zähler)
+    }else{
+      c.twTotal=null;
+    }
+  });
+
+  // ── BEHANDLUNGEN aus Kartei einlesen — das ist die ECHTE Datenquelle ──
+  // Jede Behandlung die Tamara in der Kartei einträgt setzt c.lv automatisch.
+  const karteiData=loadKartei();
+  clients.forEach(c=>{
+    const kd=karteiData[c.id];
+    if(kd&&Array.isArray(kd.treatments)&&kd.treatments.length){
+      let count=0;
+      kd.treatments.forEach(t=>{
+        if(t.date&&t.date<=TODAY_STR){
+          count++;
+          if(!c.lv||t.date>c.lv)c.lv=t.date;
+        }
+      });
+      // Echte Besuchs-Zahl aus eingetragenen Behandlungen
+      if(count>0)c.visits=Math.max(c.visits||0,count);
+    }
+    if(kd&&kd.stamm&&kd.stamm.lv&&kd.stamm.lv<=TODAY_STR){
+      if(!c.lv||kd.stamm.lv>c.lv)c.lv=kd.stamm.lv;
+    }
     c.days=diffDays(c.lv);
     c.bdSoon=false;
     if(c.gebDate){const bd=new Date(TODAY.getFullYear(),c.gebDate.getMonth(),c.gebDate.getDate());const diff=Math.floor((bd-TODAY)/(864e5));c.bdSoon=diff>=0&&diff<=14}
   });
 
-  // Treatwell-only
+  // Treatwell-only Kontakte (in TW aber nicht in Trello) — als potenzielle Kundinnen mit Hinweis
   const clientKeys=new Set();
   clients.forEach(c=>{clientKeys.add(normalize(c.fn+' '+c.ln));clientKeys.add(normalize(c.ln+' '+c.fn));clientKeys.add(normalize(c.name))});
   TW_CONTACTS.forEach(tw=>{
     if(!tw.fn||tw.fn.length>40)return;const key=normalize(tw.fn+' '+tw.ln);const keyRev=normalize(tw.ln+' '+tw.fn);
     if(key.length<3||clientKeys.has(key)||clientKeys.has(keyRev))return;
-    const nc={id:'tw_'+key.replace(/\s/g,'_'),name:tw.fn+' '+tw.ln,fn:tw.fn,ln:tw.ln,ph:tw.ph||'',em:tw.em||'',bd:'',gebDate:null,lv:'',visits:tw.b||0,visitDates:[]};
+    const nc={id:'tw_'+key.replace(/\s/g,'_'),name:tw.fn+' '+tw.ln,fn:tw.fn,ln:tw.ln,ph:tw.ph||'',em:tw.em||'',bd:'',gebDate:null,lv:'',visits:0,twTotal:tw.b||0,visitDates:[]};
     nc.days=diffDays(nc.lv);nc.bdSoon=false;
     clients.push(nc);clientKeys.add(key);clientKeys.add(keyRev);
   });
 
   // Manually created
-  const kartei=loadKartei();
-  if(kartei.__newClients){kartei.__newClients.forEach(nc=>{if(!clients.find(c=>c.id===nc.id))clients.push(nc)})}
+  if(karteiData.__newClients){karteiData.__newClients.forEach(nc=>{if(!clients.find(c=>c.id===nc.id))clients.push(nc)})}
   clients.sort((a,b)=>a.days-b.days);
 }
 
 // ── NACHSORGE: Firestore ──
 function loadNachsorge(){
-  const ago=new Date(TODAY);ago.setDate(ago.getDate()-180);
-  nsDb.collection('client_visits').where('date','>=',ago.toISOString().split('T')[0]).orderBy('date','desc').get().then(snap=>{
+  // Alle client_visits laden — keine Datumsgrenze, damit auch Backfill-Importe sichtbar werden
+  nsDb.collection('client_visits').orderBy('date','desc').get().then(snap=>{
+    const visitsByClient={};
     snap.forEach(doc=>{
-      const d=doc.data();const name=(d.clientName||'').trim();if(!name)return;
-      const c=clients.find(x=>normalize(x.fn+' '+x.ln)===normalize(name)||normalize(x.name)===normalize(name));
-      if(c){const vd=d.date||'';if(vd&&(!c.lv||vd>c.lv)){c.lv=vd;c.days=diffDays(vd)}}
+      const d=doc.data();
+      // Office schreibt 'name', altes Format hatte evtl. 'clientName'
+      const name=(d.name||d.clientName||'').trim();
+      if(!name)return;
+      const c=clients.find(x=>normalize(x.fn+' '+x.ln)===normalize(name)||normalize(x.ln+' '+x.fn)===normalize(name)||normalize(x.name)===normalize(name));
+      if(c){
+        const vd=d.date||'';
+        if(vd&&(!c.lv||vd>c.lv)){c.lv=vd;c.days=diffDays(vd)}
+        visitsByClient[c.id]=(visitsByClient[c.id]||0)+1;
+      }
+    });
+    // Echte Besuchs-Zahl aus client_visits hinzufügen
+    Object.keys(visitsByClient).forEach(cid=>{
+      const c=clients.find(x=>x.id===cid);
+      if(c)c.visits=Math.max(c.visits||0,visitsByClient[cid]);
     });
     clients.sort((a,b)=>a.days-b.days);
     render();
-  }).catch(()=>render());
+  }).catch(e=>{console.warn('Nachsorge-Load Fehler:',e&&e.message);render()});
 }
 
 // ── FIREBASE SYNC ──
@@ -570,30 +614,28 @@ function render(){
 }
 
 // ── ACTION CENTER ──
+// "Bekannt" = Kundin mit verifiziertem letzten Besuch in unseren Daten (Behandlungs-Eintrag oder client_visits-Import)
+// "Stammkundin-Verdacht" = Hatte TW-Buchungen aber kein verifizierter Besuch bei uns — Re-Engagement-Kandidatinnen
 function renderActionCenter(){
-  const known=clients.filter(c=>c.days<9999);
-  const needAttention=known.filter(c=>c.days>30);
+  const known=clients.filter(c=>c.days<9999);                           // Echte Daten
+  const verloreneStamm=clients.filter(c=>c.days>=9999&&(c.twTotal||0)>=2); // Stammkundinnen ohne aktuellen Besuch
+  const needAttention=known.filter(c=>c.days>60);                       // 2+ Monate nicht da
   const remindersToday=known.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR});
   const birthdays=known.filter(c=>c.bdSoon);
   const weekStart=getWeekStart();
   let contactedThisWeek=0;
   Object.values(crmData).forEach(e=>{if(e.kontaktiert&&e.kontaktiert>=weekStart)contactedThisWeek++});
-  const weekGoal=Math.max(10,Math.round(needAttention.length*0.3));
-  const weekPct=Math.min(100,Math.round(contactedThisWeek/weekGoal*100));
 
   document.getElementById('actionCenter').innerHTML=`
     <div class="ac-row">
       <div class="ac-left">
         <h2>Dein CRM Dashboard</h2>
-        <p>${known.length} Kunden &middot; ${needAttention.length} brauchen Aufmerksamkeit &middot; ${contactedThisWeek} diese Woche kontaktiert</p>
+        <p>${known.length} mit Besuchshistorie &middot; ${needAttention.length} seit 2+ Monaten nicht da &middot; ${contactedThisWeek} diese Woche kontaktiert</p>
         <div class="ac-alerts">
+          ${needAttention.length?'<div class="ac-alert" onclick="setQuickFilter(\'overdue\')"><span>&#9888;</span><span class="num">'+needAttention.length+'</span> Kund'+(needAttention.length===1?'in':'innen')+' &gt; 60 Tage nicht da</div>':''}
+          ${verloreneStamm.length?'<div class="ac-alert" onclick="setQuickFilter(\'verlorenStamm\')"><span>&#128064;</span><span class="num">'+verloreneStamm.length+'</span> ehemalige Stammkundinnen ohne aktuellen Besuch</div>':''}
           ${remindersToday.length?'<div class="ac-alert" onclick="setQuickFilter(\'reminder\')"><span>&#128276;</span><span class="num">'+remindersToday.length+'</span> Erinnerung'+(remindersToday.length>1?'en':'')+' heute</div>':''}
           ${birthdays.length?'<div class="ac-alert" onclick="setQuickFilter(\'bday\')"><span>&#127874;</span><span class="num">'+birthdays.length+'</span> Geburtstag'+(birthdays.length>1?'e':'')+' bald</div>':''}
-          ${needAttention.length>20?'<div class="ac-alert" onclick="setFilter(\'m36\')"><span>&#9888;</span><span class="num">'+clients.filter(c=>c.days>90&&c.days<9999).length+'</span> drohen abzuwandern</div>':''}
-        </div>
-        <div class="week-bar">
-          <div class="week-label"><span>Wochenziel: ${contactedThisWeek} / ${weekGoal} kontaktiert</span><span>${weekPct}%</span></div>
-          <div class="week-track"><div class="week-fill" style="width:${weekPct}%"></div></div>
         </div>
       </div>
       <div class="ac-right">
@@ -635,26 +677,32 @@ function renderSegStats(){
 function renderQuickFilters(){
   const reminders=clients.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR}).length;
   const bdays=clients.filter(c=>c.bdSoon&&c.days<9999).length;
-  const unkontaktiert=clients.filter(c=>c.days>=31&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
+  const overdue=clients.filter(c=>c.days>=60&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
+  const verlorenStamm=clients.filter(c=>c.days>=9999&&(c.twTotal||0)>=2&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
+  const vipCount=clients.filter(c=>(c.visits||0)>=4||(c.twTotal||0)>=4).length;
 
   document.getElementById('quickFilters').innerHTML=`
-    <button class="qf ${quickFilter==='open'?'on':''}" onclick="setQuickFilter('open')">Offen <span class="qf-count">${unkontaktiert}</span></button>
+    <button class="qf ${quickFilter==='overdue'?'on':''}" onclick="setQuickFilter('overdue')">&#9888; Über 60 Tage <span class="qf-count">${overdue}</span></button>
+    <button class="qf ${quickFilter==='verlorenStamm'?'on':''}" onclick="setQuickFilter('verlorenStamm')">&#128064; Verlorene Stammkundinnen <span class="qf-count">${verlorenStamm}</span></button>
     ${reminders?'<button class="qf '+(quickFilter==='reminder'?'on':'')+'" onclick="setQuickFilter(\'reminder\')">&#128276; Erinnerungen <span class="qf-count">'+reminders+'</span></button>':''}
     ${bdays?'<button class="qf '+(quickFilter==='bday'?'on':'')+'" onclick="setQuickFilter(\'bday\')">&#127874; Geburtstage <span class="qf-count">'+bdays+'</span></button>':''}
-    <button class="qf ${quickFilter==='vip'?'on':''}" onclick="setQuickFilter('vip')">VIP</button>
+    <button class="qf ${quickFilter==='vip'?'on':''}" onclick="setQuickFilter('vip')">&#11088; Stammkundinnen <span class="qf-count">${vipCount}</span></button>
   `;
 }
 
 // ── CLIENT LIST ──
 function getFilteredClients(){
-  let list=clients.filter(c=>c.days<9999);
+  // Default: NUR Kundinnen mit echten Daten zeigen (verifizierter Besuch ODER bekannte Stammkundin aus TW)
+  // Kein "fake" mehr — wer keinen lv hat und keine TW-Buchungen, wird in CRM-Liste ausgeblendet
+  let list=clients.filter(c=>c.days<9999||(c.twTotal||0)>=1);
 
-  if(activeFilter!=='all'){const seg=SEGMENTS.find(s=>s.key===activeFilter);if(seg)list=list.filter(c=>c.days>=seg.min&&c.days<=seg.max)}
+  if(activeFilter!=='all'){const seg=SEGMENTS.find(s=>s.key===activeFilter);if(seg)list=list.filter(c=>c.days<9999&&c.days>=seg.min&&c.days<=seg.max)}
 
-  if(quickFilter==='open')list=list.filter(c=>c.days>=31&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
+  if(quickFilter==='overdue')list=list.filter(c=>c.days>=60&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
+  else if(quickFilter==='verlorenStamm')list=list.filter(c=>c.days>=9999&&(c.twTotal||0)>=2&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
   else if(quickFilter==='reminder')list=list.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR});
   else if(quickFilter==='bday')list=list.filter(c=>c.bdSoon);
-  else if(quickFilter==='vip')list=list.filter(c=>c.visits>=8);
+  else if(quickFilter==='vip')list=list.filter(c=>(c.visits||0)>=4||(c.twTotal||0)>=4);
 
   if(searchQuery){const q=normalize(searchQuery);list=list.filter(c=>normalize(c.name).includes(q)||normalize(c.fn+' '+c.ln).includes(q)||(c.ph&&c.ph.includes(searchQuery)))}
 
@@ -662,7 +710,7 @@ function getFilteredClients(){
     case'days-asc':list.sort((a,b)=>a.days-b.days);break;
     case'days-desc':list.sort((a,b)=>b.days-a.days);break;
     case'name-asc':list.sort((a,b)=>(a.fn+a.ln).localeCompare(b.fn+b.ln));break;
-    case'visits-desc':list.sort((a,b)=>(b.visits||0)-(a.visits||0));break;
+    case'visits-desc':list.sort((a,b)=>((b.visits||0)+(b.twTotal||0))-((a.visits||0)+(a.twTotal||0)));break;
   }
   return list;
 }
@@ -674,8 +722,21 @@ function renderList(){
   // Group by segment when showing all
   if(activeFilter==='all'&&!searchQuery&&!quickFilter){
     let html='';
+    // Erste Gruppe: ehemalige Stammkundinnen ohne aktuellen Besuch (eigener Block)
+    const verlorenStamm=list.filter(c=>c.days>=9999&&(c.twTotal||0)>=2);
+    if(verlorenStamm.length){
+      const unkVS=verlorenStamm.filter(c=>!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
+      html+=`<div class="seg-section">
+        <div class="seg-head" onclick="setQuickFilter('verlorenStamm')">
+          <div class="seg-stripe" style="background:#6B5344"></div>
+          <div class="seg-head-title">Ehemalige Stammkundinnen (kein aktueller Besuch)</div>
+          <div class="seg-head-count" style="background:#6B5344">${verlorenStamm.length}</div>
+          <div class="seg-head-info"><span style="color:var(--danger)">${unkVS} offen</span> · Re-Engagement</div>
+        </div></div>`;
+    }
     SEGMENTS.forEach(seg=>{
-      const sc=list.filter(c=>c.days>=seg.min&&c.days<=seg.max);
+      // Wichtig: c.days<9999 — leere lv-Werte landen nicht im "6+ Monate"-Bucket
+      const sc=list.filter(c=>c.days<9999&&c.days>=seg.min&&c.days<=seg.max);
       if(!sc.length)return;
       const collapsed=collapsedSegments[seg.key];
       const unkontaktiert=sc.filter(c=>!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
