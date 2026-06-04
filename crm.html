@@ -566,6 +566,7 @@ function loadNachsorge(){
   // Alle client_visits laden — keine Datumsgrenze, damit auch Backfill-Importe sichtbar werden
   nsDb.collection('client_visits').orderBy('date','desc').get().then(snap=>{
     const visitsByClient={};
+    const unmatchedVisits={};   // Kunden die in client_visits stehen aber nicht im CRM-Pool
     snap.forEach(doc=>{
       const d=doc.data();
       // Office schreibt 'name', altes Format hatte evtl. 'clientName'
@@ -576,7 +577,28 @@ function loadNachsorge(){
         const vd=d.date||'';
         if(vd&&(!c.lv||vd>c.lv)){c.lv=vd;c.days=diffDays(vd)}
         visitsByClient[c.id]=(visitsByClient[c.id]||0)+1;
+      }else{
+        // Kunde NOCH NICHT im Pool — neue Karte anlegen aus client_visits-Daten
+        const k=normalize(name);
+        if(!unmatchedVisits[k])unmatchedVisits[k]={name,visits:0,lv:''};
+        unmatchedVisits[k].visits++;
+        const vd=d.date||'';
+        if(vd&&(!unmatchedVisits[k].lv||vd>unmatchedVisits[k].lv))unmatchedVisits[k].lv=vd;
       }
+    });
+    // Neue Kunden aus unmatched anlegen
+    Object.entries(unmatchedVisits).forEach(([key,u])=>{
+      const parts=u.name.split(' ');
+      const fn=parts[0]||'';
+      const ln=parts.slice(1).join(' ')||'';
+      const nc={
+        id:'cv_'+key.replace(/\s/g,'_'),
+        name:u.name,fn,ln,ph:'',em:'',bd:'',gebDate:null,
+        lv:u.lv,visits:u.visits,visitDates:[],
+        days:diffDays(u.lv),bdSoon:false,
+        twTotal:null,source:'kassenbuch-import'
+      };
+      clients.push(nc);
     });
     // Echte Besuchs-Zahl aus client_visits hinzufügen
     Object.keys(visitsByClient).forEach(cid=>{
