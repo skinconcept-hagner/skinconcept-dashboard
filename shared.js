@@ -41,7 +41,6 @@ const NAV_ITEMS = [
     { href: 'gutscheine.html',      icon: 'voucher', label: 'Gutscheine' },
     { href: 'rechnungen.html',      icon: 'invoice', label: 'Rechnungen' },
     { href: 'monatsabschluss.html', icon: 'chart',   label: 'Monatsabschluss' },
-    { href: 'finanzen.html',        icon: 'coins',   label: 'Finanzen' },
     { href: 'preislisten.html',     icon: 'tag',     label: 'Preisliste' },
     { href: 'hautapp.html',         icon: 'phone',   label: 'HautApp' },
 ];

@@ -521,9 +521,36 @@ function initClients(){
 
   // ── BEHANDLUNGEN aus Kartei einlesen — das ist die ECHTE Datenquelle ──
   // Jede Behandlung die Tamara in der Kartei einträgt setzt c.lv automatisch.
+  // WICHTIG: Lookup nach ID UND nach Name — falls die Behandlung unter einer anderen
+  // Kartei-ID gespeichert ist (z.B. wenn Kundin manuell oder aus Anamnese angelegt wurde).
   const karteiData=loadKartei();
+  // Name-Index aus Kartei aufbauen
+  const karteiByName={};
+  Object.entries(karteiData).forEach(([kid,kd])=>{
+    if(!kd||typeof kd!=='object'||kid.startsWith('_'))return;
+    let name='';
+    if(kd._anamneseData&&kd._anamneseData._name)name=kd._anamneseData._name;
+    else if(kd.name)name=kd.name;
+    else if(kd.fn||kd.ln)name=((kd.fn||'')+' '+(kd.ln||'')).trim();
+    if(!name)return;
+    const k=normalize(name);
+    if(k.length<3)return;
+    if(!karteiByName[k])karteiByName[k]=kd;
+    // Auch reversed (Nachname Vorname)
+    const kRev=k.split(' ').reverse().join(' ');
+    if(kRev!==k&&!karteiByName[kRev])karteiByName[kRev]=kd;
+  });
+
   clients.forEach(c=>{
-    const kd=karteiData[c.id];
+    // 1. Direkter ID-Lookup
+    let kd=karteiData[c.id];
+    // 2. Name-Lookup falls nichts gefunden
+    if(!kd||!kd.treatments||!kd.treatments.length){
+      const k1=normalize(c.fn+' '+c.ln);
+      const k2=normalize(c.ln+' '+c.fn);
+      const k3=normalize(c.name);
+      kd=karteiByName[k1]||karteiByName[k2]||karteiByName[k3]||kd;
+    }
     if(kd&&Array.isArray(kd.treatments)&&kd.treatments.length){
       let count=0;
       kd.treatments.forEach(t=>{
@@ -532,7 +559,6 @@ function initClients(){
           if(!c.lv||t.date>c.lv)c.lv=t.date;
         }
       });
-      // Echte Besuchs-Zahl aus eingetragenen Behandlungen
       if(count>0)c.visits=Math.max(c.visits||0,count);
     }
     if(kd&&kd.stamm&&kd.stamm.lv&&kd.stamm.lv<=TODAY_STR){
