@@ -703,26 +703,31 @@ function renderQuickFilters(){
   const bdays=clients.filter(c=>c.bdSoon&&c.days<9999).length;
   const overdue=clients.filter(c=>c.days>=60&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
   const verlorenStamm=clients.filter(c=>c.days>=9999&&(c.twTotal||0)>=2&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
+  const seitJanuar=clients.filter(c=>c.lv&&c.lv>='2026-01-01'&&c.lv<='2026-02-28').length;
   const vipCount=clients.filter(c=>(c.visits||0)>=4||(c.twTotal||0)>=4).length;
+  const alleCount=clients.length;
 
   document.getElementById('quickFilters').innerHTML=`
-    <button class="qf ${quickFilter==='overdue'?'on':''}" onclick="setQuickFilter('overdue')">&#9888; Über 60 Tage <span class="qf-count">${overdue}</span></button>
-    <button class="qf ${quickFilter==='verlorenStamm'?'on':''}" onclick="setQuickFilter('verlorenStamm')">&#128064; Verlorene Stammkundinnen <span class="qf-count">${verlorenStamm}</span></button>
-    ${reminders?'<button class="qf '+(quickFilter==='reminder'?'on':'')+'" onclick="setQuickFilter(\'reminder\')">&#128276; Erinnerungen <span class="qf-count">'+reminders+'</span></button>':''}
-    ${bdays?'<button class="qf '+(quickFilter==='bday'?'on':'')+'" onclick="setQuickFilter(\'bday\')">&#127874; Geburtstage <span class="qf-count">'+bdays+'</span></button>':''}
-    <button class="qf ${quickFilter==='vip'?'on':''}" onclick="setQuickFilter('vip')">&#11088; Stammkundinnen <span class="qf-count">${vipCount}</span></button>
+    <button class="qf ${quickFilter==='alle'?'on':''}" onclick="setQuickFilter('alle')">Alle Kontakte <span class="qf-count">${alleCount}</span></button>
+    <button class="qf ${quickFilter==='seitJanuar'?'on':''}" onclick="setQuickFilter('seitJanuar')">Seit Januar nicht da <span class="qf-count">${seitJanuar}</span></button>
+    <button class="qf ${quickFilter==='overdue'?'on':''}" onclick="setQuickFilter('overdue')">Über 60 Tage <span class="qf-count">${overdue}</span></button>
+    <button class="qf ${quickFilter==='verlorenStamm'?'on':''}" onclick="setQuickFilter('verlorenStamm')">Verlorene Stammkundinnen <span class="qf-count">${verlorenStamm}</span></button>
+    ${reminders?'<button class="qf '+(quickFilter==='reminder'?'on':'')+'" onclick="setQuickFilter(\'reminder\')">Erinnerungen <span class="qf-count">'+reminders+'</span></button>':''}
+    ${bdays?'<button class="qf '+(quickFilter==='bday'?'on':'')+'" onclick="setQuickFilter(\'bday\')">Geburtstage <span class="qf-count">'+bdays+'</span></button>':''}
+    <button class="qf ${quickFilter==='vip'?'on':''}" onclick="setQuickFilter('vip')">Stammkundinnen <span class="qf-count">${vipCount}</span></button>
   `;
 }
 
 // ── CLIENT LIST ──
 function getFilteredClients(){
-  // Default: NUR Kundinnen mit echten Daten zeigen (verifizierter Besuch ODER bekannte Stammkundin aus TW)
-  // Kein "fake" mehr — wer keinen lv hat und keine TW-Buchungen, wird in CRM-Liste ausgeblendet
-  let list=clients.filter(c=>c.days<9999||(c.twTotal||0)>=1);
+  // Default: NUR Kundinnen mit echten Daten zeigen — bei Quickfilter "alle" wird das aufgehoben
+  let list=quickFilter==='alle'?clients.slice():clients.filter(c=>c.days<9999||(c.twTotal||0)>=1);
 
   if(activeFilter!=='all'){const seg=SEGMENTS.find(s=>s.key===activeFilter);if(seg)list=list.filter(c=>c.days<9999&&c.days>=seg.min&&c.days<=seg.max)}
 
-  if(quickFilter==='overdue')list=list.filter(c=>c.days>=60&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
+  if(quickFilter==='alle')list=list;     // Alle Kontakte — keine zusätzliche Filterung
+  else if(quickFilter==='seitJanuar')list=list.filter(c=>c.lv&&c.lv>='2026-01-01'&&c.lv<='2026-02-28');
+  else if(quickFilter==='overdue')list=list.filter(c=>c.days>=60&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
   else if(quickFilter==='verlorenStamm')list=list.filter(c=>c.days>=9999&&(c.twTotal||0)>=2&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
   else if(quickFilter==='reminder')list=list.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR});
   else if(quickFilter==='bday')list=list.filter(c=>c.bdSoon);
