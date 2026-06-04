@@ -290,7 +290,11 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="shared.js"></script>
+<script>var alleKunden = []; var TW_CONTACTS = [];</script>
+<script src="./trello_all_kunden.js"></script>
+<script src="./tw_contacts.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     const hour = new Date().getHours();
@@ -335,7 +339,170 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('Activity error:', err);
     }
+
+    try {
+        await checkLongAbsence();
+    } catch (err) {
+        console.error('LongAbsence error:', err);
+    }
 });
+
+// ── 60-TAGE-WARNUNG: Kundinnen, die seit 60+ Tagen nicht da waren ──
+// Datenquellen: client_visits (Firestore) + Kartei-Treatments (RDB) + TW_CONTACTS (Stammkundinnen-Hinweis)
+async function checkLongAbsence() {
+    const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+    const diffDays = d => d ? Math.max(0, Math.floor((TODAY - new Date(d + 'T00:00:00')) / 86400000)) : 9999;
+    const normalize = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ß/g,'ss').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+
+    // 1) Stammkundinnen-Pool aus TW_CONTACTS (≥2 Buchungen in Treatwell-Historie)
+    const stammPool = {};
+    (TW_CONTACTS || []).forEach(tw => {
+        if (!tw.fn || !tw.b || tw.b < 2) return;
+        const key = normalize(tw.fn + ' ' + tw.ln);
+        if (key.length < 3) return;
+        stammPool[key] = { name: (tw.fn + ' ' + tw.ln).trim(), fn: tw.fn, ln: tw.ln, ph: tw.ph || '', em: tw.em || '', twBookings: tw.b, lv: '' };
+    });
+
+    // 2) Telefonnummer aus Trello mitnehmen (für WhatsApp-Buttons)
+    (alleKunden || []).forEach(t => {
+        const key = normalize(t.name || '');
+        const stamm = stammPool[key]; if (!stamm) return;
+        const desc = t.desc || '';
+        const phM = desc.match(/(\+?\d[\d\s\/\-]{7,})/);
+        if (phM && !stamm.ph) stamm.ph = phM[1].replace(/\s+/g, ' ').trim();
+        const emM = desc.match(/([\w.\-+]+@[\w.\-]+\.\w{2,})/i);
+        if (emM && !stamm.em) stamm.em = emM[1].toLowerCase();
+    });
+
+    // 3) Letzten Besuch aus client_visits ermitteln (Firestore)
+    try {
+        const visitsSnap = await db.collection('client_visits').get();
+        visitsSnap.forEach(doc => {
+            const v = doc.data();
+            const name = (v.name || v.clientName || '').trim();
+            if (!name || !v.date) return;
+            const key = normalize(name);
+            const stamm = stammPool[key];
+            if (stamm && (!stamm.lv || v.date > stamm.lv)) stamm.lv = v.date;
+        });
+    } catch (e) { console.warn('client_visits read failed:', e.message); }
+
+    // 4) Letzten Besuch aus Kartei-Treatments ergänzen (Realtime DB)
+    try {
+        const hagnerApp = firebase.apps.find(a => a.name === 'hagner') || firebase.initializeApp({
+            apiKey: "AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+            authDomain: "skinconcept-hagner.firebaseapp.com",
+            databaseURL: "https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skinconcept-hagner"
+        }, 'hagner');
+        const vault = 'v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
+        const karteiSnap = await hagnerApp.database().ref(vault + '/kartei_data').once('value');
+        const kartei = karteiSnap.val() || {};
+        Object.values(kartei).forEach(kd => {
+            if (!kd || typeof kd !== 'object') return;
+            const name = kd._anamneseData && kd._anamneseData._name ? kd._anamneseData._name : (kd.name || ((kd.fn||'') + ' ' + (kd.ln||'')).trim());
+            if (!name) return;
+            const key = normalize(name);
+            const stamm = stammPool[key]; if (!stamm) return;
+            if (Array.isArray(kd.treatments)) {
+                kd.treatments.forEach(t => {
+                    if (t.date && (!stamm.lv || t.date > stamm.lv)) stamm.lv = t.date;
+                });
+            }
+            if (kd.stamm && kd.stamm.lv && (!stamm.lv || kd.stamm.lv > stamm.lv)) stamm.lv = kd.stamm.lv;
+        });
+    } catch (e) { console.warn('Kartei read failed:', e.message); }
+
+    // 5) Liste der Stammkundinnen mit lv ≥ 60 Tagen
+    const candidates = Object.entries(stammPool)
+        .map(([key, c]) => ({ ...c, key, days: diffDays(c.lv) }))
+        .filter(c => c.days >= 60)
+        .sort((a, b) => b.twBookings - a.twBookings);
+
+    if (!candidates.length) return;
+
+    // 6) Bereits gewarnte/dismissed Kundinnen ausfiltern
+    let dismissed; try { dismissed = new Set(JSON.parse(localStorage.getItem('sc_60d_warned_v1') || '[]')); } catch { dismissed = new Set(); }
+    const newCandidates = candidates.filter(c => !dismissed.has(c.key));
+
+    // 7) Banner im Alerts-Bereich zeigen (zusätzlich zu bestehenden Aufgaben-Alerts)
+    const alertsContainer = document.getElementById('alerts');
+    if (alertsContainer && candidates.length) {
+        const newCount = newCandidates.length;
+        const totalCount = candidates.length;
+        const banner = document.createElement('div');
+        banner.className = 'alert-item urgent';
+        banner.style.cursor = 'pointer';
+        banner.onclick = () => showAbsenceModal(candidates, dismissed);
+        banner.innerHTML = `<span class="alert-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span><span class="alert-text"><strong>${totalCount} Stammkundin${totalCount > 1 ? 'nen' : ''}</strong> seit 60+ Tagen nicht da${newCount > 0 ? ' · ' + newCount + ' neu' : ''}</span><span class="alert-action">Ansehen</span>`;
+        alertsContainer.appendChild(banner);
+
+        // Auto-Popup wenn neue gefunden (max. 1x pro Sitzung)
+        if (newCount > 0 && !sessionStorage.getItem('sc_60d_shown_session')) {
+            sessionStorage.setItem('sc_60d_shown_session', '1');
+            setTimeout(() => showAbsenceModal(newCandidates, dismissed, true), 600);
+        }
+    }
+}
+
+function showAbsenceModal(candidates, dismissed, isAuto) {
+    const existing = document.getElementById('absenceModal'); if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'absenceModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(42,37,32,0.55);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+
+    const wa = ph => {
+        const n = (ph||'').replace(/[\s\-()\/]/g, '').replace(/^0/, '49').replace(/^\+/, '');
+        return n ? 'https://wa.me/' + n : '';
+    };
+    const formatDays = d => d < 30 ? d + ' Tage' : d < 365 ? Math.floor(d/30) + ' Mon.' : (Math.floor(d/365) + ' J.');
+
+    const rowsHtml = candidates.slice(0, 50).map(c => {
+        const waUrl = wa(c.ph);
+        const phPretty = c.ph || '';
+        const msg = encodeURIComponent(`Hallo ${c.fn}, hier ist Tamara von Skinconcept Hagner. Ich wollte mich kurz melden — wir haben uns lange nicht mehr gesehen. Hast du Lust auf einen Termin? Liebe Grüße!`);
+        return `<div class="abs-row" data-key="${c.key.replace(/"/g,'')}" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border)">
+            <div style="flex:1;min-width:0">
+                <div style="font-weight:600;font-size:14px">${c.name}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${c.lv ? 'Letzter Besuch vor ' + formatDays(c.days) : 'Keine Besuche dokumentiert'} · ${c.twBookings}× früher gebucht${phPretty ? ' · ' + phPretty : ''}</div>
+            </div>
+            ${waUrl ? `<a href="${waUrl}?text=${msg}" target="_blank" rel="noopener" style="background:#25D366;color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap">WhatsApp</a>` : ''}
+            <button onclick="dismissAbsence(this,'${c.key.replace(/'/g,"\\'")}')" style="background:transparent;border:1px solid var(--border-strong);color:var(--text-secondary);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px">Später</button>
+            <button onclick="dismissAbsence(this,'${c.key.replace(/'/g,"\\'")}',true)" style="background:var(--success-light);border:1px solid var(--success);color:var(--success);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px">&#10003; Kontaktiert</button>
+        </div>`;
+    }).join('');
+
+    overlay.innerHTML = `
+    <div style="background:#fff;border-radius:18px;width:100%;max-width:720px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.25)">
+        <div style="padding:22px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+            <div>
+                <div style="font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px">${isAuto ? 'Wichtige Erinnerung' : 'Re-Engagement'}</div>
+                <h2 style="font-size:22px;font-weight:600;margin:0">${candidates.length} Kundin${candidates.length > 1 ? 'nen' : ''} länger nicht gesehen</h2>
+                <p style="font-size:13px;color:var(--text-muted);margin:6px 0 0">Ehemalige Stammkundinnen seit 60+ Tagen ohne Besuch — Zeit für eine freundliche Nachricht?</p>
+            </div>
+            <button onclick="document.getElementById('absenceModal').remove()" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);line-height:1">&times;</button>
+        </div>
+        <div style="flex:1;overflow-y:auto">${rowsHtml || '<div style="padding:40px;text-align:center;color:var(--text-muted)">Alle erledigt!</div>'}</div>
+        <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted)">
+            <div>Zeige ${Math.min(50, candidates.length)} von ${candidates.length}</div>
+            <button onclick="document.getElementById('absenceModal').remove()" style="background:var(--primary);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500">Später erinnern</button>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+}
+
+function dismissAbsence(btn, key, kontaktiert) {
+    try {
+        const set = new Set(JSON.parse(localStorage.getItem('sc_60d_warned_v1') || '[]'));
+        set.add(key);
+        localStorage.setItem('sc_60d_warned_v1', JSON.stringify([...set]));
+    } catch {}
+    const row = btn.closest('.abs-row'); if (row) row.remove();
+    if (kontaktiert) {
+        // Optional: Hier könnte man in Firestore crm_data den Kontakt eintragen
+    }
+}
 
 async function loadRecentActivity() {
     const activities = [];
