@@ -638,33 +638,23 @@ function render(){
 }
 
 // ── ACTION CENTER ──
-// "Bekannt" = Kundin mit verifiziertem letzten Besuch in unseren Daten (Behandlungs-Eintrag oder client_visits-Import)
-// "Stammkundin-Verdacht" = Hatte TW-Buchungen aber kein verifizierter Besuch bei uns — Re-Engagement-Kandidatinnen
+// Fokus: Kundinnen mit Besuch seit Januar 2026 (aus Kassenbuch-Import + Kartei-Behandlungen)
 function renderActionCenter(){
-  const known=clients.filter(c=>c.days<9999);                           // Echte Daten
-  const verloreneStamm=clients.filter(c=>c.days>=9999&&(c.twTotal||0)>=2); // Stammkundinnen ohne aktuellen Besuch
-  const needAttention=known.filter(c=>c.days>60);                       // 2+ Monate nicht da
-  const remindersToday=known.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR});
-  const birthdays=known.filter(c=>c.bdSoon);
-  const weekStart=getWeekStart();
-  let contactedThisWeek=0;
-  Object.values(crmData).forEach(e=>{if(e.kontaktiert&&e.kontaktiert>=weekStart)contactedThisWeek++});
+  const seit2026=clients.filter(c=>c.lv&&c.lv>='2026-01-01');                     // Alle die seit Januar mind. 1x da waren
+  const aktiv=seit2026.filter(c=>c.days<=30);                                     // Aktiv: letzte 30 Tage da
+  const wackelt=seit2026.filter(c=>c.days>30&&c.days<=60);                        // Wackelt: 30-60 Tage
+  const verlustGefahr=seit2026.filter(c=>c.days>60&&c.days<=120);                 // Verlust-Gefahr: 60-120 Tage
+  const verloren=seit2026.filter(c=>c.days>120);                                  // Vermutlich verloren: 120+ Tage (seit Jan/Feb nicht mehr)
 
   document.getElementById('actionCenter').innerHTML=`
     <div class="ac-row">
       <div class="ac-left">
-        <h2>Dein CRM Dashboard</h2>
-        <p>${known.length} mit Besuchshistorie &middot; ${needAttention.length} seit 2+ Monaten nicht da &middot; ${contactedThisWeek} diese Woche kontaktiert</p>
-        <div class="ac-alerts">
-          ${needAttention.length?'<div class="ac-alert" onclick="setQuickFilter(\'overdue\')"><span>&#9888;</span><span class="num">'+needAttention.length+'</span> Kund'+(needAttention.length===1?'in':'innen')+' &gt; 60 Tage nicht da</div>':''}
-          ${verloreneStamm.length?'<div class="ac-alert" onclick="setQuickFilter(\'verlorenStamm\')"><span>&#128064;</span><span class="num">'+verloreneStamm.length+'</span> ehemalige Stammkundinnen ohne aktuellen Besuch</div>':''}
-          ${remindersToday.length?'<div class="ac-alert" onclick="setQuickFilter(\'reminder\')"><span>&#128276;</span><span class="num">'+remindersToday.length+'</span> Erinnerung'+(remindersToday.length>1?'en':'')+' heute</div>':''}
-          ${birthdays.length?'<div class="ac-alert" onclick="setQuickFilter(\'bday\')"><span>&#127874;</span><span class="num">'+birthdays.length+'</span> Geburtstag'+(birthdays.length>1?'e':'')+' bald</div>':''}
-        </div>
+        <h2>Deine Kundinnen seit Januar 2026</h2>
+        <p>${seit2026.length} Kundinnen waren mindestens einmal da &middot; ${aktiv.length} aktiv &middot; ${verloren.length} seit Januar/Februar nicht mehr</p>
       </div>
       <div class="ac-right">
-        <button class="ac-btn" onclick="window.print()">&#128424; Drucken</button>
-        <button class="ac-btn gold" onclick="startBatchFollowUp()">&#128172; Batch Follow-up</button>
+        <button class="ac-btn" onclick="window.print()">Drucken</button>
+        <button class="ac-btn gold" onclick="setQuickFilter('seitJanuar')">Verloren-Liste</button>
       </div>
     </div>`;
 }
@@ -699,33 +689,42 @@ function renderSegStats(){
 
 // ── QUICK FILTERS ──
 function renderQuickFilters(){
-  const reminders=clients.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR}).length;
+  const seit2026=clients.filter(c=>c.lv&&c.lv>='2026-01-01');
+  const aktivCount=seit2026.filter(c=>c.days<=30).length;
+  const wackeltCount=seit2026.filter(c=>c.days>30&&c.days<=60).length;
+  const verlustCount=seit2026.filter(c=>c.days>60&&c.days<=120).length;
+  const verlorenCount=seit2026.filter(c=>c.days>120).length;
   const bdays=clients.filter(c=>c.bdSoon&&c.days<9999).length;
-  const overdue=clients.filter(c=>c.days>=60&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
-  const verlorenStamm=clients.filter(c=>c.days>=9999&&(c.twTotal||0)>=2&&!(crmData[c.id]&&crmData[c.id].kontaktiert)).length;
-  const seitJanuar=clients.filter(c=>c.lv&&c.lv>='2026-01-01'&&c.lv<='2026-02-28').length;
-  const vipCount=clients.filter(c=>(c.visits||0)>=4||(c.twTotal||0)>=4).length;
+  const reminders=clients.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR}).length;
   const alleCount=clients.length;
 
   document.getElementById('quickFilters').innerHTML=`
-    <button class="qf ${quickFilter==='alle'?'on':''}" onclick="setQuickFilter('alle')">Alle Kontakte <span class="qf-count">${alleCount}</span></button>
-    <button class="qf ${quickFilter==='seitJanuar'?'on':''}" onclick="setQuickFilter('seitJanuar')">Seit Januar nicht da <span class="qf-count">${seitJanuar}</span></button>
-    <button class="qf ${quickFilter==='overdue'?'on':''}" onclick="setQuickFilter('overdue')">Über 60 Tage <span class="qf-count">${overdue}</span></button>
-    <button class="qf ${quickFilter==='verlorenStamm'?'on':''}" onclick="setQuickFilter('verlorenStamm')">Verlorene Stammkundinnen <span class="qf-count">${verlorenStamm}</span></button>
+    <button class="qf ${!quickFilter?'on':''}" onclick="setQuickFilter('')">Seit Januar (${seit2026.length})</button>
+    <button class="qf ${quickFilter==='aktivJan'?'on':''}" onclick="setQuickFilter('aktivJan')">Aktiv <span class="qf-count">${aktivCount}</span></button>
+    <button class="qf ${quickFilter==='wackelt'?'on':''}" onclick="setQuickFilter('wackelt')">Wackelt (30-60 Tage) <span class="qf-count">${wackeltCount}</span></button>
+    <button class="qf ${quickFilter==='verlustGefahr'?'on':''}" onclick="setQuickFilter('verlustGefahr')">Verlust-Gefahr (60-120 Tage) <span class="qf-count">${verlustCount}</span></button>
+    <button class="qf ${quickFilter==='verlorenJan'?'on':''}" onclick="setQuickFilter('verlorenJan')">Vermutlich verloren (4+ Mon.) <span class="qf-count">${verlorenCount}</span></button>
     ${reminders?'<button class="qf '+(quickFilter==='reminder'?'on':'')+'" onclick="setQuickFilter(\'reminder\')">Erinnerungen <span class="qf-count">'+reminders+'</span></button>':''}
     ${bdays?'<button class="qf '+(quickFilter==='bday'?'on':'')+'" onclick="setQuickFilter(\'bday\')">Geburtstage <span class="qf-count">'+bdays+'</span></button>':''}
-    <button class="qf ${quickFilter==='vip'?'on':''}" onclick="setQuickFilter('vip')">Stammkundinnen <span class="qf-count">${vipCount}</span></button>
+    <button class="qf ${quickFilter==='alle'?'on':''}" onclick="setQuickFilter('alle')" style="margin-left:auto">Alle Kontakte (${alleCount})</button>
   `;
 }
 
 // ── CLIENT LIST ──
 function getFilteredClients(){
-  // Default: NUR Kundinnen mit echten Daten zeigen — bei Quickfilter "alle" wird das aufgehoben
-  let list=quickFilter==='alle'?clients.slice():clients.filter(c=>c.days<9999||(c.twTotal||0)>=1);
+  // Default: NUR Kundinnen mit Besuch seit Januar 2026 (= 225 echte aus Kassenbuch + alle die in Kartei Behandlungen haben)
+  // "Alle Kontakte" Filter hebt die Einschränkung auf
+  let list;
+  if(quickFilter==='alle')list=clients.slice();
+  else list=clients.filter(c=>c.lv&&c.lv>='2026-01-01');
 
   if(activeFilter!=='all'){const seg=SEGMENTS.find(s=>s.key===activeFilter);if(seg)list=list.filter(c=>c.days<9999&&c.days>=seg.min&&c.days<=seg.max)}
 
-  if(quickFilter==='alle')list=list;     // Alle Kontakte — keine zusätzliche Filterung
+  if(quickFilter==='alle'){/* Alle Kontakte */}
+  else if(quickFilter==='aktivJan')list=list.filter(c=>c.days<=30);
+  else if(quickFilter==='wackelt')list=list.filter(c=>c.days>30&&c.days<=60);
+  else if(quickFilter==='verlustGefahr')list=list.filter(c=>c.days>60&&c.days<=120);
+  else if(quickFilter==='verlorenJan')list=list.filter(c=>c.days>120);
   else if(quickFilter==='seitJanuar')list=list.filter(c=>c.lv&&c.lv>='2026-01-01'&&c.lv<='2026-02-28');
   else if(quickFilter==='overdue')list=list.filter(c=>c.days>=60&&c.days<9999&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
   else if(quickFilter==='verlorenStamm')list=list.filter(c=>c.days>=9999&&(c.twTotal||0)>=2&&!(crmData[c.id]&&crmData[c.id].kontaktiert));
