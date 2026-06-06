@@ -40,7 +40,6 @@ const NAV_ITEMS = [
     { href: 'crm.html',             icon: 'crm',     label: 'CRM' },
     { href: 'gutscheine.html',      icon: 'voucher', label: 'Gutscheine' },
     { href: 'rechnungen.html',      icon: 'invoice', label: 'Rechnungen' },
-    { href: 'monatsabschluss.html', icon: 'chart',   label: 'Monatsabschluss' },
     { href: 'preislisten.html',     icon: 'tag',     label: 'Preisliste' },
     { href: 'hautapp.html',         icon: 'phone',   label: 'HautApp' },
 ];
