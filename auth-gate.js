@@ -3,12 +3,14 @@
 // ============================================
 // Verlangt Login bevor irgendwas gerendert wird.
 // PIN wird client-seitig geprueft (SHA-256).
-// Session bleibt 30 Tage im localStorage.
+// Session: 30 Tage max, plus Auto-Logout nach 24h Inaktivität.
 // ============================================
 
 (function () {
   const SESSION_KEY = 'skinconcept_session_v1';
   const SESSION_DAYS = 30;
+  const INACTIVITY_HOURS = 24;
+  const INACTIVITY_MS = INACTIVITY_HOURS * 60 * 60 * 1000;
 
   const USERS = [
     { id: 'tamara', label: 'Tamara', hash: 'e8026bda3ea2eedc7dc7bce9daa640f8cc0f33e335bd73d986a872b3ba789c71' },
@@ -30,13 +32,43 @@
       const s = JSON.parse(raw);
       if (!s.user || !s.expires) return null;
       if (Date.now() > s.expires) return null;
+      // Auto-Logout nach 24h Inaktivität
+      if (s.lastActivity && (Date.now() - s.lastActivity) > INACTIVITY_MS) {
+        clearSession();
+        return null;
+      }
       return s;
     } catch (e) { return null; }
   }
 
   function writeSession(userId) {
-    const s = { user: userId, expires: Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000 };
+    const now = Date.now();
+    const s = { user: userId, expires: now + SESSION_DAYS * 24 * 60 * 60 * 1000, lastActivity: now };
     localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  }
+
+  // Throttled Activity-Update — schreibt max alle 5 Min in localStorage
+  let lastWriteAt = 0;
+  function touchActivity() {
+    const now = Date.now();
+    if (now - lastWriteAt < 5 * 60 * 1000) return;   // throttle: max alle 5 Min
+    lastWriteAt = now;
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (!s.user) return;
+      s.lastActivity = now;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
+
+  function setupActivityTracking() {
+    ['click','keydown','touchstart','mousemove'].forEach(evt => {
+      window.addEventListener(evt, touchActivity, { passive: true });
+    });
+    // Beim Tab-Wechsel zurück aktivität setzen
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) touchActivity(); });
   }
 
   function clearSession() {
@@ -171,6 +203,9 @@
       clearSession();
       location.reload();
     };
+    setupActivityTracking();
+    // Erste Aktivität direkt setzen (Tab-Öffnung zählt als Aktion)
+    touchActivity();
     try { window.dispatchEvent(new CustomEvent('sc:login', { detail: { user: userId } })); } catch (e) {}
   }
 
