@@ -1,0 +1,156 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Speicher-Check</title>
+<style>
+body{font-family:'Inter',system-ui,sans-serif;background:#FCFAF6;color:#2A2520;padding:40px;max-width:800px;margin:0 auto}
+h1{font-size:22px;margin-bottom:24px}
+.check{padding:16px 20px;border-radius:12px;margin-bottom:12px;border:1px solid rgba(42,37,32,0.06)}
+.ok{background:#EBF5F0;border-color:#3D8B5F}.fail{background:#FDF0EF;border-color:#C0544F}.warn{background:#FDF6E3;border-color:#C4920A}
+.label{font-weight:600;margin-bottom:4px}.detail{font-size:13px;color:#4C463E}
+#log{font-family:ui-monospace,monospace;font-size:12px;background:#fff;border:1px solid rgba(42,37,32,0.1);border-radius:12px;padding:16px;white-space:pre-wrap;max-height:300px;overflow:auto;margin-top:20px}
+</style></head><body>
+<h1>Speicher-Diagnose</h1>
+<div id="results"></div>
+<div id="log"></div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+const R=document.getElementById('results');
+const L=document.getElementById('log');
+function add(status,label,detail){R.innerHTML+='<div class="check '+status+'"><div class="label">'+label+'</div><div class="detail">'+detail+'</div></div>'}
+function log(msg){L.textContent+=msg+'\n'}
+
+(async function(){
+  log('=== Speicher-Diagnose gestartet ===\n');
+
+  // 1. localStorage Check
+  log('1. localStorage prüfen...');
+  try{
+    var lsSize=0;
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);lsSize+=(localStorage.getItem(k)||'').length}
+    var lsMB=(lsSize/(1024*1024)).toFixed(2);
+    var karteiRaw=localStorage.getItem('sc_kartei_v2');
+    var karteiSize=karteiRaw?karteiRaw.length:0;
+    var karteiKB=Math.round(karteiSize/1024);
+    if(karteiSize>0){
+      var kartei=JSON.parse(karteiRaw);
+      var count=Object.keys(kartei).filter(k=>!k.startsWith('_')).length;
+      add('warn','localStorage: Kartei noch vorhanden ('+karteiKB+' KB, '+count+' Kunden)','Migration nach IndexedDB war noch nicht aktiv — alter Cache vorhanden. Wird beim nächsten Laden der Kartei migriert.');
+      log('   localStorage Kartei: '+karteiKB+' KB, '+count+' Kunden');
+    }else{
+      add('ok','localStorage: Kartei leer oder migriert','Kartei-Daten sind nicht mehr in localStorage (gut — kein 5MB-Limit-Problem)');
+      log('   localStorage Kartei: leer/migriert');
+    }
+    log('   localStorage gesamt: '+lsMB+' MB');
+  }catch(e){add('fail','localStorage Fehler',e.message);log('   FEHLER: '+e.message)}
+
+  // 2. IndexedDB Kartei Check
+  log('\n2. IndexedDB (skinconcept_kartei) prüfen...');
+  try{
+    var idbData=await new Promise(function(resolve){
+      var req=indexedDB.open('skinconcept_kartei',1);
+      req.onupgradeneeded=function(e){e.target.result.createObjectStore('kartei')};
+      req.onsuccess=function(e){
+        var db=e.target.result;
+        try{
+          var tx=db.transaction('kartei','readonly');
+          var get=tx.objectStore('kartei').get('data');
+          get.onsuccess=function(){resolve(get.result)};
+          get.onerror=function(){resolve(null)};
+        }catch(ex){resolve(null)}
+      };
+      req.onerror=function(){resolve(null)};
+    });
+    if(idbData&&typeof idbData==='object'){
+      var ids=Object.keys(idbData).filter(k=>!k.startsWith('_'));
+      var sizeKB=Math.round(JSON.stringify(idbData).length/1024);
+      add('ok','IndexedDB: '+ids.length+' Kunden gespeichert ('+sizeKB+' KB)','Kartei-Daten sind in IndexedDB — kein Speicherlimit-Problem.');
+      log('   IDB Kartei: '+ids.length+' Kunden, '+sizeKB+' KB');
+      // Check for treatments
+      var withTreat=ids.filter(id=>idbData[id]&&idbData[id].treatments&&idbData[id].treatments.length>0);
+      log('   Davon mit Behandlungen: '+withTreat.length);
+    }else{
+      add('warn','IndexedDB: Noch keine Kartei-Daten','Die Kundenkartei-Seite muss einmal geladen werden, damit die Migration startet.');
+      log('   IDB Kartei: leer');
+    }
+  }catch(e){add('fail','IndexedDB Fehler',e.message);log('   FEHLER: '+e.message)}
+
+  // 3. IndexedDB Media Check
+  log('\n3. IndexedDB (skinconcept_media) prüfen...');
+  try{
+    var mediaCount=await new Promise(function(resolve){
+      var req=indexedDB.open('skinconcept_media',1);
+      req.onsuccess=function(e){
+        var db=e.target.result;
+        if(!db.objectStoreNames.contains('blobs')){resolve(0);return}
+        try{
+          var tx=db.transaction('blobs','readonly');
+          var cnt=tx.objectStore('blobs').count();
+          cnt.onsuccess=function(){resolve(cnt.result)};
+          cnt.onerror=function(){resolve(-1)};
+        }catch(ex){resolve(-1)}
+      };
+      req.onerror=function(){resolve(-1)};
+    });
+    if(mediaCount>=0){
+      add('ok','IndexedDB Media: '+mediaCount+' Dateien','Fotos, Berichte und Signaturen im lokalen Speicher.');
+      log('   Media-Blobs: '+mediaCount);
+    }else{add('warn','IndexedDB Media: nicht lesbar','');}
+  }catch(e){log('   Media-Check Fehler: '+e.message)}
+
+  // 4. Firebase Realtime DB Check
+  log('\n4. Firebase Realtime Database prüfen...');
+  try{
+    var fbApp=firebase.initializeApp({
+      apiKey:"AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
+      authDomain:"skinconcept-hagner.firebaseapp.com",
+      databaseURL:"https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"skinconcept-hagner"
+    },'check');
+    var vault='v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
+    var snap=await firebase.app('check').database().ref(vault+'/kartei_data').once('value');
+    var fbData=snap.val()||{};
+    var fbIds=Object.keys(fbData);
+    var fbWithTreat=fbIds.filter(id=>fbData[id]&&fbData[id].treatments&&fbData[id].treatments.length>0);
+    add('ok','Firebase Cloud: '+fbIds.length+' Kunden ('+fbWithTreat.length+' mit Behandlungen)','Alle Kartei-Daten sind in der Cloud gesichert.');
+    log('   Firebase Kartei: '+fbIds.length+' Kunden, '+fbWithTreat.length+' mit Behandlungen');
+  }catch(e){add('fail','Firebase Fehler',e.message);log('   FEHLER: '+e.message)}
+
+  // 5. IDB Write Test
+  log('\n5. IDB Schreib-Test...');
+  try{
+    var testKey='__speicher_check_'+Date.now();
+    var wrote=await new Promise(function(resolve){
+      var req=indexedDB.open('skinconcept_kartei',1);
+      req.onsuccess=function(e){
+        var db=e.target.result;
+        var tx=db.transaction('kartei','readwrite');
+        tx.objectStore('kartei').put({test:true,ts:Date.now()},testKey);
+        tx.oncomplete=function(){
+          // Verify read-back
+          var tx2=db.transaction('kartei','readonly');
+          var get=tx2.objectStore('kartei').get(testKey);
+          get.onsuccess=function(){
+            if(get.result&&get.result.test===true){
+              // Cleanup
+              var tx3=db.transaction('kartei','readwrite');
+              tx3.objectStore('kartei').delete(testKey);
+              resolve(true);
+            }else{resolve(false)}
+          };
+          get.onerror=function(){resolve(false)};
+        };
+        tx.onerror=function(){resolve(false)};
+      };
+      req.onerror=function(){resolve(false)};
+    });
+    if(wrote){
+      add('ok','IDB Schreib-Test: Erfolgreich','Schreiben + Zurücklesen + Löschen funktioniert einwandfrei.');
+      log('   Schreiben OK, Lesen OK, Löschen OK');
+    }else{
+      add('fail','IDB Schreib-Test: FEHLGESCHLAGEN','IndexedDB kann nicht beschrieben werden!');
+      log('   FEHLGESCHLAGEN');
+    }
+  }catch(e){add('fail','IDB Schreib-Test Fehler',e.message);log('   FEHLER: '+e.message)}
+
+  log('\n=== Diagnose abgeschlossen ===');
+})();
+</script></body></html>

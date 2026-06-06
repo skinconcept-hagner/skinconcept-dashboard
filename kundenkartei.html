@@ -2604,7 +2604,7 @@ function renderKartei(c){
   `;
   // Asynchron Bilder laden nach Render
   setTimeout(function(){loadHautberichtPreviews();loadPhotoPreviews()},50);
-  if(currentKTab==='kaeufe') loadKaeufe(selectedClient);
+  if(currentKTab==='kaeufe') loadKaeufe(selectedClient.id);
   if(currentKTab==='hautapp') loadHautAppData(selectedClient);
 }
 

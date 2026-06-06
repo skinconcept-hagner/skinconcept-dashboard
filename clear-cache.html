@@ -1,0 +1,20 @@
+<!DOCTYPE html><html><head><title>Cache leeren</title></head>
+<body style="font-family:Inter,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#FCFAF6">
+<div style="text-align:center">
+<h2>Cache wird geleert...</h2>
+<p id="status">Bitte warten</p>
+<script>
+(async function(){
+  const el=document.getElementById('status');
+  try{
+    const regs=await navigator.serviceWorker.getRegistrations();
+    for(const r of regs){await r.unregister()}
+    el.textContent='Service Worker entfernt ('+regs.length+')';
+    const keys=await caches.keys();
+    for(const k of keys){await caches.delete(k)}
+    el.textContent+=', '+keys.length+' Caches geloescht. Weiterleitung...';
+    setTimeout(function(){window.location.href='/kundenkartei.html?v='+Date.now()},1500);
+  }catch(e){el.textContent='Fehler: '+e.message}
+})();
+</script>
+</div></body></html>

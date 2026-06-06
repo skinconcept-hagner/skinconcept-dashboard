@@ -357,13 +357,12 @@ function isDeletedName(name){if(!name)return false;return _deletedNames.has(norm
 function markDeletedName(name){if(!name)return;_deletedNames.add(normalize(name));try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}}
 const FB_DELETED_REF=fbDb.ref(FB_VAULT+'/kartei_deleted');
 FB_DELETED_REF.on('child_added',function(snap){const v=snap.val();if(v&&v.name){markDeletedName(v.name)}});
-function diffDays(dateStr){if(!dateStr)return 9999;return Math.max(0,Math.floor((TODAY-new Date(dateStr))/(864e5)))}
+function diffDays(dateStr){if(!dateStr)return 9999;return Math.max(0,Math.floor((TODAY-new Date(dateStr+'T00:00:00'))/(864e5)))}
 function fmtDate(d){if(!d)return'–';if(d.includes('-')){const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}return d}
 function formatDays(d){if(d===0)return'Heute';if(d===1)return'Gestern';if(d<7)return d+' Tage';if(d<30){const w=Math.floor(d/7);return w+' Woche'+(w>1?'n':'');}if(d<365){const m=Math.floor(d/30);return m+' Monat'+(m>1?'e':'');}const y=Math.floor(d/365),m=Math.floor((d%365)/30);return y+' Jahr'+(y>1?'e':'')+(m>0?', '+m+' Mon.':'')}
 function formatPhone(ph){if(!ph)return'';return ph.replace(/[\s\-()\/]/g,'').replace(/^0/,'49').replace(/^\+/,'')}
 function getWaUrl(ph){const n=formatPhone(ph);return n?'https://wa.me/'+n:''}
 function avatarColor(name){const h=Array.from(name||'X').reduce((a,c)=>a+c.charCodeAt(0),0);const colors=['#c9a96e','#a78bfa','#60a5fa','#4ade80','#fb923c','#f87171','#facc15'];return colors[h%colors.length]}
-function getWeekStart(){const d=new Date(TODAY);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 
 // ── KARTEI (IndexedDB statt localStorage — kein 5MB-Limit) ──
 let _karteiCache=null;
@@ -654,7 +653,8 @@ function renderActionCenter(){
       </div>
       <div class="ac-right">
         <button class="ac-btn" onclick="window.print()">Drucken</button>
-        <button class="ac-btn gold" onclick="setQuickFilter('seitJanuar')">Verloren-Liste</button>
+        <button class="ac-btn" onclick="startBatchFollowUp()">Batch Follow-up</button>
+        <button class="ac-btn gold" onclick="setQuickFilter('verlorenJan')">Verloren-Liste</button>
       </div>
     </div>`;
 }

@@ -376,7 +376,7 @@ function renderProducts() {
             <td>${p.inStock !== false ? '<span class="badge badge-aktiv">Ja</span>' : '<span class="badge badge-entwurf">Nein</span>'}</td>
             <td>
                 <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')">Bearbeiten</button>
-                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteProduct('${p.id}', '${p.name}')">&#10005;</button>
+                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteProduct('${p.id}', '${escHtml(p.name).replace(/'/g, "\\'")}')">&#10005;</button>
             </td>
         </tr>
     `).join('');

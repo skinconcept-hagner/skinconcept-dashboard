@@ -533,11 +533,11 @@ async function createVoucher(evt) {
             createdBy: currentUser
         };
 
-        // Beide parallel speichern
-        await Promise.all([
-            db.collection('vouchers').doc(voucherCode).set(voucherData),
-            db.collection('invoices').doc(invoiceNumber).set(invoiceData)
-        ]);
+        // Atomar speichern — entweder beide oder keine. Verhindert halb-konsistente Zustände.
+        const batch = db.batch();
+        batch.set(db.collection('vouchers').doc(voucherCode), voucherData);
+        batch.set(db.collection('invoices').doc(invoiceNumber), invoiceData);
+        await batch.commit();
 
         // PDF 1: Gutschein (A5 quer)
         const { jsPDF } = window.jspdf;

@@ -346,7 +346,8 @@ function renderAll() {
     const today = todayStr();
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekAgoStr = weekAgo.toISOString().slice(0, 10);
+    // Lokales Datum (in DE), NICHT UTC — sonst Tag-Versatz nach Mitternacht
+    const weekAgoStr = weekAgo.getFullYear() + '-' + String(weekAgo.getMonth()+1).padStart(2,'0') + '-' + String(weekAgo.getDate()).padStart(2,'0');
 
     const open = allTasks.filter(t => t.status !== 'done');
     const done = allTasks.filter(t => t.status === 'done');
@@ -388,7 +389,7 @@ function renderAll() {
     // Render open tasks
     const board = document.getElementById('taskBoard');
     if (filtered.length === 0) {
-        board.innerHTML = '<div class="empty-state"><div class="icon">&#9989;</div><h3>Keine offenen Aufgaben</h3><p>Alles erledigt! Erstelle eine neue Aufgabe oben.</p></div>';
+        board.innerHTML = '<div class="empty-state"><div class="icon">&#10003;</div><h3>Keine offenen Aufgaben</h3><p>Alles erledigt! Erstelle eine neue Aufgabe oben.</p></div>';
     } else {
         board.innerHTML = filtered.map(t => renderTaskItem(t, false)).join('');
     }
