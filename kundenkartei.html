@@ -5171,9 +5171,9 @@ async function loadHautAppData(client){
     // RECENT DIARY
     if(diary.length){
       html+='<div class="scard"><h3>Letzte Diary-Einträge</h3>';
-      var moods={1:'😔',2:'😐',3:'🙂',4:'😃',5:'😍'};
+      var moods={1:'Bedrückt',2:'Verhalten',3:'Gut',4:'Sehr gut',5:'Strahlend'};
       html+=diary.filter(function(e){return !e.isPrivate;}).slice(0,5).map(function(e){
-        return '<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start"><div style="font-size:1.3rem;flex-shrink:0">'+(moods[e.mood]||'')+'</div><div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--muted)">'+fmtDateSafe(e.createdAt)+' · Haut '+e.skinCondition+'/10'+(e.isPrivate?' · <i>Privat</i>':'')+'</div>'+(e.tags&&e.tags.length?'<div style="margin-top:4px">'+e.tags.map(function(t){return '<span style="display:inline-block;padding:2px 8px;background:var(--bg4);border-radius:50px;font-size:11px;color:var(--muted);margin-right:4px">'+esc(t)+'</span>';}).join('')+'</div>':'')+(e.note?'<div style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.5">'+esc(e.note.substring(0,200))+'</div>':'')+'</div></div>';
+        return '<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">'+(moods[e.mood]?'<div style="flex-shrink:0;min-width:70px;text-align:center"><div style="font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gold)">'+moods[e.mood]+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Stimmung</div></div>':'')+'<div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--muted)">'+fmtDateSafe(e.createdAt)+' · Haut '+e.skinCondition+'/10'+(e.isPrivate?' · <i>Privat</i>':'')+'</div>'+(e.tags&&e.tags.length?'<div style="margin-top:4px">'+e.tags.map(function(t){return '<span style="display:inline-block;padding:2px 8px;background:var(--bg4);border-radius:50px;font-size:11px;color:var(--muted);margin-right:4px">'+esc(t)+'</span>';}).join('')+'</div>':'')+(e.note?'<div style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.5">'+esc(e.note.substring(0,200))+'</div>':'')+'</div></div>';
       }).join('');
       html+='</div>';
     }
