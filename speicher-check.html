@@ -1,4 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><title>Speicher-Check</title>
+<script src="auth-gate.js"></script>
 <style>
 body{font-family:'Inter',system-ui,sans-serif;background:#FCFAF6;color:#2A2520;padding:40px;max-width:800px;margin:0 auto}
 h1{font-size:22px;margin-bottom:24px}
@@ -12,6 +13,7 @@ h1{font-size:22px;margin-bottom:24px}
 <div id="log"></div>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="hagner-auth.js"></script>
 <script>
 const R=document.getElementById('results');
 const L=document.getElementById('log');
@@ -19,6 +21,9 @@ function add(status,label,detail){R.innerHTML+='<div class="check '+status+'"><d
 function log(msg){L.textContent+=msg+'\n'}
 
 (async function(){
+  if(window.scAuthReady)await window.scAuthReady;
+  var authenticated=await scEnsureHagnerAuth({required:true});
+  if(!authenticated)return;
   log('=== Speicher-Diagnose gestartet ===\n');
 
   // 1. localStorage Check

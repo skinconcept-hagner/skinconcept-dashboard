@@ -45,11 +45,16 @@
 
         /* GUTSCHEIN PREVIEW */
         .gs-preview {
-            background: linear-gradient(135deg, #2C2420 0%, #4A3728 100%);
+            background: linear-gradient(135deg, #2D3136 0%, #3C424A 100%);
             color: #fff; padding: 32px 28px; border-radius: var(--radius);
             text-align: center; box-shadow: var(--shadow-lg); position: relative;
             border: 1px solid rgba(196,162,101,0.3);
         }
+        /* Vorschau-Spalte als Ganzes auf Gutschein-Proportion begrenzen + zentrieren.
+           So sind Vorschau-Titel, Karte, Bildunterschrift UND die Download-Buttons
+           exakt gleich breit und mittig — sonst standen die Buttons breiter als die
+           Gutschein-Karte darüber (wirkte nachträglich unsymmetrisch). */
+        .gs-preview-col { max-width: 440px; margin-left: auto; margin-right: auto; }
         .gs-preview .gs-brand {
             font-family: inherit; font-size: 22px;
             letter-spacing: 4px; margin-bottom: 4px;
@@ -60,9 +65,9 @@
             font-family: inherit; font-size: 48px; font-weight: 600;
             margin: 6px 0;
         }
-        .gs-preview .gs-for { font-size: 15px; color: #E5E0D8; margin-bottom: 4px; }
-        .gs-preview .gs-from { font-size: 12px; color: #B8B0A8; font-style: italic; margin-bottom: 16px; }
-        .gs-preview .gs-meta { font-size: 11px; color: #9A938C; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(196,162,101,0.2); }
+        .gs-preview .gs-for { font-size: 15px; color: #E3E6E9; margin-bottom: 4px; }
+        .gs-preview .gs-from { font-size: 12px; color: #B2B7BD; font-style: italic; margin-bottom: 16px; }
+        .gs-preview .gs-meta { font-size: 11px; color: #9AA0A6; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(196,162,101,0.2); }
         .gs-preview .gs-meta div { margin: 3px 0; }
 
         /* GUTSCHEIN LAYOUT */
@@ -276,7 +281,7 @@
                 </div>
 
                 <!-- RECHTS: Live-Vorschau -->
-                <div>
+                <div class="gs-preview-col">
                     <div class="rg-section-title" style="border:none;">Vorschau</div>
                     <div class="gs-preview" id="voucher-preview">
                         <div class="gs-brand">Skinconcept</div>
@@ -294,6 +299,11 @@
                     <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:10px;">
                         So sieht der gedruckte Gutschein aus
                     </p>
+                    <div id="download-panel" style="display:none;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+                        <div style="font-size:11px;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;text-align:center;margin-bottom:10px;">Downloads</div>
+                        <button type="button" onclick="downloadLastVoucher()" style="width:100%;min-height:48px;margin-bottom:8px;background:var(--primary-dark);color:#fff;border:none;border-radius:var(--radius-sm);font-weight:600;font-family:inherit;font-size:15px;cursor:pointer;">Gutschein herunterladen</button>
+                        <button type="button" onclick="downloadLastInvoice()" style="width:100%;min-height:48px;background:#fff;color:var(--text);border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-weight:500;font-family:inherit;font-size:15px;cursor:pointer;">Rechnung herunterladen</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -323,6 +333,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="shared.js"></script>
+<script src="ai-bridge.js"></script>
 <script>
 // ============================================================
 // Skinconcept — Gutscheine
@@ -345,10 +356,9 @@ const STUDIO = {
 const VOUCHER_VAT_MODE = 'einzweck';
 
 const today = todayStr();
-const currentUser = (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown';
-
 let allVouchers = [];
 let unsubVouchers = null;
+let voucherSaveInProgress = false;
 
 // ============ TAB SWITCHING ============
 function switchSection(name) {
@@ -372,7 +382,11 @@ function formatEURpdf(val) {
 }
 function formatDateDE(dateStr) {
     if (!dateStr) return '';
+    // ISO JJJJ-MM-TT direkt zerlegen (KEIN new Date() -> kein UTC-Tagesversatz)
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
+    if (m) return m[3] + '.' + m[2] + '.' + m[1];
     const d = new Date(dateStr);
+    if (isNaN(d)) return String(dateStr);
     return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
 }
 function escHtml(str) {
@@ -392,6 +406,20 @@ async function getNextNumber(type) {
     });
     const padded = String(next).padStart(4, '0');
     return type === 'voucher' ? `SCH-${year}-${padded}` : `${year}-${padded}`;
+}
+
+// Alle Ausgangsrechnungen verwenden ab jetzt denselben Office-Nummernkreis.
+// So entstehen zwischen Dashboard-Gutscheinen und Office keine Doppelnummern mehr.
+async function getNextOfficeInvoiceNumber() {
+    const year = new Date().getFullYear();
+    const ref = db.collection('office_counters').doc('invoice_' + year);
+    const next = await db.runTransaction(async tx => {
+        const doc = await tx.get(ref);
+        const current = (doc.exists && doc.data().current) ? doc.data().current + 1 : 1;
+        tx.set(ref, { current, year }, { merge: true });
+        return current;
+    });
+    return `${year}-${String(next).padStart(4, '0')}`;
 }
 
 // ============ BUYER-SAME ============
@@ -472,8 +500,35 @@ async function sendVoucherEmailAndArchive(p) {
     });
 }
 
+// ============ DOWNLOADS (iPad-sicher: je ein eigener Tap) ============
+let lastVoucherPdf = null, lastVoucherFile = '';
+let lastInvoicePdf = null, lastInvoiceFile = '';
+
+function showDownloadPanel() {
+    const panel = document.getElementById('download-panel');
+    if (panel) panel.style.display = 'block';
+}
+function downloadLastVoucher() {
+    if (lastVoucherPdf) { try { lastVoucherPdf.save(lastVoucherFile); } catch (e) { console.error(e); showToast('Download fehlgeschlagen.', 'error'); } }
+}
+function downloadLastInvoice() {
+    if (lastInvoicePdf) { try { lastInvoicePdf.save(lastInvoiceFile); } catch (e) { console.error(e); showToast('Download fehlgeschlagen.', 'error'); } }
+}
+
 // ============ CREATE VOUCHER ============
 async function createVoucher(evt) {
+    if (voucherSaveInProgress) return;
+
+    if (!window.jspdf || typeof window.jspdf.jsPDF !== 'function') {
+        showToast('Das PDF-Modul konnte nicht geladen werden. Bitte die Seite neu laden.', 'error');
+        return;
+    }
+
+    if (typeof scEnsureStudioAuth === 'function') {
+        const authenticated = await scEnsureStudioAuth({ required: true });
+        if (!authenticated) return;
+    }
+
     const beneficiary = document.getElementById('g-beneficiary').value.trim();
     const gifter = document.getElementById('g-gifter').value.trim();
     const value = parseFloat(document.getElementById('g-value').value) || 0;
@@ -494,13 +549,14 @@ async function createVoucher(evt) {
     if (!buyerName) { showToast('Bitte den Namen der Käuferin eintragen (für die Rechnung).', 'error'); return; }
 
     const btn = evt && evt.target && evt.target.closest('button');
+    voucherSaveInProgress = true;
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
     try {
         // Nummern parallel ziehen
         const [voucherCode, invoiceNumber] = await Promise.all([
             getNextNumber('voucher'),
-            getNextNumber('invoice')
+            getNextOfficeInvoiceNumber()
         ]);
 
         const voucherData = {
@@ -510,7 +566,7 @@ async function createVoucher(evt) {
             invoiceNumber,
             buyer: { name: buyerName, email: buyerEmail, street: buyerStreet, zip: buyerZip, city: buyerCity },
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: currentUser
+            createdBy: (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown'
         };
 
         const invoiceData = {
@@ -518,26 +574,67 @@ async function createVoucher(evt) {
             type: 'voucher',
             voucherCode,
             customer: { name: buyerName, email: buyerEmail, street: buyerStreet, zip: buyerZip, city: buyerCity },
-            date, due: 'SOFORT',
+            date, serviceDate: date, due: 'SOFORT',
             vatMode: VOUCHER_VAT_MODE,
             items: [{
                 description: 'Gutschein ' + voucherCode + ' (' + description + ')',
                 qty: 1,
-                priceBrutto: value
+                priceBrutto: value,
+                vatRate: VOUCHER_VAT_MODE === 'einzweck' ? 19 : 0
             }],
             subtotal: VOUCHER_VAT_MODE === 'einzweck' ? roundCent(value / 1.19) : value,
             vat: VOUCHER_VAT_MODE === 'einzweck' ? roundCent(value - roundCent(value / 1.19)) : 0,
             total: roundCent(value),
             notes: 'Gutschein für ' + beneficiary + (gifter ? ' (von ' + gifter + ')' : ''),
+            status: 'open',
+            paid: false,
+            sourceSystem: 'dashboard',
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: currentUser
+            createdBy: (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown'
         };
 
         // Atomar speichern — entweder beide oder keine. Verhindert halb-konsistente Zustände.
         const batch = db.batch();
         batch.set(db.collection('vouchers').doc(voucherCode), voucherData);
-        batch.set(db.collection('invoices').doc(invoiceNumber), invoiceData);
+        batch.set(db.collection('office_invoices').doc(invoiceNumber), invoiceData);
         await batch.commit();
+
+        if (typeof window.scSendAiEvent === 'function') {
+            window.scSendAiEvent({
+                eventId: 'invoice:' + invoiceNumber,
+                eventType: 'invoice.created',
+                occurredAt: new Date().toISOString(),
+                customer: {
+                    name: buyerName,
+                    firstName: buyerName.split(/\s+/)[0] || buyerName,
+                    lastName: buyerName.split(/\s+/).slice(1).join(' '),
+                    email: buyerEmail,
+                    street: buyerStreet,
+                    zip: buyerZip,
+                    city: buyerCity
+                },
+                invoice: {
+                    number: invoiceNumber,
+                    date: date,
+                    serviceDate: date,
+                    due: invoiceData.due,
+                    subtotal: invoiceData.subtotal,
+                    vat: invoiceData.vat,
+                    total: invoiceData.total,
+                    paymentMethod: 'offen',
+                    paid: false,
+                    items: invoiceData.items.map(function (item) {
+                        return {
+                            description: item.description,
+                            qty: item.qty,
+                            priceBrutto: item.priceBrutto
+                        };
+                    })
+                }
+            }).catch(function (err) {
+                console.warn('[AI-Sync] Rechnung wird später synchronisiert:', err && err.message || err);
+            });
+        }
 
         // PDF 1: Gutschein (A5 quer)
         const { jsPDF } = window.jspdf;
@@ -549,8 +646,20 @@ async function createVoucher(evt) {
         buildInvoicePDF(invoicePdf, invoiceData);
 
         const safeName = beneficiary.replace(/[^a-zA-Z0-9äöüÄÖÜß]+/g, '_');
-        voucherPdf.save('Gutschein_' + safeName + '_' + voucherCode + '.pdf');
-        invoicePdf.save('Rechnung_' + safeName + '_' + invoiceNumber + '.pdf');
+        const voucherFile = 'Gutschein_' + safeName + '_' + voucherCode + '.pdf';
+        const invoiceFile = 'Rechnung_' + safeName + '_' + invoiceNumber + '.pdf';
+
+        // PDFs für die Download-Buttons merken — je ein eigener Tap ist auf
+        // iPad/Safari die zuverlässige Methode (zwei Auto-Downloads in einem Tap
+        // blockieren sich gegenseitig, deshalb hatte der Gutschein gefehlt).
+        lastVoucherPdf = voucherPdf; lastVoucherFile = voucherFile;
+        lastInvoicePdf = invoicePdf; lastInvoiceFile = invoiceFile;
+        showDownloadPanel();
+
+        // Auto-Download als Komfort: Gutschein sofort, Rechnung zeitlich versetzt,
+        // damit sie sich nicht gegenseitig abwürgen. Buttons oben sind die sichere Reserve.
+        try { voucherPdf.save(voucherFile); } catch (e) { console.error('Gutschein-Download:', e); }
+        setTimeout(() => { try { invoicePdf.save(invoiceFile); } catch (e) { console.error('Rechnung-Download:', e); } }, 1200);
 
         // Versand/Drive kommt sobald OAuth eingerichtet ist
         if (typeof sendVoucherEmailAndArchive === 'function' && buyerEmail) {
@@ -575,6 +684,7 @@ async function createVoucher(evt) {
         console.error('Fehler beim Erstellen:', err);
         showToast('Fehler beim Erstellen: ' + (err.message || 'unbekannt'), 'error');
     } finally {
+        voucherSaveInProgress = false;
         if (btn) { btn.disabled = false; btn.style.opacity = ''; }
     }
 }
@@ -594,12 +704,18 @@ function setDefaultValidity() {
     document.getElementById('g-valid-until').value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
+// Zentriert Text mit Buchstabenabstand exakt (jsPDF align:center ignoriert charSpace)
+function centeredSpaced(doc, text, cx, y, charSpace) {
+    const tw = doc.getTextWidth(text) + charSpace * (text.length - 1);
+    doc.text(text, cx - tw / 2, y, { charSpace });
+}
+
 // ============ PDF: VOUCHER (A5 LANDSCAPE) ============
 function buildVoucherPDF(doc, d) {
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
     const accent = [196, 162, 101];
-    const dark = [44, 36, 32];
+    const dark = [45, 49, 54]; // Anthrazit
 
     doc.setFillColor(...dark);
     doc.rect(0, 0, w, h, 'F');
@@ -618,7 +734,7 @@ function buildVoucherPDF(doc, d) {
         doc.line(x, y, x, y + cs*dy);
     });
 
-    let y = 22;
+    let y = 34;
 
     doc.setFont('times', 'normal');
     doc.setFontSize(22);
@@ -627,7 +743,7 @@ function buildVoucherPDF(doc, d) {
     y += 5;
     doc.setFontSize(7);
     doc.setTextColor(...accent);
-    doc.text('TAMARA HAGNER', w / 2, y, { align: 'center', charSpace: 1.5 });
+    centeredSpaced(doc, 'TAMARA HAGNER', w / 2, y, 1.5);
 
     y += 5;
     doc.setLineWidth(0.2);
@@ -636,7 +752,7 @@ function buildVoucherPDF(doc, d) {
     y += 8;
     doc.setFontSize(10);
     doc.setTextColor(...accent);
-    doc.text('G U T S C H E I N', w / 2, y, { align: 'center', charSpace: 2 });
+    centeredSpaced(doc, 'G U T S C H E I N', w / 2, y, 2);
 
     y += 18;
     doc.setFont('times', 'normal');
@@ -646,14 +762,14 @@ function buildVoucherPDF(doc, d) {
 
     y += 12;
     doc.setFontSize(13);
-    doc.setTextColor(225, 220, 210);
+    doc.setTextColor(224, 226, 229);
     doc.text('für ' + d.beneficiary, w / 2, y, { align: 'center' });
 
     if (d.gifter) {
         y += 6;
         doc.setFontSize(10);
         doc.setFont('times', 'italic');
-        doc.setTextColor(180, 175, 165);
+        doc.setTextColor(176, 180, 185);
         doc.text('von ' + d.gifter, w / 2, y, { align: 'center' });
         doc.setFont('times', 'normal');
     }
@@ -661,7 +777,7 @@ function buildVoucherPDF(doc, d) {
     if (d.description) {
         y += 7;
         doc.setFontSize(9);
-        doc.setTextColor(180, 175, 165);
+        doc.setTextColor(176, 180, 185);
         doc.text(d.description, w / 2, y, { align: 'center' });
     }
 
@@ -672,15 +788,15 @@ function buildVoucherPDF(doc, d) {
 
     y += 6;
     doc.setFontSize(8);
-    doc.setTextColor(150, 145, 138);
+    doc.setTextColor(150, 154, 159);
     doc.text('Gutschein-Nr.: ' + d.voucherCode, w / 2, y, { align: 'center' });
     y += 4;
     doc.text('Gültig bis: ' + formatDateDE(d.validUntil), w / 2, y, { align: 'center' });
 
     doc.setFontSize(6.5);
-    doc.setTextColor(120, 115, 108);
+    doc.setTextColor(124, 128, 133);
     doc.text(STUDIO.name + '  |  ' + STUDIO.street + ', ' + STUDIO.zip + ' ' + STUDIO.city + '  |  ' + STUDIO.phone,
-        w / 2, h - 8, { align: 'center' });
+        w / 2, h - 11, { align: 'center' });
 }
 
 // ============ PDF: INVOICE (A4 PORTRAIT) ============
@@ -760,6 +876,13 @@ function buildInvoicePDF(doc, inv) {
     doc.text('Datum', pageW - mr - 35, rightY);
     doc.setTextColor(...txt);
     doc.text(formatDateDE(inv.date), pageW - mr, rightY, { align: 'right' });
+
+    // Leistungsdatum (Pflichtangabe § 14 Abs. 4 Nr. 6 UStG) — beim Gutscheinverkauf = Verkaufsdatum.
+    rightY += 5;
+    doc.setTextColor(...muted);
+    doc.text('Leistungsdatum', pageW - mr - 35, rightY);
+    doc.setTextColor(...txt);
+    doc.text(formatDateDE(inv.serviceDate || inv.date), pageW - mr, rightY, { align: 'right' });
 
     rightY += 5;
     doc.setTextColor(...muted);
@@ -884,8 +1007,22 @@ function loadArchive() {
             loadStats();
         }, err => {
             console.error('vouchers:', err);
-            document.getElementById('archive-list').innerHTML =
-                '<div class="empty-state" style="padding:40px;text-align:center;color:var(--text-muted);">Fehler beim Laden: ' + escHtml(err.message) + '</div>';
+            // Fallback ohne orderBy -> client-seitig sortieren, damit Liste UND Stats trotzdem laden
+            db.collection('vouchers').limit(300).get().then(snap => {
+                allVouchers = [];
+                snap.forEach(d => allVouchers.push({ ...d.data(), _id: d.id }));
+                allVouchers.sort((a, b) => {
+                    const ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : (a.date ? Date.parse(a.date) : 0);
+                    const tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : (b.date ? Date.parse(b.date) : 0);
+                    return tb - ta;
+                });
+                renderArchive();
+                loadStats();
+            }).catch(e2 => {
+                console.error('vouchers fallback:', e2);
+                document.getElementById('archive-list').innerHTML =
+                    '<div class="empty-state" style="padding:40px;text-align:center;color:var(--text-muted);">Fehler beim Laden: ' + escHtml(err.message) + '</div>';
+            });
         });
 }
 
@@ -940,8 +1077,9 @@ function renderArchiveRow(v) {
     const status = v.status === 'redeemed'
         ? '<span class="rg-badge redeemed">Eingelöst</span>'
         : '<span class="rg-badge active">Offen</span>';
+    const dl = `<button onclick="reprintVoucher('${v.code}')" style="min-height:44px;padding:6px 16px;border:1px solid var(--border-strong);background:#fff;color:var(--text);border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;margin-right:6px;">Gutschein PDF</button>`;
     const action = v.status !== 'redeemed'
-        ? `<button onclick="markRedeemed('${v.code}')" style="padding:6px 12px;border:1px solid var(--success);background:#fff;color:var(--success);border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">Einlösen</button>`
+        ? `<button onclick="markRedeemed('${v.code}')" style="min-height:44px;padding:6px 16px;border:1px solid var(--success);background:#fff;color:var(--success);border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">Einlösen</button>`
         : '';
 
     return `
@@ -953,9 +1091,29 @@ function renderArchiveRow(v) {
             <td>${escHtml(formatDateDE(v.validUntil))}</td>
             <td style="text-align:right;font-weight:600;">${formatEUR(v.value)}</td>
             <td>${status}</td>
-            <td>${action}</td>
+            <td style="white-space:nowrap;">${dl}${action}</td>
         </tr>
     `;
+}
+
+// Gutschein-PDF aus den gespeicherten Daten neu erzeugen (z.B. wenn der
+// Download beim Erstellen gefehlt hat). Einzelner Tap = zuverlässig auf iPad.
+function reprintVoucher(code) {
+    const v = allVouchers.find(x => x.code === code);
+    if (!v) { showToast('Gutschein nicht gefunden.', 'error'); return; }
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+        buildVoucherPDF(pdf, {
+            voucherCode: v.code, beneficiary: v.beneficiary, gifter: v.gifter,
+            value: v.value, description: v.description, validUntil: v.validUntil, date: v.date
+        });
+        const safeName = (v.beneficiary || 'Gutschein').replace(/[^a-zA-Z0-9äöüÄÖÜß]+/g, '_');
+        pdf.save('Gutschein_' + safeName + '_' + v.code + '.pdf');
+    } catch (e) {
+        console.error('reprintVoucher:', e);
+        showToast('Download fehlgeschlagen.', 'error');
+    }
 }
 
 async function markRedeemed(voucherCode) {
@@ -964,7 +1122,7 @@ async function markRedeemed(voucherCode) {
         await db.collection('vouchers').doc(voucherCode).update({
             status: 'redeemed',
             redeemedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            redeemedBy: currentUser
+            redeemedBy: (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown'
         });
         showToast('Gutschein als eingelöst markiert.', 'success');
     } catch (err) {
@@ -980,7 +1138,7 @@ function loadStats() {
 
     let monthCount = 0, openCount = 0, openValue = 0, redeemedThisMonth = 0;
     allVouchers.forEach(v => {
-        if (v.date >= monthStart) monthCount++;
+        if (v.date && v.date >= monthStart) monthCount++;
         if (v.status !== 'redeemed') {
             openCount++;
             openValue += v.value || 0;
@@ -999,7 +1157,12 @@ function loadStats() {
 }
 
 // ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') {
+        const authenticated = await scEnsureStudioAuth({ required: true });
+        if (!authenticated) return;
+    }
     document.getElementById('g-date').value = today;
     setDefaultValidity();
     updateVoucherPreview();

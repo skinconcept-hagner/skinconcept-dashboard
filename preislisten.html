@@ -136,9 +136,18 @@
                 <input type="number" id="tDuration" placeholder="60">
             </div>
         </div>
-        <div class="form-group">
-            <label>Preis (EUR)</label>
-            <input type="number" id="tPrice" step="0.01" placeholder="189.00">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Preis (EUR)</label>
+                <input type="number" id="tPrice" step="0.01" placeholder="189.00">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="tActive">
+                    <option value="true">Aktiv</option>
+                    <option value="false">Inaktiv (in Kartei ausgeblendet)</option>
+                </select>
+            </div>
         </div>
         <div class="form-group">
             <label>Beschreibung</label>
@@ -184,6 +193,13 @@
                 </select>
             </div>
         </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select id="pActive">
+                <option value="true">Aktiv</option>
+                <option value="false">Inaktiv (in Kartei ausgeblendet)</option>
+            </select>
+        </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button class="btn btn-primary" style="flex:1;" onclick="saveProduct()">Speichern</button>
             <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('productModal')">Abbrechen</button>
@@ -199,6 +215,8 @@ let allTreatments = [];
 let allProducts = [];
 let allCategories = new Set();
 let allBrands = new Set();
+// Feste Kategorien (immer auswählbar, auch wenn noch keine Behandlung darin existiert)
+const FIXED_CATEGORIES = ['HAUTKONZEPT-Termin', 'Medical Beauty', 'Brows'];
 
 // ============ TABS ============
 function switchTab(tab, btn) {
@@ -210,14 +228,18 @@ function switchTab(tab, btn) {
 
 // ============ TREATMENTS ============
 function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+// Zahl robust einlesen: akzeptiert Komma ("189,00") UND Punkt; leer/ungueltig -> 0 (kein stiller NaN)
+function parseNum(v) { const n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isNaN(n) ? 0 : n; }
 
 async function loadTreatments() {
     let snap;
     try {
-        snap = await db.collection('treatments').orderBy('category').orderBy('sortOrder').get();
+        // Vollstaendig laden und lokal sortieren: orderBy wuerde Dokumente ohne
+        // category/sortOrder ausblenden und benoetigt ausserdem einen Composite-Index.
+        snap = await db.collection('treatments').get();
     } catch(e) {
         console.error('Treatments load error:', e);
-        try { snap = await db.collection('treatments').get(); } catch(e2) { console.error(e2); return; }
+        return;
     }
     allTreatments = [];
     allCategories = new Set();
@@ -226,16 +248,20 @@ async function loadTreatments() {
         allTreatments.push(data);
         if (data.category) allCategories.add(data.category);
     });
+    // Immer client-seitig sortieren (Fallback-Pfad liefert sonst unsortiert; Docs ohne Feld fehlen sonst ganz)
+    allTreatments.sort((a, b) => (a.category || '').localeCompare(b.category || '') || ((a.sortOrder || 0) - (b.sortOrder || 0)) || (a.name || '').localeCompare(b.name || ''));
 
+    // Feste Kategorien immer mit aufnehmen (auch ohne vorhandene Behandlung)
+    const catList = [...new Set([...FIXED_CATEGORIES, ...allCategories])];
     // Update category filter & datalist
     const filter = document.getElementById('categoryFilter');
     const current = filter.value;
     filter.innerHTML = '<option value="">Alle Kategorien</option>' +
-        [...allCategories].sort().map(c => `<option value="${c}">${c}</option>`).join('');
+        catList.sort().map(c => `<option value="${c}">${c}</option>`).join('');
     filter.value = current;
 
     document.getElementById('categorySuggestions').innerHTML =
-        [...allCategories].map(c => `<option value="${c}">`).join('');
+        catList.map(c => `<option value="${c}">`).join('');
 
     renderTreatments();
 }
@@ -255,9 +281,10 @@ function renderTreatments() {
     }
 
     tbody.innerHTML = filtered.map(t => `
-        <tr>
+        <tr${t.active === false ? ' style="opacity:.5"' : ''}>
             <td>
                 <strong>${escHtml(t.name)}</strong>
+                ${t.active === false ? ' <span class="badge badge-entwurf">Inaktiv</span>' : ''}
                 ${t.description ? `<br><small style="color:var(--text-light)">${escHtml(t.description)}</small>` : ''}
             </td>
             <td><span class="badge badge-aktiv">${escHtml(t.category) || '-'}</span></td>
@@ -265,7 +292,7 @@ function renderTreatments() {
             <td><strong>${formatCurrency(t.price || 0)}</strong></td>
             <td>
                 <button class="btn btn-secondary btn-sm" onclick="editTreatment('${t.id}')">Bearbeiten</button>
-                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteTreatment('${t.id}', '${escHtml(t.name).replace(/'/g, "\\'")}')">&#10005;</button>
+                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteTreatment('${t.id}')">&#10005;</button>
             </td>
         </tr>
     `).join('');
@@ -279,6 +306,7 @@ function openTreatmentModal() {
     document.getElementById('tDuration').value = '';
     document.getElementById('tPrice').value = '';
     document.getElementById('tDescription').value = '';
+    document.getElementById('tActive').value = 'true';
     document.getElementById('treatmentModal').classList.add('active');
 }
 
@@ -292,6 +320,7 @@ function editTreatment(id) {
     document.getElementById('tDuration').value = t.duration || '';
     document.getElementById('tPrice').value = t.price || '';
     document.getElementById('tDescription').value = t.description || '';
+    document.getElementById('tActive').value = (t.active === false) ? 'false' : 'true';
     document.getElementById('treatmentModal').classList.add('active');
 }
 
@@ -300,20 +329,21 @@ async function saveTreatment() {
     const data = {
         name: document.getElementById('tName').value.trim(),
         category: document.getElementById('tCategory').value.trim(),
-        duration: Number(document.getElementById('tDuration').value) || 0,
-        price: Number(document.getElementById('tPrice').value) || 0,
+        duration: parseNum(document.getElementById('tDuration').value),
+        price: parseNum(document.getElementById('tPrice').value),
         description: document.getElementById('tDescription').value.trim(),
-        active: true,
-        sortOrder: 0
+        active: document.getElementById('tActive').value !== 'false'
     };
 
     if (!data.name) { showToast('Bitte Name eingeben', 'error'); return; }
 
     try {
         if (id) {
+            // sortOrder NICHT ueberschreiben beim Bearbeiten (sonst springt die Behandlung in der Sortierung)
             await db.collection('treatments').doc(id).update(data);
             showToast('Behandlung aktualisiert', 'success');
         } else {
+            data.sortOrder = 0;
             data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await db.collection('treatments').add(data);
             showToast('Behandlung gespeichert', 'success');
@@ -326,14 +356,16 @@ async function saveTreatment() {
     }
 }
 
-async function deleteTreatment(id, name) {
-    if (!confirm(`"${name}" wirklich loeschen?`)) return;
+async function deleteTreatment(id) {
+    const t = allTreatments.find(x => x.id === id);
+    const name = t ? (t.name || 'Behandlung') : 'Behandlung';
+    if (!confirm(`"${name}" wirklich löschen?`)) return;
     try {
         await db.collection('treatments').doc(id).delete();
-        showToast('Behandlung geloescht', 'success');
+        showToast('Behandlung gelöscht', 'success');
         loadTreatments();
     } catch (err) {
-        showToast('Fehler beim Loeschen', 'error');
+        showToast('Fehler beim Löschen', 'error');
     }
 }
 
@@ -341,10 +373,11 @@ async function deleteTreatment(id, name) {
 async function loadProducts() {
     let snap;
     try {
-        snap = await db.collection('products').orderBy('brand').get();
+        // Auch Produkte vollstaendig laden; Eintraege ohne Marke bleiben sichtbar.
+        snap = await db.collection('products').get();
     } catch(e) {
         console.error('Products load error:', e);
-        try { snap = await db.collection('products').get(); } catch(e2) { console.error(e2); return; }
+        return;
     }
     allProducts = [];
     allBrands = new Set();
@@ -353,6 +386,8 @@ async function loadProducts() {
         allProducts.push(data);
         if (data.brand) allBrands.add(data.brand);
     });
+    // Immer client-seitig sortieren (Fallback-Pfad sonst unsortiert)
+    allProducts.sort((a, b) => (a.brand || '').localeCompare(b.brand || '') || (a.name || '').localeCompare(b.name || ''));
 
     document.getElementById('brandSuggestions').innerHTML =
         [...allBrands].map(b => `<option value="${b}">`).join('');
@@ -368,15 +403,15 @@ function renderProducts() {
     }
 
     tbody.innerHTML = allProducts.map(p => `
-        <tr>
-            <td><strong>${escHtml(p.name)}</strong></td>
+        <tr${p.active === false ? ' style="opacity:.5"' : ''}>
+            <td><strong>${escHtml(p.name)}</strong>${p.active === false ? ' <span class="badge badge-entwurf">Inaktiv</span>' : ''}</td>
             <td>${escHtml(p.brand) || '-'}</td>
             <td>${escHtml(p.category) || '-'}</td>
             <td><strong>${formatCurrency(p.price || 0)}</strong></td>
             <td>${p.inStock !== false ? '<span class="badge badge-aktiv">Ja</span>' : '<span class="badge badge-entwurf">Nein</span>'}</td>
             <td>
                 <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')">Bearbeiten</button>
-                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteProduct('${p.id}', '${escHtml(p.name).replace(/'/g, "\\'")}')">&#10005;</button>
+                <button class="btn btn-sm" style="color:var(--danger);background:none;padding:6px 8px;" onclick="deleteProduct('${p.id}')">&#10005;</button>
             </td>
         </tr>
     `).join('');
@@ -390,6 +425,7 @@ function openProductModal() {
     document.getElementById('pCategory').value = '';
     document.getElementById('pPrice').value = '';
     document.getElementById('pInStock').value = 'true';
+    document.getElementById('pActive').value = 'true';
     document.getElementById('productModal').classList.add('active');
 }
 
@@ -403,6 +439,7 @@ function editProduct(id) {
     document.getElementById('pCategory').value = p.category || '';
     document.getElementById('pPrice').value = p.price || '';
     document.getElementById('pInStock').value = p.inStock !== false ? 'true' : 'false';
+    document.getElementById('pActive').value = (p.active === false) ? 'false' : 'true';
     document.getElementById('productModal').classList.add('active');
 }
 
@@ -412,8 +449,9 @@ async function saveProduct() {
         name: document.getElementById('pName').value.trim(),
         brand: document.getElementById('pBrand').value.trim(),
         category: document.getElementById('pCategory').value.trim(),
-        price: Number(document.getElementById('pPrice').value) || 0,
-        inStock: document.getElementById('pInStock').value === 'true'
+        price: parseNum(document.getElementById('pPrice').value),
+        inStock: document.getElementById('pInStock').value === 'true',
+        active: document.getElementById('pActive').value !== 'false'
     };
 
     if (!data.name) { showToast('Bitte Produktname eingeben', 'error'); return; }
@@ -435,14 +473,16 @@ async function saveProduct() {
     }
 }
 
-async function deleteProduct(id, name) {
-    if (!confirm(`"${name}" wirklich loeschen?`)) return;
+async function deleteProduct(id) {
+    const p = allProducts.find(x => x.id === id);
+    const name = p ? (p.name || 'Produkt') : 'Produkt';
+    if (!confirm(`"${name}" wirklich löschen?`)) return;
     try {
         await db.collection('products').doc(id).delete();
-        showToast('Produkt geloescht', 'success');
+        showToast('Produkt gelöscht', 'success');
         loadProducts();
     } catch (err) {
-        showToast('Fehler beim Loeschen', 'error');
+        showToast('Fehler beim Löschen', 'error');
     }
 }
 
@@ -514,7 +554,9 @@ function exportPDF() {
 }
 
 // ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') await scEnsureStudioAuth();
     loadTreatments();
     loadProducts();
 });

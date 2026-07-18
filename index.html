@@ -284,11 +284,19 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="shared.js"></script>
+<script src="hagner-auth.js"></script>
 <script>var alleKunden = []; var TW_CONTACTS = [];</script>
-<script src="./trello_all_kunden.js"></script>
-<script src="./tw_contacts.js"></script>
+<script src="./private-customer-data.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') {
+        const authenticated = await scEnsureStudioAuth({ required: true });
+        if (!authenticated) return;
+    }
+    await scLoadPrivateCustomerData();
+    const hagnerAuthenticated = await scEnsureHagnerAuth({ required: true });
+    if (!hagnerAuthenticated) return;
     const hour = new Date().getHours();
     const greetEl = document.getElementById('greeting');
     if (hour < 12) greetEl.textContent = 'Guten Morgen, Skinconcept';
@@ -344,7 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function checkLongAbsence() {
     const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
     const diffDays = d => d ? Math.max(0, Math.floor((TODAY - new Date(d + 'T00:00:00')) / 86400000)) : 9999;
-    const normalize = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ß/g,'ss').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+    const normalize = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 
     // 1) Stammkundinnen-Pool aus TW_CONTACTS (≥2 Buchungen in Treatwell-Historie)
     const stammPool = {};
@@ -381,7 +389,11 @@ async function checkLongAbsence() {
 
     // 4) Letzten Besuch aus Kartei-Treatments ergänzen (Realtime DB)
     try {
-        const hagnerApp = firebase.apps.find(a => a.name === 'hagner') || firebase.initializeApp({
+        const hagnerApp = firebase.apps.find(a => {
+            const options = a.options || {};
+            return options.projectId === 'skinconcept-hagner'
+                || options.databaseURL === 'https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app';
+        }) || firebase.initializeApp({
             apiKey: "AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
             authDomain: "skinconcept-hagner.firebaseapp.com",
             databaseURL: "https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
@@ -419,14 +431,13 @@ async function checkLongAbsence() {
 
     // 7) Banner im Alerts-Bereich zeigen (zusätzlich zu bestehenden Aufgaben-Alerts)
     const alertsContainer = document.getElementById('alerts');
-    if (alertsContainer && candidates.length) {
+    if (alertsContainer && newCandidates.length) {
         const newCount = newCandidates.length;
-        const totalCount = candidates.length;
         const banner = document.createElement('div');
         banner.className = 'alert-item urgent';
         banner.style.cursor = 'pointer';
-        banner.onclick = () => showAbsenceModal(candidates, dismissed);
-        banner.innerHTML = `<span class="alert-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span><span class="alert-text"><strong>${totalCount} Stammkundin${totalCount > 1 ? 'nen' : ''}</strong> seit 60+ Tagen nicht da${newCount > 0 ? ' · ' + newCount + ' neu' : ''}</span><span class="alert-action">Ansehen</span>`;
+        banner.onclick = () => showAbsenceModal(newCandidates, dismissed);
+        banner.innerHTML = `<span class="alert-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span><span class="alert-text"><strong>${newCount} Stammkundin${newCount > 1 ? 'nen' : ''}</strong> seit 60+ Tagen nicht da</span><span class="alert-action">Ansehen</span>`;
         alertsContainer.appendChild(banner);
 
         // Auto-Popup wenn neue gefunden (max. 1x pro Sitzung)
@@ -459,8 +470,8 @@ function showAbsenceModal(candidates, dismissed, isAuto) {
                 <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${c.lv ? 'Letzter Besuch vor ' + formatDays(c.days) : 'Keine Besuche dokumentiert'} · ${c.twBookings}× früher gebucht${phPretty ? ' · ' + phPretty : ''}</div>
             </div>
             ${waUrl ? `<a href="${waUrl}?text=${msg}" target="_blank" rel="noopener" style="background:#25D366;color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap">WhatsApp</a>` : ''}
-            <button onclick="dismissAbsence(this,'${c.key.replace(/'/g,"\\'")}')" style="background:transparent;border:1px solid var(--border-strong);color:var(--text-secondary);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px">Später</button>
-            <button onclick="dismissAbsence(this,'${c.key.replace(/'/g,"\\'")}',true)" style="background:var(--success-light);border:1px solid var(--success);color:var(--success);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px">&#10003; Kontaktiert</button>
+            <button type="button" data-abs-act="later" style="background:transparent;border:1px solid var(--border-strong);color:var(--text-secondary);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px">Später</button>
+            <button type="button" data-abs-act="done" style="background:var(--success-light);border:1px solid var(--success);color:var(--success);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px">&#10003; Kontaktiert</button>
         </div>`;
     }).join('');
 
@@ -472,31 +483,51 @@ function showAbsenceModal(candidates, dismissed, isAuto) {
                 <h2 style="font-size:22px;font-weight:600;margin:0">${candidates.length} Kundin${candidates.length > 1 ? 'nen' : ''} länger nicht gesehen</h2>
                 <p style="font-size:13px;color:var(--text-muted);margin:6px 0 0">Ehemalige Stammkundinnen seit 60+ Tagen ohne Besuch — Zeit für eine freundliche Nachricht?</p>
             </div>
-            <button onclick="document.getElementById('absenceModal').remove()" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);line-height:1">&times;</button>
+            <button type="button" data-abs-act="close" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);line-height:1">&times;</button>
         </div>
-        <div style="flex:1;overflow-y:auto">${rowsHtml || '<div style="padding:40px;text-align:center;color:var(--text-muted)">Alle erledigt!</div>'}</div>
+        <div style="flex:1;overflow-y:auto" id="absRows">${rowsHtml || '<div style="padding:40px;text-align:center;color:var(--text-muted)">Alle erledigt!</div>'}</div>
         <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted)">
             <div>Zeige ${Math.min(50, candidates.length)} von ${candidates.length}</div>
-            <button onclick="document.getElementById('absenceModal').remove()" style="background:var(--primary);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500">Später erinnern</button>
+            <button type="button" data-abs-act="close" style="background:var(--primary);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500">Später erinnern</button>
         </div>
     </div>`;
     document.body.appendChild(overlay);
-    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+    // EIN delegierter Klick-Handler für ALLE Buttons – robust gegen Inline-onclick-Probleme (iPad/Scope).
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) { overlay.remove(); return; }
+        const btn = e.target.closest('[data-abs-act]');
+        if (!btn) return;
+        const act = btn.getAttribute('data-abs-act');
+        if (act === 'close') { overlay.remove(); return; }
+        const row = btn.closest('.abs-row');
+        const key = row ? row.getAttribute('data-key') : '';
+        dismissAbsence(row, key, act === 'done');
+        // Wenn keine Zeilen mehr übrig sind: Modal schließen.
+        const rowsBox = document.getElementById('absRows');
+        if (rowsBox && !rowsBox.querySelector('.abs-row')) overlay.remove();
+    });
 }
 
-function dismissAbsence(btn, key, kontaktiert) {
+function dismissAbsence(row, key, kontaktiert) {
     try {
         const set = new Set(JSON.parse(localStorage.getItem('sc_60d_warned_v1') || '[]'));
-        set.add(key);
+        if (key) set.add(key);
         localStorage.setItem('sc_60d_warned_v1', JSON.stringify([...set]));
-    } catch {}
-    const row = btn.closest('.abs-row'); if (row) row.remove();
+    } catch (e) { console.warn('dismissAbsence localStorage:', e && e.message); }
+    if (row && row.remove) row.remove();
+    // Banner-Zähler im Alerts-Bereich entfernen, damit die Erinnerung nicht "hängen" bleibt.
     if (kontaktiert) {
-        // Optional: Hier könnte man in Firestore crm_data den Kontakt eintragen
+        const banner = document.querySelector('.alert-item.urgent');
+        // Banner nur entfernen wenn alle abgearbeitet sind – sonst Zahl belassen.
+        const rowsBox = document.getElementById('absRows');
+        if (banner && rowsBox && !rowsBox.querySelector('.abs-row')) banner.remove();
     }
 }
 
 async function loadRecentActivity() {
+    const container = document.getElementById('activityList');
+    if (!container) return;          // Element optional — falls Section nicht im HTML, keine Reads verschwenden
     const activities = [];
     try {
         const taskSnap = await db.collection('studio_tasks').where('status', '==', 'done').orderBy('createdAt', 'desc').limit(5).get();
@@ -513,8 +544,6 @@ async function loadRecentActivity() {
 
     activities.sort((a, b) => b.time - a.time);
     const recent = activities.slice(0, 8);
-    const container = document.getElementById('activityList');
-    if (!container) return;          // Element optional — falls Section nicht im HTML, einfach skippen
     if (recent.length === 0) { container.innerHTML = '<div class="empty-state"><p>Noch keine Aktivitäten.</p></div>'; return; }
     container.innerHTML = recent.map(a => `<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time.toLocaleDateString('de-DE')} ${a.time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</div></div></div>`).join('');
 }

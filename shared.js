@@ -13,6 +13,122 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
+// ============ STUDIO-FIREBASE-ANMELDUNG (Security-Foundation) ============
+// Baut eine ECHTE Firebase-Anmeldung auf dem Studio-Konto auf, damit die
+// Firestore-Rules schrittweise von "if true" auf "nur Studio" umgestellt
+// werden koennen. Solange die Rules noch offen sind, ist das unkritisch:
+// klickt man "Spaeter", funktioniert alles weiter (nichts wird blockiert).
+// Einmal pro Geraet — Firebase merkt sich die Anmeldung (LOCAL-Persistenz).
+const STUDIO_EMAIL = 'skinconcept.hagner@gmail.com';
+let scAuthSdkPromise = null;
+let scStudioAuthPromise = null;
+
+// Das Auth-SDK ist auf den Seiten (noch) nicht eingebunden — dynamisch laden.
+function scLoadAuthSdk() {
+  if (firebase.auth) return Promise.resolve();
+  if (scAuthSdkPromise) return scAuthSdkPromise;
+
+  scAuthSdkPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('auth-sdk'));
+    document.head.appendChild(s);
+  });
+  return scAuthSdkPromise.then(
+    value => value,
+    error => { scAuthSdkPromise = null; throw error; }
+  );
+}
+
+function scStudioReady() {
+  try {
+    const u = firebase.auth && firebase.auth().currentUser;
+    return !!(u && u.email === STUDIO_EMAIL);
+  } catch (e) { return false; }
+}
+
+// Stellt sicher, dass eine Studio-Anmeldung besteht. Gibt true/false zurueck.
+// Blockiert NICHTS: bei "Spaeter" oder Fehler wird false geliefert und die
+// Seite laeuft (dank offener Rules) normal weiter.
+function scEnsureStudioAuth(options) {
+  const required = !!(options && options.required);
+  if (scStudioReady()) return Promise.resolve(true);
+  if (scStudioAuthPromise) return scStudioAuthPromise;
+
+  scStudioAuthPromise = scLoadAuthSdk().then(() => {
+    try { firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch (e) {}
+    return new Promise((resolve) => {
+      if (scStudioReady()) { resolve(true); return; }
+      let settled = false;
+      const unsub = firebase.auth().onAuthStateChanged((u) => {
+        if (settled) return; settled = true; unsub();
+        if (u && u.email === STUDIO_EMAIL) resolve(true);
+        else scShowStudioLogin(resolve, required);
+      });
+    });
+  }).catch(() => false);
+
+  // Auto-Anstoss und Seiten-Init muessen dieselbe laufende Anmeldung teilen.
+  // Ohne diese Sperre konnte der zweite Aufruf wegen des bereits sichtbaren
+  // Modals sofort false liefern und geschuetzte Abfragen zu frueh starten.
+  scStudioAuthPromise = scStudioAuthPromise.then(
+    value => { scStudioAuthPromise = null; return value; },
+    error => { scStudioAuthPromise = null; throw error; }
+  );
+  return scStudioAuthPromise;
+}
+window.scEnsureStudioAuth = scEnsureStudioAuth;
+window.scStudioReady = scStudioReady;
+
+function scShowStudioLogin(resolve, required) {
+  if (document.getElementById('scStudioLoginOverlay')) { resolve(false); return; }
+  const ov = document.createElement('div');
+  ov.id = 'scStudioLoginOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:linear-gradient(135deg,rgba(74,55,40,.55),rgba(44,36,32,.6));display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:20px;max-width:380px;width:100%;padding:36px 30px;text-align:center;box-shadow:0 24px 70px rgba(20,16,12,.35)">'
+    + '<div style="font-size:26px;color:#4A3728;letter-spacing:1.2px;font-weight:600">Skinconcept</div>'
+    + '<div style="font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#9E9894;margin-top:6px;font-weight:600">Studio-Anmeldung</div>'
+    + '<p style="color:#9E9894;font-size:12.5px;margin:18px 0 16px;line-height:1.5">Einmalig pro Ger&auml;t &middot; dein Studio-Passwort.<br>' + (required ? 'Anmeldung erforderlich, um diese Daten zu laden.' : 'Sch&uuml;tzt Kundinnen- und Studio-Daten.') + '</p>'
+    + '<input id="scStudioPw" type="password" autocomplete="current-password" placeholder="Passwort" style="width:100%;padding:13px;border:1.5px solid rgba(107,83,68,.18);border-radius:12px;font-size:15px;text-align:center;box-sizing:border-box;font-family:inherit">'
+    + '<div id="scStudioErr" style="color:#C0544F;font-size:12px;margin-top:9px;display:none">Passwort falsch</div>'
+    + '<div id="scStudioMsg" style="color:#2e7d32;font-size:12px;margin-top:9px;display:none;line-height:1.5"></div>'
+    + '<button id="scStudioBtn" style="width:100%;margin-top:15px;background:#4A3728;color:#fff;border:none;padding:14px;border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Anmelden</button>'
+    + '<button id="scStudioReset" style="width:100%;margin-top:11px;background:none;border:0;color:#9E9894;font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit">Passwort vergessen?</button>'
+    + '<button id="scStudioLater" style="width:100%;margin-top:5px;background:none;border:0;color:#B8B2AD;font-size:12px;cursor:pointer;font-family:inherit">Sp&auml;ter</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  const pw = ov.querySelector('#scStudioPw'), err = ov.querySelector('#scStudioErr'), msg = ov.querySelector('#scStudioMsg'),
+        btn = ov.querySelector('#scStudioBtn'), resetBtn = ov.querySelector('#scStudioReset');
+  try { pw.focus(); } catch (e) {}
+  function close(val) { ov.remove(); resolve(val); }
+  function doLogin() {
+    const p = pw.value; if (!p) return;
+    err.style.display = 'none'; btn.disabled = true; btn.textContent = 'Anmelden…';
+    firebase.auth().signInWithEmailAndPassword(STUDIO_EMAIL, p)
+      .then(() => close(true))
+      .catch((e) => {
+        err.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') ? 'Passwort falsch' : 'Anmeldung fehlgeschlagen';
+        err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Anmelden';
+      });
+  }
+  btn.addEventListener('click', doLogin);
+  pw.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+  resetBtn.addEventListener('click', () => {
+    err.style.display = 'none'; msg.style.display = 'none'; resetBtn.disabled = true; resetBtn.textContent = 'Sende Link…';
+    firebase.auth().sendPasswordResetEmail(STUDIO_EMAIL)
+      .then(() => { msg.innerHTML = 'Reset-Link an <b>' + STUDIO_EMAIL + '</b> gesendet. Bitte E-Mail (auch Spam) pr&uuml;fen, neues Passwort setzen und hier anmelden.'; msg.style.display = 'block'; resetBtn.style.display = 'none'; })
+      .catch((e) => { err.textContent = 'Konnte Reset-Mail nicht senden: ' + ((e && e.message) || ''); err.style.display = 'block'; resetBtn.disabled = false; resetBtn.textContent = 'Passwort vergessen?'; });
+  });
+  const laterBtn = ov.querySelector('#scStudioLater');
+  if (required) laterBtn.remove();
+  else laterBtn.addEventListener('click', () => close(false));
+}
+
+// Jede interne Seite startet die Anmeldung in ihrem eigenen Init und wartet
+// dort darauf. So beginnen Firebase-Abfragen garantiert nicht vor der Auth.
+
 // ============ NAVIGATION ============
 // Premium SVG-Icons (Lucide-style, stroke 1.5) — keine Emojis im UI.
 const ICON_SVG = {
@@ -39,9 +155,10 @@ const NAV_ITEMS = [
     { href: 'kundenkartei.html',    icon: 'kartei',  label: 'Kundenkartei' },
     { href: 'crm.html',             icon: 'crm',     label: 'CRM' },
     { href: 'gutscheine.html',      icon: 'voucher', label: 'Gutscheine' },
-    { href: 'rechnungen.html',      icon: 'invoice', label: 'Rechnungen' },
+    { href: 'https://skinconcept-office.vercel.app/rechnungen', icon: 'invoice', label: 'Rechnungen', external: true },
     { href: 'preislisten.html',     icon: 'tag',     label: 'Preisliste' },
     { href: 'hautapp.html',         icon: 'phone',   label: 'HautApp' },
+    { href: 'https://skinconcept-ai-command-center.vercel.app', icon: 'chart', label: 'AI Team', external: true },
 ];
 
 function initNavigation() {

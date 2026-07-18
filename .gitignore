@@ -4,6 +4,8 @@ node_modules/
 .env
 .env.local
 .env.*.local
+backups/private-*/
+.claude/
 
 # Lokale Daten-Exports (nicht ins Repo, bleiben aber lokal)
 studio-photos/

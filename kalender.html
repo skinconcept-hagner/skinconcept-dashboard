@@ -418,6 +418,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="shared.js"></script>
+<script src="hagner-auth.js"></script>
 <script>
 function toast(msg) { if (typeof showToast === 'function') showToast(msg); else console.log(msg); }
 
@@ -1238,7 +1239,14 @@ function getWeekDays(date) {
 }
 
 // ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') {
+        const studioAuthenticated = await scEnsureStudioAuth({ required: true });
+        if (!studioAuthenticated) return;
+    }
+    const hagnerAuthenticated = await scEnsureHagnerAuth({ required: true });
+    if (!hagnerAuthenticated) return;
     loadFirestoreTreatments();
     loadKalClients();
     initAppointments();

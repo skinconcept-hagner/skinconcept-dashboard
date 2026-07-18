@@ -259,6 +259,17 @@ body.client-open .back-btn{display:inline-flex}
 .consent-warn-text{flex:1}
 .consent-warn-title{font-size:14px;font-weight:600;color:var(--red);margin-bottom:4px}
 .consent-warn-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.refill-warn{background:var(--orange-bg);border:1px solid rgba(217,119,6,.35);border-radius:var(--r);padding:16px 18px;margin-bottom:16px}
+.refill-warn-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.refill-warn-head svg{color:var(--orange);flex-shrink:0;margin-top:2px}
+.refill-warn-title{font-size:14px;font-weight:600;color:var(--orange);margin-bottom:3px;letter-spacing:.2px}
+.refill-warn-sub{font-size:12px;color:var(--text2);line-height:1.5}
+.refill-list{display:flex;flex-direction:column;gap:8px}
+.refill-item{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.refill-item-main{display:flex;align-items:baseline;gap:8px;min-width:0}
+.refill-item-name{font-size:13px;font-weight:600;color:var(--text)}
+.refill-item-brand{font-size:11px;color:var(--muted)}
+.refill-item-meta{flex:1;min-width:120px;font-size:11px;color:var(--text2)}
 .sig-canvas-wrap{background:#fff;border:2px solid var(--border);border-radius:10px;position:relative;touch-action:none;margin:12px 0}
 .sig-canvas{display:block;width:100%;cursor:crosshair;border-radius:8px}
 .sig-line{position:absolute;bottom:40px;left:20px;right:20px;border-bottom:1px dashed var(--muted);pointer-events:none}
@@ -502,9 +513,10 @@ body.client-open .back-btn{display:inline-flex}
   <a href="aufgaben.html">Aufgaben</a>
   <a href="crm.html">CRM</a>
   <a href="gutscheine.html">Gutscheine</a>
-  <a href="rechnungen.html">Rechnungen</a>
+  <a href="https://skinconcept-office.vercel.app/rechnungen" target="_blank" rel="noopener">Rechnungen</a>
   <a href="preislisten.html">Preisliste</a>
   <a href="hautapp.html">HautApp</a>
+  <a href="https://skinconcept-ai-command-center.vercel.app" target="_blank" rel="noopener">AI Team</a>
   <span class="sep"></span>
   <a href="https://skinconcept-office.vercel.app" target="_blank" rel="noopener" class="office">
     Office
@@ -520,6 +532,10 @@ body.client-open .back-btn{display:inline-flex}
     <span class="sub">Kundenkartei</span>
   </div>
   <div class="hdr-right">
+    <button id="haNotifBell" class="btn btn-sm" onclick="toggleHaNotifPanel()" title="Meldungen aus der HautApp" style="position:relative;padding:7px 10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <span id="haNotifBadge" style="display:none;position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#C0544F;color:#fff;font-size:10px;font-weight:700;line-height:17px;text-align:center;box-sizing:border-box">0</span>
+    </button>
     <a href="import-kunden.html" class="btn btn-dark btn-sm" style="text-decoration:none">Treatwell Import</a>
     <button class="btn btn-dark btn-sm" onclick="exportCSV()">CSV Export</button>
     <button class="btn btn-gold btn-sm" onclick="openNewClientModal()">+ Neuer Kunde</button>
@@ -601,11 +617,12 @@ body.client-open .back-btn{display:inline-flex}
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="./ai-bridge.js"></script>
+<script src="./hagner-auth.js"></script>
 
 <!-- TRELLO + TREATWELL DATA -->
 <script>var alleKunden = []; var TW_CONTACTS = [];</script>
-<script src="./trello_all_kunden.js"></script>
-<script src="./tw_contacts.js"></script>
+<script src="./private-customer-data.js"></script>
 
 <!-- PDF + DOCX + HAUTANALYSE -->
 <script src="./jspdf.min.js"></script>
@@ -643,14 +660,68 @@ const nsApp = firebase.initializeApp({
 },'nachsorge');
 const nsDb = nsApp.firestore();
 const nsAuth = nsApp.auth();
-nsAuth.signInAnonymously().catch(function(e){console.log('HautApp-Auth:',e.message)});
+// Studio-Login für skinconcept-tool (gehärtete Rules: nur das Studio-Konto darf
+// Kundinnen-Daten lesen). Einmalig pro Gerät — Firebase merkt sich die Anmeldung.
+const NS_STUDIO_EMAIL='skinconcept.hagner@gmail.com';
+try{nsAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);}catch(e){}
+function nsStudioReady(){return !!(nsAuth.currentUser&&nsAuth.currentUser.email===NS_STUDIO_EMAIL);}
+function nsEnsureStudio(options){
+  var required=!!(options&&options.required);
+  return new Promise(function(resolve){
+    if(nsStudioReady()){resolve(true);return;}
+    var settled=false;
+    var unsub=nsAuth.onAuthStateChanged(function(u){
+      if(settled)return;settled=true;unsub();
+      if(u&&u.email===NS_STUDIO_EMAIL)resolve(true);
+      else showStudioLoginModal(resolve,required);
+    });
+  });
+}
+function showStudioLoginModal(resolve,required){
+  if(document.getElementById('nsLoginOverlay'))return;
+  var ov=document.createElement('div');
+  ov.id='nsLoginOverlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(20,16,12,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;max-width:360px;width:100%;padding:30px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:2.4rem;color:var(--gold);line-height:1">S</div>'
+    +'<div style="font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:6px">Skinconcept Studio</div>'
+    +'<h3 style="margin:16px 0 4px;font-size:1.15rem">Studio-Anmeldung</h3>'
+    +'<p style="color:var(--muted);font-size:12px;margin-bottom:16px">Einmalig pro Ger&auml;t &middot; dein Office-Passwort</p>'
+    +'<input id="nsLoginPw" type="password" autocomplete="current-password" placeholder="Passwort" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:15px;text-align:center;box-sizing:border-box">'
+    +'<div id="nsLoginErr" style="color:#c0392b;font-size:12px;margin-top:8px;display:none">Passwort falsch</div>'
+    +'<div id="nsLoginMsg" style="color:#2e7d32;font-size:12px;margin-top:8px;display:none;line-height:1.5"></div>'
+    +'<button id="nsLoginBtn" class="btn btn-gold" style="width:100%;margin-top:14px">Anmelden</button>'
+    +'<button id="nsLoginReset" style="width:100%;margin-top:10px;background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer">Passwort vergessen?</button>'
+    +(required?'':'<button id="nsLoginCancel" class="btn btn-sm" style="width:100%;margin-top:6px">Sp&auml;ter</button>')
+    +'</div>';
+  document.body.appendChild(ov);
+  var pw=ov.querySelector('#nsLoginPw'),err=ov.querySelector('#nsLoginErr'),msg=ov.querySelector('#nsLoginMsg'),btn=ov.querySelector('#nsLoginBtn'),resetBtn=ov.querySelector('#nsLoginReset');
+  pw.focus();
+  resetBtn.addEventListener('click',function(){
+    err.style.display='none';msg.style.display='none';resetBtn.disabled=true;resetBtn.textContent='Sende Link…';
+    nsAuth.sendPasswordResetEmail(NS_STUDIO_EMAIL)
+      .then(function(){msg.innerHTML='Reset-Link an <b>'+NS_STUDIO_EMAIL+'</b> gesendet. Bitte E-Mail (auch Spam) pr&uuml;fen, neues Passwort setzen und hier anmelden.';msg.style.display='block';resetBtn.style.display='none';})
+      .catch(function(e){err.textContent='Konnte Reset-Mail nicht senden: '+(e&&e.message||'');err.style.display='block';resetBtn.disabled=false;resetBtn.textContent='Passwort vergessen?';});
+  });
+  function close(val){ov.remove();resolve(val);}
+  function doLogin(){
+    var p=pw.value;if(!p)return;err.style.display='none';btn.disabled=true;btn.textContent='Anmelden…';
+    nsAuth.signInWithEmailAndPassword(NS_STUDIO_EMAIL,p)
+      .then(function(){close(true);})
+      .catch(function(e){err.textContent=(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')?'Passwort falsch':'Anmeldung fehlgeschlagen';err.style.display='block';btn.disabled=false;btn.textContent='Anmelden';});
+  }
+  btn.addEventListener('click',doLogin);
+  pw.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  var cancelBtn=ov.querySelector('#nsLoginCancel');
+  if(cancelBtn)cancelBtn.addEventListener('click',function(){close(false);});
+}
 
 // ── CONSTANTS ──
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 const TODAY_STR = TODAY.getFullYear() + '-' + String(TODAY.getMonth()+1).padStart(2,'0') + '-' + String(TODAY.getDate()).padStart(2,'0');
 const STORE_KEY = 'sc_kartei_v2';
 const ACTIONS_KEY = 'sc_kartei_actions_v2';
-// Alte Loeschliste bereinigen
+// Alte Löschliste bereinigen
 try{localStorage.removeItem("sc_kartei_deleted")}catch(e){}
 
 // Eindeutige Geräte-ID um Echo-Loops zu vermeiden (PC/iPad/Handy werden unterschieden)
@@ -662,19 +733,40 @@ const DEVICE_ID = (function(){
   }catch(e){return 'dev_unknown'}
 })();
 
-// ── TREATWELL KONTAKTE ── (jetzt aus tw_contacts.js geladen, global verfuegbar)
+// ── TREATWELL KONTAKTE ── (jetzt aus tw_contacts.js geladen, global verfügbar)
 
-// ── KASSENBUCH VISITS (leer — wird nur noch durch Live-Import befuellt) ──
+// ── KASSENBUCH VISITS (leer — wird nur noch durch Live-Import befüllt) ──
 const KB_VISITS = [
 ];
 
 // ── HELPERS ──
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+// Sicher fuer einfach-quotierte JS-Zeichenkette in einem doppelt-quotierten onclick-Attribut
+function escJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/\r?\n/g,' ');}
 function uid(){return 'c'+Math.random().toString(36).substr(2,9)}
 function fmtDate(d){if(!d)return '–';if(d.includes('-')){const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}return d}
 function diffDays(dateStr){if(!dateStr)return 9999;const d=new Date(dateStr+'T00:00:00');if(d>TODAY)return 9999;return Math.max(0,Math.floor((TODAY-d)/(864e5)))}
 function formatDays(d){if(d===0)return'Heute';if(d===1)return'1 Tag';if(d<7)return d+' Tage';if(d<30)return Math.floor(d/7)+' Wo.';if(d<365)return Math.floor(d/30)+' Mon.';const y=Math.floor(d/365),m=Math.floor((d%365)/30);return y+' J.'+(m>0?' '+m+' M.':'')}
-function normalize(s){return s.toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/-/g,' ').trim()}
+function normalize(s){return (s||'').toLowerCase().replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/[ß]/g,'ss').replace(/-/g,' ').replace(/\s+/g,' ').trim()}
+// Telefon auf reine Ziffern reduzieren (für Matching): 0171/123-45 -> 017112345
+function normPhone(s){var d=(s||'').replace(/[^0-9]/g,'');if(d.length>=10&&d.indexOf('0049')===0)d='0'+d.slice(4);else if(d.length>=10&&d.indexOf('49')===0&&d.length>11)d='0'+d.slice(2);return d}
+function normEmail(s){return (s||'').toLowerCase().trim()}
+// Geburtsdatum aus TT.MM.JJJJ ODER JJJJ-MM-TT (Formular) zu Date
+function parseBirthdate(s){
+  if(!s)return null;
+  s=String(s).trim();
+  var iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso)return new Date(parseInt(iso[1]),parseInt(iso[2])-1,parseInt(iso[3]));
+  var de=s.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
+  if(de){var y=parseInt(de[3]);if(y<100)y+=1900;return new Date(y,parseInt(de[2])-1,parseInt(de[1]))}
+  return null;
+}
+// Vergleicht zwei Geburtsdaten: true=gleich, false=verschieden, null=nicht vergleichbar (mind. eines fehlt/unlesbar)
+function sameBirthdate(a,b){
+  var da=parseBirthdate(a),db=parseBirthdate(b);
+  if(!da||!db)return null;
+  return da.getFullYear()===db.getFullYear()&&da.getMonth()===db.getMonth()&&da.getDate()===db.getDate();
+}
 function getStatus(days,cid){
   const base=days>=9999?{key:'n',label:'Neu',color:'gray',badge:'badge-n'}:days<=42?{key:'g',label:'Aktiv',color:'green',badge:'badge-g'}:days<=84?{key:'y',label:'Aufmerksamkeit',color:'yellow',badge:'badge-y'}:days<=182?{key:'o',label:'Überfällig',color:'orange',badge:'badge-o'}:{key:'r',label:'Verloren?',color:'red',badge:'badge-r'};
   if(cid&&(base.key==='y'||base.key==='o'||base.key==='r')){
@@ -728,15 +820,20 @@ function markDeleted(id,name){
     try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}
   }
 }
-FB_DELETED_REF.on('child_added',function(snap){
-  _deletedIds.add(snap.key);
-  try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}
-  const v=snap.val();
-  if(v&&v.name){
-    _deletedNames.add(normalize(v.name));
-    try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}
-  }
-},function(err){console.error('FB_DELETED_REF listener error:',err)});
+let _deletedListenerActive=false;
+function setupDeletedListener(){
+  if(_deletedListenerActive)return;
+  _deletedListenerActive=true;
+  FB_DELETED_REF.on('child_added',function(snap){
+    _deletedIds.add(snap.key);
+    try{localStorage.setItem(DELETED_KEY,JSON.stringify([..._deletedIds]))}catch(e){}
+    const v=snap.val();
+    if(v&&v.name){
+      _deletedNames.add(normalize(v.name));
+      try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}
+    }
+  },function(err){console.error('FB_DELETED_REF listener error:',err)});
+}
 
 // ── IndexedDB für grosse Daten ──
 let _idb=null;
@@ -930,7 +1027,7 @@ function migrateToCloud(){
     if(changed){
       _karteiCache=data;_karteiDirty=true;flushKartei();
       console.log('Cloud-Migration: '+uploads.length+' Dateien hochgeladen');
-      toast('Bilder in Cloud hochgeladen — auf allen Geräten verfuegbar!');
+      toast('Bilder in Cloud hochgeladen — auf allen Geräten verfügbar!');
     }
   }).catch(function(e){console.error('Migration-Fehler:',e)});
 }
@@ -1065,7 +1162,7 @@ function flushKartei(){
   updateSaveStatus('ok');
 }
 
-// ── SCHUTZ: Seite nicht schliessen wenn noch nicht gespeichert ──
+// ── SCHUTZ: Seite nicht schließen wenn noch nicht gespeichert ──
 let _pendingSaves=0;
 window.addEventListener('beforeunload',function(e){
   if(_karteiDirty||_pendingSaves>0){
@@ -1166,6 +1263,7 @@ function clientSyncPayload(kd){
     noonProdukte:kd.noonProdukte!==undefined?kd.noonProdukte:null,
     kuren:kd.kuren||[],
     skinReports:(kd.skinReports||[]).map(function(r){var o={date_iso:r.date_iso,model:r.model,cost_eur:r.cost_eur};if(r._mediaId)o._mediaId=r._mediaId;if(r.report)o.report=r.report;return o}),
+    _revenue:(function(){try{return getClientRevenue(kd)}catch(e){return null}})(),
     _modified:kd._modified||new Date().toISOString(),
     _device:DEVICE_ID
   };
@@ -1269,13 +1367,17 @@ function mergeCloudClient(id,cloud,isUpdate){
   let changed=false;
 
   if(!loc){
+    if(cloud.treatments)cloud.treatments=dedupArr(cloud.treatments);
+    if(cloud.products)cloud.products=dedupArr(cloud.products);
+    if(cloud.contacts)cloud.contacts=dedupArr(cloud.contacts);
+    if(cloud.notesList)cloud.notesList=dedupArr(cloud.notesList);
     data[id]=cloud;
     changed=true;
   }else{
     const cloudTs=Date.parse(cloud._modified||cloud._lastSync||'')||0;
     const localTs=Date.parse(loc._modified||loc._lastSync||'')||0;
 
-    // Arrays: immer zusammenfuehren (nichts geht verloren)
+    // Arrays: immer zusammenführen (nichts geht verloren)
     const locTreat=loc.treatments||[];
     const locCont=loc.contacts||[];
     const locNotes=loc.notesList||[];
@@ -1297,7 +1399,7 @@ function mergeCloudClient(id,cloud,isUpdate){
       });
     }
 
-    // Medien-Listen zusammenfuehren (Fotos, Hautberichte, Hautanalysen)
+    // Medien-Listen zusammenführen (Fotos, Hautberichte, Hautanalysen)
     // Union über _mediaId — nichts geht verloren, neue kommen dazu
     ['photos','hautberichte','hautanalysen'].forEach(function(key){
       if(!cloud[key]||!cloud[key].length)return;
@@ -1388,7 +1490,7 @@ function migrateMediaListsToCloud(){
         idbKarteiSave(data);
         if(pushed>0){
           console.log('Medien-Migration: '+pushed+' Kunden mit Medien-Listen nach Cloud gepusht');
-          try{toast(pushed+' Kartei'+(pushed>1?'en':'')+' mit Fotos/Berichten in Cloud synchronisiert — jetzt auf allen Geräten verfuegbar!')}catch(e){}
+          try{toast(pushed+' Kartei'+(pushed>1?'en':'')+' mit Fotos/Berichten in Cloud synchronisiert — jetzt auf allen Geräten verfügbar!')}catch(e){}
         }
         resolve(pushed);
       });
@@ -1396,14 +1498,44 @@ function migrateMediaListsToCloud(){
   });
 }
 
-function mergeArrayByDate(local,cloud){
-  if(!cloud||!cloud.length)return local||[];
-  if(!local||!local.length)return cloud;
-  const merged=[...local];
-  cloud.forEach(item=>{
-    const isDuplicate=merged.some(m=>m.date===item.date&&(m.type===item.type||m.text===item.text||m.channel===item.channel||m.name===item.name));
-    if(!isDuplicate)merged.push(item);
+// Eindeutige ID für neue Einträge (Behandlungen, Produkte …) — macht Dedup zuverlässig
+function kUid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+// Eindeutige Signatur eines Eintrags. Bevorzugt die stabile _uid; sonst eine
+// präzise Inhalts-Signatur, die echte Einträge am selben Tag auseinanderhält.
+function itemSig(it){
+  if(!it||typeof it!=='object')return 'x:'+String(it);
+  if(it._uid)return 'u:'+it._uid;
+  const lc=s=>String(s==null?'':s).trim().toLowerCase();
+  const d=it.date||'';
+  if(it.name!==undefined)    return 'P|'+d+'|'+lc(it.name)+'|'+lc(it.type)+'|'+(it.price||'');           // Produkt
+  if(it.channel!==undefined) return 'C|'+d+'|'+lc(it.channel)+'|'+lc(it.text||it.note);                  // Kontakt
+  if(it.type!==undefined)    return 'T|'+d+'|'+lc(it.time)+'|'+lc(it.type)+'|'+(it.price||'')+'|'+lc((it.notes||'').slice(0,40)); // Behandlung
+  if(it.text!==undefined)    return 'N|'+d+'|'+lc((it.text||'').slice(0,60));                             // Notiz
+  return 'J|'+JSON.stringify(it);
+}
+// Behandlungen zusätzlich inhaltlich vergleichen. Frühere Versionen konnten
+// denselben Formularvorgang mit zwei verschiedenen _uid-Werten speichern;
+// die stabile ID allein reicht deshalb für Altbestand und Geräte-Merges nicht.
+function treatmentContentSig(it){
+  if(!it||typeof it!=='object'||it.type===undefined||it.name!==undefined||it.channel!==undefined)return'';
+  const lc=s=>String(s==null?'':s).trim().toLowerCase();
+  return 'TC|'+lc(it.date)+'|'+lc(it.time)+'|'+lc(it.type)+'|'+kParseNum(it.price)+'|'+lc(it.products)+'|'+lc(it.notes);
+}
+// Liste deduplizieren: erste Vorkommen behalten (Reihenfolge bleibt erhalten)
+function dedupArr(arr){
+  if(!arr||!arr.length)return arr||[];
+  const seen=new Set();const treatmentSeen=new Set();const out=[];
+  arr.forEach(it=>{
+    const s=itemSig(it),ts=treatmentContentSig(it);
+    if(seen.has(s)||(ts&&treatmentSeen.has(ts)))return;
+    seen.add(s);if(ts)treatmentSeen.add(ts);out.push(it);
   });
+  return out;
+}
+function mergeArrayByDate(local,cloud){
+  if(!cloud||!cloud.length)return dedupArr(local||[]);
+  if(!local||!local.length)return dedupArr(cloud);
+  const merged=dedupArr([...(local||[]),...(cloud||[])]);
   merged.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   return merged;
 }
@@ -1431,7 +1563,12 @@ setInterval(function(){
 },30000);
 
 function getClientKartei(id){const d=loadKartei();if(!d[id])d[id]={treatments:[],plan:[],products:[],photos:[],contacts:[],hautanalysen:[],hautberichte:[],notesList:[],consents:[],notes:'',hauttyp:'',allergien:'',adresse:''};return d[id]}
-function saveClientKartei(id,data){const all=loadKartei();all[id]=data;saveKartei(all,id)}
+function saveClientKartei(id,data){
+  const all=loadKartei();
+  if(data&&Array.isArray(data.treatments))data.treatments=dedupArr(data.treatments);
+  all[id]=data;
+  saveKartei(all,id);
+}
 
 // ── DEBOUNCE ──
 let _sbTimer=null;
@@ -1580,7 +1717,7 @@ function initClients(){
   // Auch Name-basiert filtern: deckt Re-Imports mit neuer ID ab.
   clients=clients.filter(c=>!isDeleted(c.id)&&!isDeletedName(c.name));
 
-  // Stammdaten-Overrides aus Kartei (von updateClient gespeicherte Änderungen) ueberlagern
+  // Stammdaten-Overrides aus Kartei (von updateClient gespeicherte Änderungen) überlagern
   clients.forEach(c=>{if(typeof applyStammOverrides==='function')applyStammOverrides(c)});
 
   clients.sort((a,b)=>a.days-b.days);
@@ -1595,17 +1732,38 @@ function processAnamEntry(entry){
   const key=normalize(fn+' '+ln);
   if(key.length<2)return null;
   anamneseCache[key]=entry;
+  // Zusätzliche Indizes für Telefon/E-Mail-Matching (robuster als Name allein)
+  const eph=normPhone(entry.telefon), eem=normEmail(entry.email);
+  if(eph.length>=6)anamneseCache['ph:'+eph]=entry;
+  if(eem)anamneseCache['em:'+eem]=entry;
 
+  const ebd=(entry.geburtsdatum||'').trim();
+  const sortTok=s=>normalize(s).split(' ').filter(Boolean).sort().join(' ');
+  const keySorted=sortTok(fn+' '+ln); // reihenfolge-unabhängig: "Tamara Hagner" == "Hagner Tamara"
   var matchClient=clients.find(c=>{
+    // Geburtstags-Konflikt: beide haben ein lesbares, ABER unterschiedliches Geburtsdatum
+    // -> definitiv ein anderer Mensch (z.B. zwei "Maria Müller"), niemals zusammenführen.
+    if(sameBirthdate(ebd,c.bd)===false)return false;
     const k1=normalize(c.fn+' '+c.ln);
     const k2=normalize(c.ln+' '+c.fn);
     const k3=normalize(c.name);
-    return k1===key||k2===key||k3===key;
+    if(k1===key||k2===key||k3===key)return true;
+    if(keySorted.length>1&&(sortTok(c.fn+' '+c.ln)===keySorted||sortTok(c.name)===keySorted))return true;
+    if(eph.length>=6&&normPhone(c.ph)===eph)return true;
+    if(eem&&normEmail(c.em)===eem)return true;
+    return false;
   });
   if(matchClient){
     try{
       const kd=getClientKartei(matchClient.id);
-      if(!kd._anamneseData){var anamCopy=Object.assign({},entry);delete anamCopy.unterschrift;delete anamCopy._unterschrift;kd._anamneseData=anamCopy;saveClientKartei(matchClient.id,kd)}
+      let kdChanged=false;
+      if(!kd._anamneseData){var anamCopy=Object.assign({},entry);delete anamCopy.unterschrift;delete anamCopy._unterschrift;kd._anamneseData=anamCopy;kdChanged=true}
+      // Fehlende Stammdaten aus dem Bogen nachtragen — nie vorhandene überschreiben.
+      kd.stamm=kd.stamm||{};
+      if(!matchClient.bd&&ebd){kd.stamm.bd=ebd;matchClient.bd=ebd;matchClient.gebDate=parseBirthdate(ebd);kdChanged=true}
+      if(!matchClient.ph&&(entry.telefon||'').trim()){var np=(entry.telefon||'').trim();kd.stamm.ph=np;matchClient.ph=np;kdChanged=true}
+      if(!matchClient.em&&(entry.email||'').trim()){var ne=(entry.email||'').trim();kd.stamm.em=ne;matchClient.em=ne;kdChanged=true}
+      if(kdChanged)saveClientKartei(matchClient.id,kd);
     }catch(e){}
   }
 
@@ -1627,7 +1785,7 @@ function processAnamEntry(entry){
       visits:0,notizen:'',missing:[],visitDates:[],
       autoCreated:true
     };
-    if(nc.bd){const m=nc.bd.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);if(m)nc.gebDate=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]))}
+    nc.gebDate=parseBirthdate(nc.bd);
     nc.missing=[];
     if(!nc.ph)nc.missing.push('telefon');if(!nc.em)nc.missing.push('email');if(!nc.bd)nc.missing.push('geburtsdatum');
     nc.bdSoon=false;
@@ -1657,6 +1815,9 @@ function processAnamEntry(entry){
 function loadAnamnese(){
   let totalNew=0;
 
+  let anamLoadError=false;
+  // Pro Referenz eigener Fehler-Fang: ein fehlgeschlagener Pfad darf NIEMALS
+  // den anderen Pfad oder die Live-Listener verhindern (sonst "Kunden verschwinden").
   function loadFromRef(refName){
     return fbDb.ref(refName).once('value').then(snap=>{
       const data=snap.val();
@@ -1667,10 +1828,15 @@ function loadAnamnese(){
         if(nc)count++;
       });
       return count;
+    }).catch(err=>{
+      anamLoadError=true;
+      console.error('Anamnese-Lesefehler ('+refName+'):',(err&&err.message)?err.message:err);
+      return 0;
     });
   }
 
-  // Lade BEIDE Firebase-Referenzen (alter + neuer Bogen)
+  // Lade BEIDE Firebase-Referenzen (alter + neuer Bogen).
+  // Promise.all kann durch die per-Ref-catch nicht mehr abbrechen -> Listener werden IMMER gesetzt.
   Promise.all([
     loadFromRef('anamnese'),
     loadFromRef('anamneseboegen')
@@ -1681,10 +1847,14 @@ function loadAnamnese(){
       renderSidebar();
       toast(totalNew+' Kunden aus Anamneseboegen geladen');
     }
+    if(anamLoadError){
+      // Sichtbarer Hinweis statt stillem Verlust: Tamara muss merken, wenn Bögen nicht laden.
+      toast('Anamnesebögen konnten nicht vollständig geladen werden – bitte Seite neu laden. Bereits vorhandene Kunden bleiben erhalten.','warn');
+    }
     if(selectedClient)renderKartei(selectedClient);
     anamFirstLoad=false;
 
-    // ── LIVE LISTENER auf beide Refs ──
+    // ── LIVE LISTENER auf beide Refs (selbstheilend: child_added holt fehlende Bögen nach) ──
     ['anamnese','anamneseboegen'].forEach(refName=>{
       fbDb.ref(refName).on('child_added',function(childSnap){
         if(anamFirstLoad)return;
@@ -1703,6 +1873,9 @@ function loadAnamnese(){
         const ln=(entry.name||'').trim();
         const key=normalize(fn+' '+ln);
         if(key.length>1)anamneseCache[key]=entry;
+        const cph=normPhone(entry.telefon), cem=normEmail(entry.email);
+        if(cph.length>=6)anamneseCache['ph:'+cph]=entry;
+        if(cem)anamneseCache['em:'+cem]=entry;
         // Debounced Re-Render, verhindert Flackern bei vielen Events
         if(selectedClient&&getAnamnese(selectedClient))scheduleBatchedSave(true);
       },function(err){console.error('Anamnese child_changed error ('+refName+'):',err)});
@@ -1747,6 +1920,9 @@ function showNewClientNotification(nc,entry){
 
 function getAnamnese(c){
   const keys=[normalize(c.fn+' '+c.ln),normalize(c.ln+' '+c.fn),normalize(c.name)];
+  const ph=normPhone(c.ph), em=normEmail(c.em);
+  if(ph.length>=6)keys.push('ph:'+ph);
+  if(em)keys.push('em:'+em);
   for(const k of keys){if(anamneseCache[k])return anamneseCache[k]}
   try{const kd=getClientKartei(c.id);if(kd._anamneseData)return kd._anamneseData}catch(e){}
   return null;
@@ -1794,14 +1970,14 @@ function getHeimtherapie(c){
 function copyHeimtherapieLink(){
   if(!selectedClient)return;
   const c=selectedClient;
-  const url='https://skinconcept-hagner.github.io/skinconcept-studio/heimtherapie-vereinbarung.html?kid='+encodeURIComponent(c.id)+'&fn='+encodeURIComponent(c.fn||'')+'&ln='+encodeURIComponent(c.ln||'');
+  const url='https://skh-anamnese-7q9k3.web.app/heimtherapie-vereinbarung.html?kid='+encodeURIComponent(c.id)+'&fn='+encodeURIComponent(c.fn||'')+'&ln='+encodeURIComponent(c.ln||'');
   navigator.clipboard.writeText(url).then(()=>toast('Heimtherapie-Vereinbarung Link kopiert!')).catch(()=>toast('Link konnte nicht kopiert werden','warn'));
 }
 
 function renderNoonHeimtherapie(c,kd){
   const ht=getHeimtherapie(c);
   let usesNoon=kd.noonProdukte;
-  const htUrl='https://skinconcept-hagner.github.io/skinconcept-studio/heimtherapie-vereinbarung.html?kid='+encodeURIComponent(c.id)+'&fn='+encodeURIComponent(c.fn||'')+'&ln='+encodeURIComponent(c.ln||'');
+  const htUrl='https://skh-anamnese-7q9k3.web.app/heimtherapie-vereinbarung.html?kid='+encodeURIComponent(c.id)+'&fn='+encodeURIComponent(c.fn||'')+'&ln='+encodeURIComponent(c.ln||'');
   const waMsg='Hallo '+(c.fn||'')+', hier ist dein persönlicher Link zur Heimtherapie-Vereinbarung von Skinconcept Hagner. Bitte fülle das Formular aus und unterschreibe digital:\n\n'+htUrl+'\n\nVielen Dank!';
   const waUrl=getWaUrl(c.ph,waMsg);
 
@@ -1969,7 +2145,7 @@ function viewHeimtherapieSig(){
       <img src="${ht._unterschrift}" style="max-width:100%;border-radius:8px" alt="Unterschrift">
     </div>
     <div style="margin-top:12px;display:flex;gap:8px">
-      <button class="btn btn-dark btn-sm" onclick="closeModal('addModal')">Schliessen</button>
+      <button class="btn btn-dark btn-sm" onclick="closeModal('addModal')">Schließen</button>
       <button class="btn btn-gold btn-sm" onclick="printHeimtherapie()">Drucken / PDF</button>
     </div>
   `;
@@ -2078,11 +2254,15 @@ function renderSidebar(){
     const checked=selectedForBulk.has(c.id);
     const checkboxHtml=showCheckbox?`<input type="checkbox" class="sb-cb" ${checked?'checked':''} onclick="event.stopPropagation();toggleBulk('${c.id}')" />`:'';
     const clickHandler=showCheckbox?`onclick="toggleBulk('${c.id}');event.stopPropagation()"`:`onclick="selectClient('${c.id}')"`;
-    return`<div class="sb-item${selectedClient&&selectedClient.id===c.id?' active':''}${checked?' bulk-selected':''}" ${clickHandler}>
+    // HautApp-Meldungen: rote Markierung, damit man die Kundin sofort sieht
+    const haAlert=(typeof HA_NOTIF!=='undefined'&&HA_NOTIF.clientAlerts)?(HA_NOTIF.clientAlerts[c.id]||HA_NOTIF.clientAlerts[String(c.id)]):null;
+    const haStyle=haAlert?'box-shadow:inset 3px 0 0 #C0544F;background:#fbf4f3':'';
+    const haBadge=haAlert?`<span class="sb-ha-badge" title="Neue HautApp-Meldung: ${esc(haNotifTypeLabel(haAlert.last))}" style="display:inline-block;background:#C0544F;color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:1px">HautApp${haAlert.count>1?' '+haAlert.count:''}</span>`:'';
+    return`<div class="sb-item${selectedClient&&selectedClient.id===c.id?' active':''}${checked?' bulk-selected':''}" ${clickHandler} style="${haStyle}">
       ${checkboxHtml}
       <div class="sb-avatar" style="background:${col}20;color:${col}">${initials}</div>
       <div class="sb-info">
-        <div class="sb-name">${esc(c.fn||c.name)} ${esc(c.ln||'')} ${twBadge}</div>
+        <div class="sb-name">${esc(c.fn||c.name)} ${esc(c.ln||'')} ${twBadge}${haBadge}</div>
         <div class="sb-detail">${c.ph?esc(c.ph):(c.em?esc(c.em):'Keine Kontaktdaten')}${c.bdSoon?' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/></svg>':''}${s.contacted?' <span style="color:var(--blue);font-weight:500">&#10003; kontaktiert</span>':''}</div>
       </div>
       <div class="sb-right">
@@ -2156,6 +2336,11 @@ function selectClient(id){
       ['treatments','notesList','products','consents','kuren'].forEach(function(key){
         if(cloud[key]&&Array.isArray(cloud[key])&&cloud[key].length){
           if(!kd[key])kd[key]=[];
+          if(key==='treatments'){
+            const merged=dedupArr([].concat(kd[key]||[],cloud[key]||[]));
+            if(merged.length!==kd[key].length){kd[key]=merged;changed=true}
+            return;
+          }
           cloud[key].forEach(function(ci){
             var dup=kd[key].some(function(li){return JSON.stringify(li)===JSON.stringify(ci)});
             if(!dup){kd[key].push(ci);changed=true}
@@ -2219,20 +2404,20 @@ function deleteClient(id){
     var failed=results.filter(r=>r.status==='rejected');
     if(failed.length){
       console.error('Firebase-Delete: '+failed.length+' Operation(en) fehlgeschlagen',failed);
-      toast('Cloud-Sync fehlgeschlagen — Kunde nur lokal geloescht','warn');
+      toast('Cloud-Sync fehlgeschlagen — Kunde nur lokal gelöscht','warn');
     }
   });
 
   goBackToList();
   renderSidebar();
-  toast('Kunde "'+c.name+'" geloescht');
+  toast('Kunde "'+c.name+'" gelöscht');
 }
 
 // ── RENDER HAUTBERICHT CARDS (helper to avoid nested template literals) ──
 function renderHautberichtCards(kd){
   return (kd.hautberichte||[]).map(function(b,i){
     var icon=b.type==='pdf'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>';
-    // Vorschau: Platzhalter mit ID, wird asynchron befuellt
+    // Vorschau: Platzhalter mit ID, wird asynchron befüllt
     var previewId='hb-preview-'+i;
     var preview=b.type==='pdf'
       ?'<div style="padding:20px;text-align:center;background:var(--bg4);border-radius:8px;color:var(--muted)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF-Dokument</div>'
@@ -2264,7 +2449,7 @@ function loadHautberichtPreviews(){
       if(dataUrl&&el){
         el.outerHTML='<img src="'+dataUrl+'" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;cursor:pointer" onclick="event.stopPropagation();openFullscreen(this.src)">';
       }else if(el){
-        el.textContent='Bild nicht verfuegbar';
+        el.textContent='Bild nicht verfügbar';
       }
     });
   });
@@ -2286,9 +2471,11 @@ function renderKartei(c){
   // Count items for tabs
   const treatCount=kd.treatments?kd.treatments.length:0;
   const prodCount=kd.products?kd.products.length:0;
+  const refillKeySet=new Set(getRefillProducts(kd).map(it=>String(it.name).trim().toLowerCase()+'|'+String(it.brand).trim().toLowerCase()+'|'+it.date));
   const photoCount=kd.photos?kd.photos.length:0;
   const hautanalyseCount=kd.hautanalysen?kd.hautanalysen.length:0;
   const berichtCount=kd.hautberichte?kd.hautberichte.length:0;
+  const rev=getClientRevenue(kd);
 
   document.getElementById('kartei').innerHTML=`
     <div class="kartei-header">
@@ -2341,6 +2528,7 @@ function renderKartei(c){
         <div class="kh-metric"><div class="kh-metric-val" style="font-size:18px">${fmtDate(c.lv)}</div><div class="kh-metric-label">Letzter Besuch</div></div>
         <div class="kh-metric"><div class="kh-metric-val">${c.visits||0}</div><div class="kh-metric-label">Besuche gesamt</div></div>
         <div class="kh-metric"><div class="kh-metric-val">${treatCount}</div><div class="kh-metric-label">Behandlungen</div></div>
+        <div class="kh-metric"><div class="kh-metric-val" style="color:var(--gold)">${fmtEur(rev.total)}</div><div class="kh-metric-label">Gesamtumsatz</div></div>
       </div>
       <div class="ktabs">
         <div class="ktab${currentKTab==='stamm'?' active':''}" onclick="switchKTab('stamm')">Stammdaten</div>
@@ -2348,13 +2536,14 @@ function renderKartei(c){
         <div class="ktab${currentKTab==='hautanalyse'?' active':''}" onclick="switchKTab('hautanalyse')">Hautanalyse ${(kd.skinReports||[]).length?'<span class="cnt">'+(kd.skinReports||[]).length+'</span>':''}</div>
         <div class="ktab${currentKTab==='behandlungen'?' active':''}" onclick="switchKTab('behandlungen')">Behandlungen &amp; Termine <span class="cnt">${treatCount}</span></div>
         <div class="ktab${currentKTab==='fotos'?' active':''}" onclick="switchKTab('fotos')">Fotos &amp; Berichte <span class="cnt">${photoCount + (berichtCount||0) + (hautanalyseCount||0)}</span></div>
-        <div class="ktab${currentKTab==='produkte'?' active':''}" onclick="switchKTab('produkte')">Produkte <span class="cnt">${prodCount}</span></div>
+        <div class="ktab${currentKTab==='produkte'?' active':''}" onclick="switchKTab('produkte')">Produkte <span class="cnt">${prodCount}</span>${getRefillCount(kd)?'<span class="cnt" style="background:var(--orange-bg);color:var(--orange)" title="Nachkauf empfohlen">'+getRefillCount(kd)+'</span>':''}</div>
         <div class="ktab${currentKTab==='notizen'?' active':''}" onclick="switchKTab('notizen')">Notizen <span class="cnt">${(kd.notesList||[]).length}</span></div>
-        <div class="ktab${currentKTab==='kaeufe'?' active':''}" onclick="switchKTab('kaeufe')">Kaeufe</div>
+        <div class="ktab${currentKTab==='kaeufe'?' active':''}" onclick="switchKTab('kaeufe')">Käufe</div>
         <div class="ktab${currentKTab==='hautapp'?' active':''}" onclick="switchKTab('hautapp')" style="color:var(--gold)">HautApp</div>
       </div>
     </div>
     <div class="kbody">
+      ${renderProductRefillWarnings(kd)}
       <!-- STAMMDATEN -->
       <div class="kpage${currentKTab==='stamm'?' active':''}" id="kp-stamm">
         <div class="scard">
@@ -2373,7 +2562,7 @@ function renderKartei(c){
           <div class="form-grid">
             <div class="fg"><label>Hauttyp</label>
               <select onchange="updateKarteiField('hauttyp',this.value);updateSaveStatus('ok')">
-                <option value="">Bitte waehlen...</option>
+                <option value="">Bitte wählen...</option>
                 <option ${kd.hauttyp==='Normal'?'selected':''}>Normal</option>
                 <option ${kd.hauttyp==='Trocken'?'selected':''}>Trocken</option>
                 <option ${kd.hauttyp==='Fettig'?'selected':''}>Fettig</option>
@@ -2395,7 +2584,7 @@ function renderKartei(c){
 
       <!-- ANAMNESE -->
       <div class="kpage${currentKTab==='anamnese'?' active':''}" id="kp-anamnese">
-        ${anam?renderAnamnese(anam)+renderUrsachen(anam):`
+        ${anam?renderIndikationen(anam,kd)+renderAnamnese(anam)+renderUrsachen(anam):`
           <div class="scard" style="text-align:center;padding:40px">
             <p style="color:var(--muted);font-size:14px;margin-bottom:12px">Kein Anamnesebogen vorhanden.</p>
             <p style="color:var(--text2);font-size:12px">Der Kunde kann den digitalen Anamnesebogen über den Link ausfüllen. Die Daten erscheinen dann automatisch hier.</p>
@@ -2430,13 +2619,23 @@ function renderKartei(c){
       <div class="kpage${currentKTab==='behandlungen'?' active':''}" id="kp-behandlungen">
         ${renderKuren(kd)}
         <div class="scard">
+          <h3>Umsatz (intern)</h3>
+          <div class="kh-metrics" style="margin:0;padding:8px 0;border:none">
+            <div class="kh-metric"><div class="kh-metric-val" style="font-size:22px">${fmtEur(rev.treatment)}</div><div class="kh-metric-label">Behandlungen</div></div>
+            <div class="kh-metric"><div class="kh-metric-val" style="font-size:22px">${fmtEur(rev.product)}</div><div class="kh-metric-label">Produkte</div></div>
+            <div class="kh-metric"><div class="kh-metric-val" style="font-size:22px;color:var(--gold)">${fmtEur(rev.total)}</div><div class="kh-metric-label">Gesamt</div></div>
+            <div class="kh-metric"><div class="kh-metric-val" style="font-size:18px">${rev.lastAmount>0?fmtEur(rev.lastAmount):'–'}</div><div class="kh-metric-label">Letzter Umsatz${rev.lastDate?' · '+fmtDate(rev.lastDate):''}</div></div>
+          </div>
+        </div>
+        <div class="scard">
           <h3>Behandlungsverlauf <button class="add-btn" onclick="openAddTreatment()">+ Behandlung</button></h3>
           ${treatCount>0?`<div class="timeline">${kd.treatments.map((t,i)=>{
             const ti=SC_TREATMENTS.find(x=>x.id===t.typeId||x.name===t.type);
+            const tp=kParseNum(t.price);
             return`<div class="tl-item">
               <div class="tl-dot" ${ti?'style="border-color:'+ti.color+'"':''}></div>
               <div class="tl-date">${fmtDate(t.date)} ${t.time?'&#183; '+esc(t.time):''}</div>
-              <div class="tl-title">${ti?ti.icon+' ':''}${esc(t.type)}</div>
+              <div class="tl-title">${ti?ti.icon+' ':''}${esc(t.type)} <span class="chip ${tp>0?'chip-gold':''}" style="font-size:11px;cursor:pointer" title="Preis bearbeiten" onclick="editTreatmentPrice(${i})">${tp>0?fmtEur(tp):'Preis +'}</span></div>
               <div class="tl-text">${esc(t.notes)}</div>
               ${t.products?'<div class="tl-tags">'+t.products.split(',').map(p=>'<span class="chip chip-gold">'+esc(p.trim())+'</span>').join('')+'</div>':''}
               <button class="btn btn-sm" style="margin-top:8px;padding:3px 8px;font-size:10px;background:var(--red-bg);color:var(--red);border:none" onclick="deleteTreatment(${i})">Löschen</button>
@@ -2458,12 +2657,13 @@ function renderKartei(c){
         <div class="scard">
           <h3>Produktempfehlungen & Verkäufe <button class="add-btn" onclick="openBarcodeScanner()" style="margin-right:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg> Barcode</button><button class="add-btn" onclick="openAddProduct()">+ Manuell</button></h3>
           ${prodCount>0?`<table class="ptable">
-            <thead><tr><th>Produkt</th><th>Marke</th><th>EAN</th><th>Typ</th><th>Datum</th><th>Notiz</th><th></th></tr></thead>
+            <thead><tr><th>Produkt</th><th>Marke</th><th>EAN</th><th>Typ</th><th>Preis</th><th>Datum</th><th>Notiz</th><th></th></tr></thead>
             <tbody>${kd.products.map((p,i)=>`<tr>
               <td style="font-weight:500">${esc(p.name)}</td>
               <td>${esc(p.brand)}</td>
               <td style="font-family:monospace;font-size:11px;color:var(--muted)">${p.ean?esc(p.ean):'–'}</td>
-              <td><span class="chip ${p.type==='Verkauft'?'chip-green':'chip-gold'}">${esc(p.type)}</span></td>
+              <td><span class="chip ${p.type==='Verkauft'?'chip-green':'chip-gold'}">${esc(p.type)}</span>${refillKeySet.has(String(p.name||'').trim().toLowerCase()+'|'+String(p.brand||'').trim().toLowerCase()+'|'+p.date)?' <span class="chip" style="background:var(--orange-bg);color:var(--orange);border:1px solid rgba(217,119,6,.3)" title="Seit dem Verkauf sind &uuml;ber 4 Monate vergangen">leer?</span>':''}</td>
+              <td style="white-space:nowrap;cursor:pointer" title="Preis bearbeiten" onclick="editProductPrice(${i})">${kParseNum(p.price)>0?fmtEur(p.price):'<span style="color:var(--gold)">+ Preis</span>'}</td>
               <td style="color:var(--muted)">${fmtDate(p.date)}</td>
               <td style="color:var(--text2);font-size:12px">${esc(p.note)}</td>
               <td><button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:var(--red-bg);color:var(--red);border:none" onclick="deleteProduct(${i})">&#10005;</button></td>
@@ -2486,7 +2686,7 @@ function renderKartei(c){
             `).join('')}
             <div class="photo-upload" onclick="document.getElementById('photoUpload').click()">
               <span style="font-size:24px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
-              <span>Foto hinzufuegen</span>
+              <span>Foto hinzufügen</span>
             </div>
           </div>
         </div>
@@ -2623,7 +2823,7 @@ async function loadKaeufe(clientId){
     var kd=getClientKartei(clientId);
     if(kd){clientName=((kd.fn||'')+' '+(kd.ln||'')).trim()||kd.name||'';}
     if(clientName){
-      var snap=await db.collection('transactions').where('clientName','==',clientName).get();
+      var snap=await nsDb.collection('transactions').where('clientName','==',clientName).get();
       snap.forEach(function(doc){allTx.push(doc.data());});
     }
   }catch(e){console.error('Kaeufe load:',e);}
@@ -2637,13 +2837,13 @@ async function loadKaeufe(clientId){
   }catch(e){}
   allTx.sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
   if(allTx.length===0){
-    container.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Noch keine Kaeufe bei dieser Kundin erfasst.<br>Kaeufe werden automatisch aus der Kasse uebernommen.</div>';
+    container.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Noch keine Käufe bei dieser Kundin erfasst.<br>Käufe werden automatisch aus der Kasse übernommen.</div>';
     return;
   }
   var totalSpent=0;
   allTx.forEach(function(t){totalSpent+=(t.total||0);});
   var html='<div style="display:flex;gap:12px;margin-bottom:16px;">';
-  html+='<div style="flex:1;padding:14px;background:var(--bg4);border-radius:10px;text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--text);">'+allTx.length+'</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Kaeufe</div></div>';
+  html+='<div style="flex:1;padding:14px;background:var(--bg4);border-radius:10px;text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--text);">'+allTx.length+'</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Käufe</div></div>';
   html+='<div style="flex:1;padding:14px;background:var(--bg4);border-radius:10px;text-align:center;"><div style="font-size:22px;font-weight:600;color:var(--text);">'+totalSpent.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' EUR</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Gesamt</div></div>';
   html+='</div>';
   allTx.forEach(function(t){
@@ -2786,6 +2986,24 @@ function renderAnamnese(a){
     html+='</div>';
   });
 
+  // ── Einwilligung & Unterschrift (rechtlich relevant, aus dem Bogen) ──
+  const sig=a._unterschrift||a.unterschrift;
+  const dsOk=a._datenschutz_akzeptiert||!!sig;
+  const dsDatum=a._datenschutz_datum?fmtDate(String(a._datenschutz_datum).split('T')[0]):(a._at?fmtDate(String(a._at).split('T')[0]):'');
+  html+=`<div class="scard" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px">
+      <span style="display:inline-flex;align-items:center;color:var(--gold)">&#9998;</span>
+      <span style="font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.5px;text-transform:uppercase;flex:1">Einwilligung &amp; Unterschrift</span>
+      <span style="padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;background:${dsOk?'var(--green-bg)':'var(--red-bg)'};color:${dsOk?'var(--green)':'var(--red)'}">${dsOk?'Erteilt':'Fehlt'}</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
+      <div>${dsOk?'&#10003;':'&#10007;'} Datenschutzerklärung zugestimmt${dsDatum?' &middot; '+dsDatum:''}</div>
+      <div>${dsOk?'&#10003;':'&#10007;'} Angaben als korrekt &amp; vollständig bestätigt</div>
+      <div>${a.newsletter_opt_in?'&#10003; Newsletter-Einwilligung erteilt':'&#8212; Kein Newsletter-Opt-In'}</div>
+    </div>
+    ${sig?`<div style="margin-top:6px"><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px">Unterschrift</div><img src="${esc(sig)}" alt="Unterschrift" style="max-width:280px;width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px"></div>`:'<div style="font-size:12px;color:var(--red);opacity:.7;font-style:italic">Keine Unterschrift hinterlegt</div>'}
+  </div>`;
+
   return html;
 }
 
@@ -2858,7 +3076,7 @@ function analyzeAnamnese(a){
     const cs=CAUSES[key];if(!cs)return;
     cs.forEach(c=>{
       let v=0;
-      if(c.cat==="Hormonal"){if(h.some(x=>["Zyklussschwankungen","Wechseljahre","Schwangerschaft"].includes(x)))v+=3;if(m.includes("Pille"))v+=2}
+      if(c.cat==="Hormonal"){if(h.some(x=>["Zyklusschwankungen","Zyklussschwankungen","Wechseljahre","Schwangerschaft"].includes(x)))v+=3;if(m.includes("Pille"))v+=2}
       if(c.cat==="Darm"){if(l.includes("Unregelmäßige Essgewohnheiten"))v+=2;if(s.includes("Autoimmunerkrankung"))v+=2}
       if(c.cat==="Stress"){if(s.includes("Hohes Stresslevel"))v+=4;if(h.includes("Schlafstörungen"))v+=2}
       if(c.cat==="Ernährung"){if(l.includes("Regelmäßiger Zuckerkonsum"))v+=3;if(l.includes("Regelmäßig Fast-Food"))v+=2}
@@ -2866,7 +3084,7 @@ function analyzeAnamnese(a){
       if(c.cat==="Medikamente"){if(m.length>0)v+=2}
       if(c.cat==="Nährstoffe"){if(l.includes("Niedriger Wasserkonsum"))v+=2}
       if(c.cat==="Schlaf"){if(h.includes("Schlafstörungen"))v+=3}
-      if(c.cat==="Autoimmun"){if(s.includes("Autoimmunerkrankung"))v+=4;if(s.includes("Immundefiziterkrankung"))v+=3}
+      if(c.cat==="Autoimmun"){if(s.includes("Autoimmunerkrankung"))v+=4;if(s.includes("Immundefiziterkrankung")||s.includes("Immundefizieterkrankung"))v+=3}
       all.push({...c,problem:PL[p]||p,priority:v});
     });
   });
@@ -2905,6 +3123,247 @@ function renderUrsachen(a){
     html+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:6px">'+(PL[p]||esc(p))+'</div>';
     html+='<div style="display:flex;flex-wrap:wrap;gap:6px">'+plan.map((t,i)=>'<span class="chip chip-gold" style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;font-weight:700;background:var(--gold);color:#fff;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center">'+(i+1)+'</span>'+esc(t)+'</span>').join('')+'</div></div>';
   });
+  html+='</div>';
+  return html;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// INDIKATIONEN & WIRKSTOFF-PRIORITÄTEN (Noon) — NUR INTERN in der Kartei
+// Leitet aus der Anamnese die dermatologischen Indikationen ab (z. B.
+// geschwächte Hautbarriere, Couperose) und ordnet jeder Indikation die
+// passenden Noon-Wirkstoffe nach Priorität mit fachlichem Ziel zu.
+// ══════════════════════════════════════════════════════════════════════
+function _anamAge(a){
+  var g=a&&(a.geburtsdatum||a.geburtstag||'');if(!g)return 0;
+  var s=String(g).trim(),y=0;
+  var m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);          // YYYY-MM-DD
+  if(m){y=+m[1];}else{var m2=s.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);if(m2)y=+m2[3];} // DD.MM.YYYY
+  if(!y)return 0;
+  var age=new Date().getFullYear()-y;
+  return (age>0&&age<120)?age:0;
+}
+function _hasAny(arr,needles){
+  if(!arr)return false;
+  var a=Array.isArray(arr)?arr:[arr];
+  var ns=Array.isArray(needles)?needles:[needles];
+  return a.some(function(x){var v=String(x==null?'':x).toLowerCase();return ns.some(function(n){return v.indexOf(String(n).toLowerCase())>=0;});});
+}
+
+// Wirkstoff-Katalog nach Indikation. prio: 1 = Basis/höchste, 2 = ergänzend, 3 = optional.
+// Alle genannten Wirkstoffe sind Teil des Noon-Aesthetics-Portfolios (DSC-Verkapselung).
+function deriveIndikationen(a,kd){
+  var probs=(a.hautproblem||[]);
+  var typ=String((kd&&kd.hauttyp)||'').toLowerCase();
+  var sun=(a.braeunung||[]), vor=(a.vorbehandlungen_aesthetisch||[]);
+  var horm=(a.hormonstatus||[]), life=(a.lebensumstaende||[]);
+  var age=_anamAge(a);
+  var res=[];
+
+  // 1) Geschwächte / gestörte Hautbarriere
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['empfindlich','irritiert','sensibel'])){sig.push('Hautproblem: empfindliche / irritierte Haut');w+=3;}
+    if(_hasAny(probs,['trocken'])){sig.push('Hautproblem: trockene Haut');w+=1;}
+    if(typ.indexOf('empfindlich')>=0){sig.push('Hauttyp: empfindlich');w+=2;}
+    if(typ.indexOf('trocken')>=0){sig.push('Hauttyp: trocken');w+=1;}
+    if(_hasAny(vor,['peeling','laser','microneedling','fruchtsäure','fruchtsaeure'])){sig.push('Intensive Vorbehandlungen (Barriere belastet)');w+=1;}
+    if(w>=2)res.push({id:'barriere',title:'Geschwächte Hautbarriere',w:w,
+      was:'Die Schutzbarriere ist durchlässig – erhöhter Feuchtigkeitsverlust, Reizbarkeit und Rötung. Vor allen aktiven Wirkstoffen zuerst stabilisieren.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Niacinamid',prio:1,ziel:'Barriere & Ceramid-Synthese stärken, Rötung senken'},
+        {n:'Panthenol / Allantoin',prio:1,ziel:'Beruhigen, Regeneration der Hornschicht fördern'},
+        {n:'Ceramide & Fettsäuren',prio:2,ziel:'Barriere-Lipide auffüllen, Wasserverlust reduzieren'},
+        {n:'Hyaluronsäure',prio:2,ziel:'Feuchtigkeit binden, Spannungsgefühl lösen'}
+      ],
+      note:'Starke Säuren & hochdosiertes Retinol erst einführen, wenn die Barriere stabil ist.'});
+  })();
+
+  // 2) Couperose / geschwächte Kapillaren
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['rosacea','couperose'])){sig.push('Hautproblem: Rosacea / Couperose');w+=3;}
+    if(_hasAny(probs,['rötung','roetung','rot'])){sig.push('Hautproblem: Rötungsneigung');w+=1;}
+    if(w>=2)res.push({id:'kapillar',title:'Couperose & geschwächte Kapillaren',w:w,
+      was:'Erweiterte, instabile Gefäße und Rötungsneigung. Ziel: Gefäßwände und umliegendes Bindegewebe stärken, Entzündung dämpfen.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Niacinamid',prio:1,ziel:'Gefäßwände stabilisieren, Entzündung & Rötung reduzieren'},
+        {n:'Vitamin C',prio:1,ziel:'Kollagen rund um die Kapillaren aufbauen, Gefäßwand stärken'},
+        {n:'Azelainsäure',prio:2,ziel:'Entzündliche Rosacea-Komponente beruhigen'},
+        {n:'Retinol (niedrig, einschleichend)',prio:3,ziel:'Kapillaren & Bindegewebe langfristig remodellieren'}
+      ],
+      note:'Trigger meiden (Hitze, Alkohol, scharfes Essen); Retinol nur langsam einschleichen.'});
+  })();
+
+  // 3) Hyperpigmentierung / Melasma
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['pigment','melasma','flecken'])){sig.push('Hautproblem: Pigmentstörungen');w+=3;}
+    if(_hasAny(sun,['solarium','sonne','bräun','braeun'])){sig.push('Regelmäßige UV-/Sonnenexposition');w+=1;}
+    if(_hasAny(horm,['schwangerschaft','pille','wechseljahre'])){sig.push('Hormoneller Faktor (Melasma-Risiko)');w+=1;}
+    if(w>=2)res.push({id:'pigment',title:'Hyperpigmentierung / Melasma',w:w,
+      was:'Überschüssige Melaninbildung führt zu ungleichmäßigem Teint und Flecken. Kombination aus Tyrosinase-Hemmung, Zellumsatz und konsequentem UV-Schutz.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Vitamin C',prio:1,ziel:'Tyrosinase hemmen, Antioxidans, Teint ausgleichen'},
+        {n:'Azelainsäure',prio:1,ziel:'Tyrosinase-Hemmung – besonders bei postentzündlicher Pigmentierung'},
+        {n:'Niacinamid',prio:2,ziel:'Melanosomen-Transfer in die Hornzellen bremsen'},
+        {n:'Retinol',prio:2,ziel:'Zellumsatz erhöhen, Pigment schneller abtransportieren'},
+        {n:'Arbutin / Tranexamsäure',prio:3,ziel:'Melaninsynthese gezielt reduzieren (Melasma)'}
+      ],
+      note:'Täglicher LSF 50+ ist Voraussetzung – ohne Sonnenschutz kein Ergebnis.'});
+  })();
+
+  // 4) Elastizitätsverlust / Kollagenabbau
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['elastizit','alter','falten','linien'])){sig.push('Hautproblem: Elastizitätsverlust / Hautalterung');w+=3;}
+    if(typ.indexOf('reif')>=0){sig.push('Hauttyp: reif');w+=2;}
+    if(age>=40){sig.push('Alter ab 40 – nachlassende Kollagensynthese');w+=2;}
+    else if(age>=30){sig.push('Alter ab 30 – Kollagenabbau beginnt');w+=1;}
+    if(w>=2)res.push({id:'kollagen',title:'Elastizitätsverlust & Kollagenabbau',w:w,
+      was:'Nachlassende Kollagen- und Elastinstruktur zeigt sich in feinen Linien und Elastizitätsverlust. Ziel: Neubildung anregen und Feuchtigkeit auffüllen.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Retinol',prio:1,ziel:'Kollagenneubildung anregen (Goldstandard gegen Faltenbildung)'},
+        {n:'Peptide',prio:1,ziel:'Kollagen-Signalwege aktivieren, Hautdichte erhöhen'},
+        {n:'Vitamin C',prio:2,ziel:'Cofaktor der Kollagensynthese + Schutz vor freien Radikalen'},
+        {n:'Hyaluronsäure',prio:2,ziel:'Volumen & Feuchtigkeit auffüllen, Fältchen glätten'}
+      ],
+      note:'Konsequenter UV-Schutz verhindert weiteren Kollagenabbau.'});
+  })();
+
+  // 5) Seborrhoe / Talgüberschuss & vergrößerte Poren
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['fettig'])){sig.push('Hautproblem: fettige Haut');w+=2;}
+    if(_hasAny(probs,['vergrößert','vergroessert','poren'])){sig.push('Hautproblem: vergrößerte / verstopfte Poren');w+=2;}
+    if(typ.indexOf('fettig')>=0){sig.push('Hauttyp: fettig');w+=1;}
+    if(typ.indexOf('mischhaut')>=0){sig.push('Hauttyp: Mischhaut');w+=1;}
+    if(w>=2)res.push({id:'seborrhoe',title:'Talgüberschuss & vergrößerte Poren',w:w,
+      was:'Überaktive Talgdrüsen und weite Poren. Ziel: Talg regulieren und Poren verfeinern, ohne die Haut auszutrocknen.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Niacinamid',prio:1,ziel:'Talgproduktion regulieren, Poren verfeinern'},
+        {n:'Salicylsäure (BHA)',prio:1,ziel:'Fettlöslich – reinigt Poren in der Tiefe'},
+        {n:'Retinol',prio:2,ziel:'Verhornung normalisieren, Porenstruktur verfeinern'},
+        {n:'Zink',prio:3,ziel:'Talg & Entzündung dämpfen'}
+      ],
+      note:'Nicht austrocknen – leichte, ölfreie Feuchtigkeit erhält die Balance.'});
+  })();
+
+  // 6) Verhornungsstörung / Komedonen (unreine Haut)
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['verstopft','komedo','mitesser'])){sig.push('Hautproblem: verstopfte Poren / Komedonen');w+=3;}
+    if(_hasAny(probs,['unrein'])){sig.push('Hautproblem: unreine Haut');w+=2;}
+    if(w>=2)res.push({id:'komedo',title:'Verhornungsstörung & Komedonen',w:w,
+      was:'Verklebte Hornzellen verschließen die Poren, es entstehen Mitesser und Unreinheiten. Ziel: Verhornung lösen und normalisieren.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Salicylsäure (BHA)',prio:1,ziel:'Komedolytisch – löst die Verhornung in der Pore'},
+        {n:'Azelainsäure',prio:1,ziel:'Antibakteriell + komedolytisch, gut verträglich'},
+        {n:'Retinol',prio:2,ziel:'Verhornung normalisieren, Neubildung von Komedonen verhindern'},
+        {n:'Niacinamid',prio:3,ziel:'Talg & Entzündung begleitend regulieren'}
+      ],
+      note:''});
+  })();
+
+  // 7) Aktive Akne / entzündliche Läsionen
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['akne'])){sig.push('Hautproblem: Akne');w+=3;}
+    if(w>=2)res.push({id:'akne',title:'Aktive Akne & Entzündung',w:w,
+      was:'Entzündliche Läsionen mit bakterieller Beteiligung. Ziel: Keimlast und Entzündung senken, Verhornung normalisieren, Barriere schützen.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Azelainsäure',prio:1,ziel:'Antibakteriell & entzündungshemmend, reduziert C. acnes'},
+        {n:'Salicylsäure (BHA)',prio:1,ziel:'Poren klären, entzündliche Läsionen reduzieren'},
+        {n:'Niacinamid',prio:2,ziel:'Entzündung & Rötung senken, Barriere schützen'},
+        {n:'Retinol',prio:2,ziel:'Verhornung & Nachschub neuer Unreinheiten reduzieren'},
+        {n:'Zink',prio:3,ziel:'Talg & Entzündung zusätzlich dämpfen'}
+      ],
+      note:'Wirkstoffe einschleichen und Barriere stützen, um Reizungen zu vermeiden.'});
+  })();
+
+  // 8) Dehydratation / Feuchtigkeitsmangel
+  (function(){
+    var sig=[],w=0;
+    if(_hasAny(probs,['trocken','dehydr'])){sig.push('Hautproblem: trockene / dehydrierte Haut');w+=2;}
+    if(typ.indexOf('trocken')>=0){sig.push('Hauttyp: trocken');w+=1;}
+    if(_hasAny(life,['wenig wasser','niedriger wasser','wasserkonsum'])){sig.push('Niedriger Wasserkonsum');w+=1;}
+    if(w>=2)res.push({id:'dehydration',title:'Feuchtigkeitsmangel (Dehydratation)',w:w,
+      was:'Der Haut fehlt Wasser – Spannungsgefühl, Fältchen und matter Teint. Ziel: Feuchtigkeit binden und Barriere-Funktion verbessern.',
+      signals:sig,
+      wirkstoffe:[
+        {n:'Hyaluronsäure',prio:1,ziel:'Feuchtigkeit binden, Haut auffüllen'},
+        {n:'Niacinamid',prio:1,ziel:'Barrierefunktion & Feuchtigkeitshaltung verbessern'},
+        {n:'Panthenol',prio:2,ziel:'Beruhigen & Feuchtigkeit unterstützen'},
+        {n:'Ceramide',prio:2,ziel:'Wasserverlust über die Barriere reduzieren'}
+      ],
+      note:''});
+  })();
+
+  res.sort(function(a,b){return b.w-a.w;});
+  return res;
+}
+
+function renderIndikationen(a,kd){
+  var inds=deriveIndikationen(a,kd);
+  var html='<div class="scard">';
+  html+='<h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg> Indikationen &amp; Wirkstoff-Prioritäten <span style="font-size:10px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:2px 8px;letter-spacing:.5px;text-transform:uppercase;margin-left:6px">Nur intern</span></h3>';
+
+  if(!inds.length){
+    html+='<p style="color:var(--muted);text-align:center;padding:20px;font-size:13px">Noch keine Indikationen ableitbar – sobald Hauttyp und Hautprobleme im Anamnesebogen ausgefüllt sind, erscheinen hier automatisch die passenden Wirkstoff-Prioritäten.</p></div>';
+    return html;
+  }
+
+  html+='<div style="padding:12px;background:var(--gold-dim);border:1px solid rgba(201,169,110,.15);border-radius:10px;margin-bottom:16px;font-size:12px;color:var(--text2)">Aus der Anamnese abgeleitete Hautindikationen mit priorisierten Noon-Wirkstoffen. Fachliche Orientierung für die Beratung – ersetzt keine ärztliche Abklärung.</div>';
+
+  // Übersicht als Chips
+  html+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">';
+  inds.forEach(function(ind){
+    var strong=ind.w>=3;
+    html+='<span style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:600;background:'+(strong?'var(--gold-dim)':'transparent')+';border:1px solid '+(strong?'rgba(201,169,110,.4)':'var(--border)')+';color:'+(strong?'var(--gold)':'var(--text2)')+'">'+esc(ind.title)+'</span>';
+  });
+  html+='</div>';
+
+  var prioColor={1:'var(--gold)',2:'#9db4c0',3:'var(--muted)'};
+  var prioLabel={1:'Priorität 1',2:'Priorität 2',3:'Optional'};
+
+  inds.forEach(function(ind){
+    var strong=ind.w>=3;
+    html+='<div style="border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:12px;margin-bottom:12px;overflow:hidden">';
+    // Kopf
+    html+='<div style="padding:14px 14px 10px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">';
+    html+='<span style="font-size:15px;font-weight:600;color:var(--text)">'+esc(ind.title)+'</span>';
+    if(strong)html+='<span style="padding:2px 9px;border-radius:12px;font-size:10px;font-weight:700;background:var(--gold);color:#fff">Hohe Priorität</span>';
+    html+='</div>';
+    html+='<div style="font-size:12px;color:var(--text2);line-height:1.6">'+esc(ind.was)+'</div>';
+    // Erkannt aus
+    if(ind.signals&&ind.signals.length){
+      html+='<div style="margin-top:8px"><div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">Erkannt aus</div><div style="display:flex;flex-wrap:wrap;gap:4px">';
+      ind.signals.forEach(function(s){html+='<span style="padding:2px 9px;border-radius:12px;font-size:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text2)">'+esc(s)+'</span>';});
+      html+='</div></div>';
+    }
+    html+='</div>';
+    // Wirkstoffe
+    html+='<div style="border-top:1px solid var(--border);background:rgba(201,169,110,.04);padding:6px 14px 10px">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.5px;text-transform:uppercase;margin:8px 0 6px">Wirkstoff-Priorität</div>';
+    ind.wirkstoffe.forEach(function(wk){
+      var pc=prioColor[wk.prio]||'var(--muted)';
+      html+='<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">';
+      html+='<span style="flex-shrink:0;font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px;border:1px solid '+pc+';color:'+pc+';min-width:70px;text-align:center">'+(prioLabel[wk.prio]||'')+'</span>';
+      html+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">'+esc(wk.n)+'</div><div style="font-size:12px;color:var(--text2);line-height:1.5;margin-top:1px">'+esc(wk.ziel)+'</div></div>';
+      html+='</div>';
+    });
+    if(ind.note)html+='<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px;padding-left:2px"><strong style="color:var(--gold)">Hinweis:</strong> '+esc(ind.note)+'</div>';
+    html+='</div>';
+    html+='</div>';
+  });
+
   html+='</div>';
   return html;
 }
@@ -2949,7 +3408,7 @@ function renderCauseCard(c,key){
 }
 
 function copyAnamLink(){
-  const url='https://skinconcept-hagner.github.io/skinconcept-studio/anamnesebogen.html';
+  const url='https://skh-anamnese-7q9k3.web.app/';
   navigator.clipboard.writeText(url).then(()=>toast('Anamnesebogen-Link kopiert!')).catch(()=>toast('Link konnte nicht kopiert werden','warn'));
 }
 
@@ -2959,8 +3418,7 @@ function updateClient(field,value){
   selectedClient[field]=value;
   if(field==='fn'||field==='ln')selectedClient.name=selectedClient.fn+' '+selectedClient.ln;
   if(field==='bd'){
-    const m=value.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
-    if(m){selectedClient.gebDate=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]))}
+    selectedClient.gebDate=parseBirthdate(value);
   }
   selectedClient.missing=[];
   if(!selectedClient.ph)selectedClient.missing.push('telefon');
@@ -2990,8 +3448,7 @@ function applyStammOverrides(c){
   if(s.em!==undefined)c.em=s.em;
   if(s.bd){
     c.bd=s.bd;
-    const m=s.bd.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
-    if(m)c.gebDate=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));
+    c.gebDate=parseBirthdate(s.bd);
   }
   c.missing=[];
   if(!c.ph)c.missing.push('telefon');
@@ -3030,21 +3487,127 @@ const SC_TREATMENTS=[
   {id:'exocean',name:'Exocean',icon:SC_ICONS.waves,desc:'Marine Wirkstoffbehandlung für tiefe Regeneration',color:'var(--blue)'}
 ];
 let selectedTreatmentId=null;
+let activeTreatmentDraftId=null;
+let treatmentSaveInProgress=false;
+
+// ── KATALOG (Preise aus Firestore: treatments/products) ──
+let CATALOG_TREATMENTS=[];
+let CATALOG_PRODUCTS=[];
+// Schutz gegen Doppel-Tap: auf dem iPad lösen Ghost-Clicks das Speichern 2× aus,
+// dadurch wurde derselbe Eintrag doppelt in die Kartei geschrieben.
+const _saveLocks={};
+function saveLocked(key){
+  const now=Date.now();
+  if(_saveLocks[key]&&now-_saveLocks[key]<1500)return true;
+  _saveLocks[key]=now;
+  return false;
+}
+function kParseNum(v){const n=parseFloat(String(v==null?'':v).replace(',','.'));return isNaN(n)?0:n;}
+function kNorm(s){return String(s||'').trim().toLowerCase();}
+function fmtEur(n){return (kParseNum(n)).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+async function loadCatalog(){
+  try{
+    const snap=await nsDb.collection('treatments').get();
+    const arr=[];snap.forEach(d=>arr.push(Object.assign({id:d.id},d.data())));
+    CATALOG_TREATMENTS=arr;
+  }catch(e){console.warn('[Katalog] Behandlungen konnten nicht geladen werden:',e&&e.message);}
+  try{
+    const snap=await nsDb.collection('products').get();
+    const arr=[];snap.forEach(d=>arr.push(Object.assign({id:d.id},d.data())));
+    CATALOG_PRODUCTS=arr;
+  }catch(e){console.warn('[Katalog] Produkte konnten nicht geladen werden:',e&&e.message);}
+  // Falls beim Laden schon ein Kunde offen ist: neu rendern, damit Preise erscheinen
+  try{if(typeof selectedClient!=='undefined'&&selectedClient)renderKartei(selectedClient);}catch(e){}
+}
+function catalogTreatmentPrice(name){
+  const t=CATALOG_TREATMENTS.find(x=>kNorm(x.name)===kNorm(name));
+  return t?kParseNum(t.price):0;
+}
+function catalogProductByName(name){
+  return CATALOG_PRODUCTS.find(x=>kNorm(x.name)===kNorm(name))||null;
+}
+// Slug aus Name (rückwärtskompatibel zu den bisherigen SC_TREATMENTS-IDs)
+function tSlug(s){return kNorm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+// Behandlungs-Auswahlliste: dynamisch aus dem zentralen Katalog (treatments).
+// Optik (Icon/Farbe/Beschreibung) kommt – wenn vorhanden – aus SC_TREATMENTS.
+// Fällt der Katalog aus oder ist noch nicht geladen, gilt SC_TREATMENTS als Fallback.
+function getTreatmentPickList(){
+  const meta={},order={};
+  SC_TREATMENTS.forEach(function(t,i){meta[kNorm(t.name)]=t;order[kNorm(t.name)]=i;});
+  if(CATALOG_TREATMENTS&&CATALOG_TREATMENTS.length){
+    const list=CATALOG_TREATMENTS.filter(function(c){return c.active!==false&&c.name;}).map(function(c){
+      const k=kNorm(c.name),m=meta[k]||{};
+      return {
+        id:m.id||tSlug(c.name),
+        name:c.name,
+        icon:m.icon||SC_ICONS.star,
+        desc:m.desc||(c.description||''),
+        color:m.color||'var(--gold)',
+        price:kParseNum(c.price),
+        _ord:(k in order)?order[k]:999
+      };
+    });
+    list.sort(function(a,b){return a._ord-b._ord||a.name.localeCompare(b.name,'de');});
+    return list;
+  }
+  return SC_TREATMENTS;
+}
+
+// ── UMSATZ pro Kundin ──
+// Behandlungsumsatz = Summe aller Behandlungs-Preise.
+// Produktumsatz = Summe verkaufter Produkte (Typ Verkauft/Nachkauf), NICHT Empfohlen.
+function getClientRevenue(kd){
+  const r={treatment:0,product:0,total:0,lastDate:'',lastAmount:0};
+  if(!kd)return r;
+  const byDate={};
+  (kd.treatments||[]).forEach(function(t){
+    const p=kParseNum(t.price);
+    r.treatment+=p;
+    if(t.date){byDate[t.date]=(byDate[t.date]||0)+p;}
+  });
+  (kd.products||[]).forEach(function(pr){
+    if(pr.type==='Verkauft'||pr.type==='Nachkauf'){
+      const p=kParseNum(pr.price);
+      r.product+=p;
+      if(pr.date){byDate[pr.date]=(byDate[pr.date]||0)+p;}
+    }
+  });
+  r.total=r.treatment+r.product;
+  // Letzter Umsatz = jüngstes Datum mit Umsatz > 0
+  Object.keys(byDate).forEach(function(d){
+    if(byDate[d]>0 && (!r.lastDate || d>r.lastDate)){r.lastDate=d;r.lastAmount=byDate[d];}
+  });
+  return r;
+}
+
+// Neu rendern, ohne dass die Kartei nach oben springt (Scroll-Position der .kbody halten)
+function rerenderKeepScroll(){
+  if(typeof selectedClient==='undefined'||!selectedClient)return;
+  var box=document.querySelector('.kbody');
+  var st=box?box.scrollTop:0;
+  renderKartei(selectedClient);
+  requestAnimationFrame(function(){
+    var b=document.querySelector('.kbody');
+    if(b)b.scrollTop=st;
+  });
+}
 
 function openAddTreatment(){
   selectedTreatmentId=null;
+  activeTreatmentDraftId=kUid();
+  treatmentSaveInProgress=false;
   document.getElementById('addModalContent').innerHTML=`
     <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
     <h2>Behandlung dokumentieren</h2>
     <p style="color:var(--muted);font-size:12px;margin-bottom:16px">Behandlung auswählen:</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px" id="treatmentPicker">
-      ${SC_TREATMENTS.map(t=>`
+      ${getTreatmentPickList().map(t=>`
         <div id="tp-${t.id}" onclick="pickTreatment('${t.id}')" style="padding:16px;border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;background:var(--bg2);touch-action:manipulation" onmouseover="this.style.borderColor='${t.color}'" onmouseout="if(selectedTreatmentId!=='${t.id}')this.style.borderColor='var(--border)'" ontouchstart="this.style.borderColor='${t.color}'">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
             <span style="display:inline-flex;align-items:center;color:${t.color}">${t.icon}</span>
-            <span style="font-size:14px;font-weight:500;color:var(--text)">${t.name}</span>
+            <span style="font-size:14px;font-weight:500;color:var(--text)">${esc(t.name)}</span>
           </div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.4">${t.desc}</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.4">${t.price>0?fmtEur(t.price):''}${t.price>0&&t.desc?' · ':''}${esc(t.desc||'')}</div>
         </div>
       `).join('')}
     </div>
@@ -3057,10 +3620,11 @@ function openAddTreatment(){
       <div class="form-grid" style="margin-bottom:16px">
         <div class="fg"><label>Datum</label><input type="date" id="atDate" value="${TODAY_STR}"></div>
         <div class="fg"><label>Uhrzeit</label><input type="time" id="atTime"></div>
+        <div class="fg"><label>Preis (EUR)<span id="atPriceHint" style="color:var(--muted);font-weight:400"></span></label><input type="number" id="atPrice" step="0.01" inputmode="decimal" placeholder="0,00"></div>
         <div class="fg form-full"><label>Verwendete Produkte</label><input id="atProducts" placeholder="z.B. Noon Serum, Smetics Cleanser, Skinconcept Mask..."></div>
         <div class="fg form-full"><label>Notizen / Behandlungsverlauf</label><textarea id="atNotes" rows="4" placeholder="Hautzustand, Reaktion, Ergebnis, nächste Schritte..."></textarea></div>
       </div>
-      <button class="btn btn-gold" onclick="saveTreatment()">Behandlung speichern</button>
+      <button type="button" class="btn btn-gold" id="saveTreatmentBtn" onclick="saveTreatment()">Behandlung speichern</button>
     </div>
   `;
   openModal('addModal');
@@ -3068,7 +3632,7 @@ function openAddTreatment(){
 
 function pickTreatment(id){
   selectedTreatmentId=id;
-  const t=SC_TREATMENTS.find(x=>x.id===id);
+  const t=getTreatmentPickList().find(x=>x.id===id);
   if(!t)return;
   document.querySelectorAll('#treatmentPicker > div').forEach(el=>{el.style.borderColor='var(--border)';el.style.background='var(--bg2)'});
   const picked=document.getElementById('tp-'+id);
@@ -3077,12 +3641,21 @@ function pickTreatment(id){
   document.getElementById('tfIcon').innerHTML=t.icon;
   document.getElementById('tfName').textContent=t.name;
   document.getElementById('treatmentForm').style.display='block';
+  // Preis automatisch aus dem Katalog übernehmen (editierbar)
+  const priceEl=document.getElementById('atPrice');
+  const hintEl=document.getElementById('atPriceHint');
+  if(priceEl){
+    const p=catalogTreatmentPrice(t.name);
+    if(p>0){priceEl.value=p;if(hintEl)hintEl.textContent=' — aus Katalog übernommen';}
+    else{priceEl.value='';if(hintEl)hintEl.textContent=' — kein Katalogpreis hinterlegt';}
+  }
 }
 
 function saveTreatment(){
   console.log('saveTreatment gestartet');
-  if(!selectedClient){toast('Kein Kunde ausgewaehlt','warn');console.warn('saveTreatment: selectedClient ist null');return}
-  if(!selectedTreatmentId){toast('Bitte Behandlungsart auswählen','warn');console.warn('saveTreatment: selectedTreatmentId ist null');return}
+  if(treatmentSaveInProgress)return false;
+  if(!selectedClient){toast('Kein Kunde ausgewählt','warn');console.warn('saveTreatment: selectedClient ist null');return false}
+  if(!selectedTreatmentId){toast('Bitte Behandlungsart auswählen','warn');console.warn('saveTreatment: selectedTreatmentId ist null');return false}
 
   // Elemente defensiv holen
   const dateEl=document.getElementById('atDate');
@@ -3094,19 +3667,37 @@ function saveTreatment(){
   if(!timeEl)missing.push('atTime');
   if(!prodEl)missing.push('atProducts');
   if(!notesEl)missing.push('atNotes');
-  if(missing.length){toast('Formular-Feld fehlt: '+missing.join(', '),'warn');console.error('Fehlende Eingabefelder:',missing);return}
+  if(missing.length){toast('Formular-Feld fehlt: '+missing.join(', '),'warn');console.error('Fehlende Eingabefelder:',missing);return false}
+  if(saveLocked('treatment'))return false;
 
-  const t=SC_TREATMENTS.find(x=>x.id===selectedTreatmentId);
+  treatmentSaveInProgress=true;
+  const saveBtn=document.getElementById('saveTreatmentBtn');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Wird gespeichert …';}
+
+  const t=getTreatmentPickList().find(x=>x.id===selectedTreatmentId);
+  const priceEl=document.getElementById('atPrice');
   const kd=getClientKartei(selectedClient.id);
   if(!kd.treatments)kd.treatments=[];
-  kd.treatments.unshift({
+  const draftId=activeTreatmentDraftId||kUid();
+  if(kd.treatments.some(function(item){return item&&item._uid===draftId;})){
+    treatmentSaveInProgress=false;
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Behandlung speichern';}
+    console.warn('saveTreatment: identischer Formularvorgang wurde bereits gespeichert',draftId);
+    return false;
+  }
+  const treatmentEntry={
+    _uid:draftId,
     date:dateEl.value,
     time:timeEl.value,
     type:t?t.name:selectedTreatmentId,
     typeId:selectedTreatmentId,
+    price:priceEl?kParseNum(priceEl.value):0,
     products:prodEl.value,
     notes:notesEl.value
-  });
+  };
+  kd.treatments.unshift(treatmentEntry);
+  // Bestehende Doppel-Einträge (ohne _uid) bei dieser Gelegenheit bereinigen
+  kd.treatments=dedupArr(kd.treatments);
 
   try{
     _pendingSaves++;
@@ -3116,7 +3707,9 @@ function saveTreatment(){
     _pendingSaves=Math.max(0,_pendingSaves-1);
     console.error('saveClientKartei Fehler:',e);
     toast('Speicher-Fehler: '+(e&&e.message||e),'warn');
-    return;
+    treatmentSaveInProgress=false;
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Behandlung speichern';}
+    return false;
   }
 
   const treatDate=dateEl.value||TODAY_STR;
@@ -3127,10 +3720,36 @@ function saveTreatment(){
   selectedClient.visits=(selectedClient.visits||0)+1;
 
   try{closeModal('addModal')}catch(e){console.error('closeModal Fehler:',e)}
-  try{renderKartei(selectedClient)}catch(e){console.error('renderKartei Fehler:',e)}
+  try{rerenderKeepScroll()}catch(e){console.error('renderKartei Fehler:',e)}
   try{renderSidebar()}catch(e){console.error('renderSidebar Fehler:',e)}
+  if(typeof window.scSendAiEvent==='function'){
+    window.scSendAiEvent({
+      eventId:'treatment:'+draftId,
+      eventType:'treatment.recorded',
+      occurredAt:new Date().toISOString(),
+      customer:{
+        sourceId:selectedClient.id,
+        name:selectedClient.name||((selectedClient.fn||'')+' '+(selectedClient.ln||'')).trim(),
+        firstName:selectedClient.fn||'',
+        lastName:selectedClient.ln||'',
+        email:selectedClient.em||'',
+        phone:selectedClient.ph||''
+      },
+      treatment:{
+        sourceId:treatmentEntry._uid,
+        date:treatmentEntry.date,
+        time:treatmentEntry.time,
+        name:treatmentEntry.type,
+        typeId:treatmentEntry.typeId,
+        price:treatmentEntry.price,
+        products:treatmentEntry.products
+      }
+    }).catch(function(err){console.warn('[AI-Sync] Behandlung wird später synchronisiert:',err&&err.message||err);});
+  }
+  activeTreatmentDraftId=null;
   toast('Behandlung gespeichert');
   console.log('saveTreatment fertig');
+  return true;
 }
 
 function deleteTreatment(idx){
@@ -3141,8 +3760,41 @@ function deleteTreatment(idx){
   if(!confirm('Behandlung wirklich löschen?\n\n'+label+'\n\nDas kann nicht rückgängig gemacht werden.'))return;
   kd.treatments.splice(idx,1);
   saveClientKartei(selectedClient.id,kd);
-  renderKartei(selectedClient);
+  rerenderKeepScroll();
   toast('Behandlung gelöscht');
+}
+
+// Preis einer bereits dokumentierten Behandlung nachtragen/ändern
+function editTreatmentPrice(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const t=kd.treatments&&kd.treatments[idx];
+  if(!t)return;
+  const cur=kParseNum(t.price);
+  const inp=prompt('Preis für "'+(t.type||'Behandlung')+'" (EUR):',cur>0?String(cur).replace('.',','):'');
+  if(inp===null)return;
+  t.price=kParseNum(inp);
+  saveClientKartei(selectedClient.id,kd);
+  try{syncClientToFirebase(selectedClient.id)}catch(e){}
+  rerenderKeepScroll();
+  toast('Preis gespeichert');
+}
+
+// Preis eines bereits erfassten Produkts nachtragen/ändern
+function editProductPrice(idx){
+  if(!selectedClient)return;
+  const kd=getClientKartei(selectedClient.id);
+  const p=kd.products&&kd.products[idx];
+  if(!p)return;
+  const cur=kParseNum(p.price);
+  const inp=prompt('Preis für "'+(p.name||'Produkt')+'" (EUR):',cur>0?String(cur).replace('.',','):'');
+  if(inp===null)return;
+  p.price=kParseNum(inp);
+  saveClientKartei(selectedClient.id,kd);
+  try{flushKartei()}catch(e){}
+  try{syncClientToFirebase(selectedClient.id)}catch(e){}
+  rerenderKeepScroll();
+  toast('Preis gespeichert');
 }
 
 // ── BEHANDLUNGSKUREN ──
@@ -3199,7 +3851,7 @@ function openAddKur(){
     <div class="form-grid" style="margin-bottom:16px">
       <div class="fg"><label>Behandlungstyp</label>
         <select id="kurType">
-          ${SC_TREATMENTS.map(t=>'<option value="'+t.id+'">'+t.name+'</option>').join('')}
+          ${getTreatmentPickList().map(t=>'<option value="'+t.id+'">'+esc(t.name)+'</option>').join('')}
         </select>
       </div>
       <div class="fg"><label>Anzahl Sitzungen</label><input type="number" id="kurTotal" min="2" max="20" value="6" style="width:100%"></div>
@@ -3250,12 +3902,18 @@ const PRODUCT_DB_KEY='sc_product_db';
 function loadProductDB(){try{return JSON.parse(localStorage.getItem(PRODUCT_DB_KEY)||'{}')}catch{return{}}}
 function saveProductDB(db){localStorage.setItem(PRODUCT_DB_KEY,JSON.stringify(db))}
 
-function openAddProduct(){
+function openAddProduct(prefill){
+  prefill=prefill||{};
   document.getElementById('addModalContent').innerHTML=`
     <button class="modal-close" onclick="closeModal('addModal');stopScanner()">&times;</button>
     <h2>Produkt erfassen</h2>
     <div class="form-grid" style="margin-bottom:16px">
-      <div class="fg"><label>Produktname</label><input id="ppName" placeholder="z.B. HydroCare Serum"></div>
+      <div class="fg form-full"><label>Aus Preisliste wählen <span style="color:var(--muted);font-weight:400">— Preis &amp; Marke werden automatisch übernommen</span></label>
+        <select id="ppPick" onchange="ppPickFromCatalog()">
+          ${(function(){const list=getProductPickList();if(!list.length)return '<option value="">— Preisliste wird geladen … —</option>';return '<option value="">— Produkt wählen —</option>'+list.map(p=>'<option value="'+esc(p.name)+'">'+esc(p.name)+(p.brand?' · '+esc(p.brand):'')+(kParseNum(p.price)>0?' · '+fmtEur(p.price):'')+'</option>').join('');})()}
+        </select>
+      </div>
+      <div class="fg form-full" style="position:relative"><label>Produktname <span style="color:var(--muted);font-weight:400">— einfach tippen, Vorschläge erscheinen</span></label><input id="ppName" placeholder="z.B. Cosmo…" autocomplete="off" oninput="ppAutoPrice();ppSuggest(this.value)" onblur="setTimeout(ppHideSuggest,200)"><div id="ppSuggest" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-top:4px;max-height:240px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.28)"></div></div>
       <div class="fg"><label>Marke</label>
         <select id="ppBrand">
           <option>Noon Aesthetics</option><option>Smetics</option><option>Skinconcept</option>
@@ -3263,9 +3921,10 @@ function openAddProduct(){
       </div>
       <div class="fg"><label>Typ</label>
         <select id="ppType">
-          <option>Empfohlen</option><option>Verkauft</option><option>Probe</option><option>Nachkauf</option>
+          <option>Empfohlen</option><option>Verkauft</option><option>Nachkauf</option>
         </select>
       </div>
+      <div class="fg"><label>Preis (EUR)<span id="ppPriceHint" style="color:var(--muted);font-weight:400"></span></label><input type="number" id="ppPrice" step="0.01" inputmode="decimal" placeholder="0,00"></div>
       <div class="fg"><label>Datum</label><input type="date" id="ppDate" value="${TODAY_STR}"></div>
       <div class="fg"><label>EAN / Barcode</label><input id="ppEAN" placeholder="z.B. 4260108830012" style="font-family:monospace;letter-spacing:1px"></div>
       <div class="fg"><label>Notiz</label><input id="ppNote" placeholder="z.B. Für die Nachtpflege empfohlen"></div>
@@ -3273,6 +3932,73 @@ function openAddProduct(){
     <button class="btn btn-gold" onclick="saveProduct()">Produkt speichern</button>
   `;
   openModal('addModal');
+  if(prefill.name){const el=document.getElementById('ppName');if(el)el.value=prefill.name;}
+  if(prefill.brand){const el=document.getElementById('ppBrand');if(el){[].forEach.call(el.options,o=>{if(o.value===prefill.brand||o.text===prefill.brand)el.value=o.value;});}}
+  if(prefill.type){const el=document.getElementById('ppType');if(el)el.value=prefill.type;}
+  ppAutoPrice();
+}
+
+// Produkte aus der Preisliste (Katalog), sortiert nach Marke + Name, nur aktive
+function getProductPickList(){
+  return (CATALOG_PRODUCTS||[]).filter(p=>p&&p.name&&p.active!==false).slice().sort((a,b)=>{
+    const ab=kNorm(a.brand||''),bb=kNorm(b.brand||'');
+    return ab.localeCompare(bb,'de')||String(a.name).localeCompare(String(b.name),'de');
+  });
+}
+// Auswahl aus der Preisliste → Name übernehmen, Preis + Marke erzwingen
+function ppPickFromCatalog(){
+  const sel=document.getElementById('ppPick');
+  if(!sel||!sel.value)return;
+  const nameEl=document.getElementById('ppName');
+  if(nameEl)nameEl.value=sel.value;
+  ppAutoPrice(true);
+}
+// Live-Vorschläge beim Tippen: passende Produkte aus der Preisliste anzeigen
+function ppSuggest(q){
+  const box=document.getElementById('ppSuggest');
+  if(!box)return;
+  const query=kNorm(q);
+  if(!query){ppHideSuggest();return;}
+  // Treffer am Wortanfang zuerst, dann alle weiteren enthaltenen
+  const all=getProductPickList();
+  const starts=all.filter(p=>kNorm(p.name).indexOf(query)===0);
+  const contains=all.filter(p=>kNorm(p.name).indexOf(query)>0);
+  const list=starts.concat(contains).slice(0,8);
+  if(!list.length){ppHideSuggest();return;}
+  box.innerHTML=list.map(p=>
+    '<div onmousedown="event.preventDefault();ppChoose(\''+escJs(p.name)+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;min-height:44px;box-sizing:border-box;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--gold-dim)\'" onmouseout="this.style.background=\'transparent\'">'+
+      '<span style="color:var(--text);font-size:14px">'+esc(p.name)+'</span>'+
+      '<span style="color:var(--muted);font-size:12px;white-space:nowrap">'+esc(p.brand||'')+(kParseNum(p.price)>0?' · '+fmtEur(p.price):'')+'</span>'+
+    '</div>'
+  ).join('');
+  box.style.display='block';
+}
+function ppHideSuggest(){const b=document.getElementById('ppSuggest');if(b){b.style.display='none';b.innerHTML='';}}
+// Vorschlag übernehmen: Name setzen, Preis + Marke aus Preisliste ziehen
+function ppChoose(name){
+  const nameEl=document.getElementById('ppName');
+  if(nameEl)nameEl.value=name;
+  ppAutoPrice(true);
+  ppHideSuggest();
+  const sel=document.getElementById('ppPick');
+  if(sel){[].forEach.call(sel.options,o=>{if(o.value===name)sel.value=name;});}
+}
+// Preis + Marke aus Katalog übernehmen, sobald der Produktname passt.
+// force=true (bei Auswahl aus Liste): Preis immer überschreiben, auch wenn schon einer drin steht.
+function ppAutoPrice(force){
+  const nameEl=document.getElementById('ppName');
+  const priceEl=document.getElementById('ppPrice');
+  const hintEl=document.getElementById('ppPriceHint');
+  if(!nameEl||!priceEl)return;
+  const p=catalogProductByName(nameEl.value);
+  if(p){
+    if(force||!priceEl.value||kParseNum(priceEl.value)===0)priceEl.value=kParseNum(p.price)||'';
+    if(hintEl)hintEl.textContent=' — aus Preisliste übernommen';
+    const brandEl=document.getElementById('ppBrand');
+    if(brandEl&&p.brand){const pb=kNorm(p.brand);[].forEach.call(brandEl.options,o=>{const ov=kNorm(o.value),ot=kNorm(o.text);if(ov===pb||ot===pb||ov.indexOf(pb)>=0||pb.indexOf(ov)>=0)brandEl.value=o.value;});}
+  }else if(hintEl){
+    hintEl.textContent='';
+  }
 }
 
 // ── BARCODE SCANNER MODAL ──
@@ -3328,9 +4054,10 @@ function openBarcodeScanner(){
         </div>
         <div class="fg"><label>Typ</label>
           <select id="spType">
-            <option>Empfohlen</option><option>Verkauft</option><option>Probe</option><option>Nachkauf</option>
+            <option>Empfohlen</option><option>Verkauft</option><option>Nachkauf</option>
           </select>
         </div>
+        <div class="fg"><label>Preis (EUR)</label><input type="number" id="spPrice" step="0.01" inputmode="decimal" placeholder="0,00"></div>
         <div class="fg"><label>Datum</label><input type="date" id="spDate" value="${TODAY_STR}"></div>
         <div class="fg"><label>EAN</label><input id="spEAN" readonly style="font-family:monospace;letter-spacing:1px;color:var(--muted)"></div>
         <div class="fg"><label>Notiz</label><input id="spNote" placeholder="z.B. Für die Nachtpflege"></div>
@@ -3525,6 +4252,9 @@ function showProductResult(info,ean,isLocal){
       }
     }
     if(!matched)brandSel.value='Sonstige';
+    const cp=catalogProductByName(info.name);
+    const spp=document.getElementById('spPrice');
+    if(cp&&spp&&!spp.value)spp.value=kParseNum(cp.price)||'';
   }
 
   scannedProductInfo=info;
@@ -3571,16 +4301,21 @@ function saveScannedProduct(){
   if(!selectedClient)return;
   const name=document.getElementById('spName').value.trim();
   if(!name){toast('Bitte Produktname eingeben','warn');return}
+  if(saveLocked('product'))return;
 
   const ean=document.getElementById('spEAN').value.trim();
   const brand=document.getElementById('spBrand').value;
+  const priceEl=document.getElementById('spPrice');
 
   // Save to client kartei
   const kd=getClientKartei(selectedClient.id);
+  if(!Array.isArray(kd.products))kd.products=[];
   kd.products.unshift({
+    _uid:kUid(),
     name:name,
     brand:brand,
     type:document.getElementById('spType').value,
+    price:priceEl?kParseNum(priceEl.value):0,
     date:document.getElementById('spDate').value,
     note:document.getElementById('spNote').value,
     ean:ean
@@ -3596,7 +4331,7 @@ function saveScannedProduct(){
 
   closeModal('addModal');
   stopScanner();
-  renderKartei(selectedClient);
+  rerenderKeepScroll();
   toast('Produkt "'+esc(name)+'" gespeichert!');
 }
 
@@ -3632,28 +4367,41 @@ function renderScanHistory(){
 function saveProduct(){
   if(!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
+  if(!Array.isArray(kd.products))kd.products=[];
   const ean=(document.getElementById('ppEAN')?document.getElementById('ppEAN').value:'').trim();
-  kd.products.unshift({
-    name:document.getElementById('ppName').value,
-    brand:document.getElementById('ppBrand').value,
-    type:document.getElementById('ppType').value,
-    date:document.getElementById('ppDate').value,
-    note:document.getElementById('ppNote').value,
-    ean:ean
-  });
-  saveClientKartei(selectedClient.id,kd);
-  try{flushKartei()}catch(e){}
-  try{syncClientToFirebase(selectedClient.id)}catch(e){}
+  const nameEl=document.getElementById('ppName');
+  if(!nameEl||!nameEl.value.trim()){toast('Bitte Produktname eingeben','warn');return}
+  if(saveLocked('product'))return;
+  const priceEl=document.getElementById('ppPrice');
+  try{
+    kd.products.unshift({
+      _uid:kUid(),
+      name:document.getElementById('ppName').value,
+      brand:document.getElementById('ppBrand').value,
+      type:document.getElementById('ppType').value,
+      price:priceEl?kParseNum(priceEl.value):0,
+      date:document.getElementById('ppDate').value,
+      note:document.getElementById('ppNote').value,
+      ean:ean
+    });
+    saveClientKartei(selectedClient.id,kd);
+  }catch(e){
+    console.error('saveProduct Fehler:',e);
+    toast('Produkt konnte nicht gespeichert werden: '+((e&&e.message)?e.message:e),'warn');
+    return;
+  }
 
   // Save to product DB if EAN
   if(ean){
-    const db=loadProductDB();
-    db[ean]={name:document.getElementById('ppName').value,brand:document.getElementById('ppBrand').value};
-    saveProductDB(db);
+    try{
+      const db=loadProductDB();
+      db[ean]={name:document.getElementById('ppName').value,brand:document.getElementById('ppBrand').value};
+      saveProductDB(db);
+    }catch(e){console.warn('ProductDB:',e);}
   }
 
   closeModal('addModal');
-  renderKartei(selectedClient);
+  rerenderKeepScroll();
   toast('Produkt gespeichert & synchronisiert');
 }
 
@@ -3667,7 +4415,7 @@ function deleteProduct(idx){
   saveClientKartei(selectedClient.id,kd);
   try{flushKartei()}catch(e){}
   try{syncClientToFirebase(selectedClient.id)}catch(e){}
-  renderKartei(selectedClient);
+  rerenderKeepScroll();
   toast('Produkt gelöscht');
 }
 
@@ -3708,7 +4456,7 @@ function viewPhoto(idx){
   document.getElementById('addModalContent').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Lade Foto...</div>';
   openModal('addModal');
   loadMediaData(p).then(function(dataUrl){
-    if(!dataUrl){document.getElementById('addModalContent').innerHTML='<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button><p style="color:var(--red);padding:20px">Foto nicht verfuegbar.</p>';return}
+    if(!dataUrl){document.getElementById('addModalContent').innerHTML='<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button><p style="color:var(--red);padding:20px">Foto nicht verfügbar.</p>';return}
     document.getElementById('addModalContent').innerHTML=
       '<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button>'
       +'<img src="'+dataUrl+'" style="width:100%;border-radius:10px;margin-bottom:12px;cursor:pointer" alt="Foto" onclick="openFullscreen(this.src)">'
@@ -3729,7 +4477,7 @@ function loadPhotoPreviews(){
     if(!el)return;
     loadMediaData(p).then(function(dataUrl){
       if(dataUrl&&el){el.innerHTML='<img src="'+dataUrl+'" alt="Foto">'}
-      else if(el){el.textContent='Nicht verfuegbar'}
+      else if(el){el.textContent='Nicht verfügbar'}
     });
   });
 }
@@ -3784,18 +4532,23 @@ function viewHautanalyse(idx){
   if(!selectedClient)return;
   const kd=getClientKartei(selectedClient.id);
   const h=kd.hautanalysen[idx];
+  if(!h)return;
   const isPdf=h.type==='pdf';
-  document.getElementById('addModalContent').innerHTML=`
-    <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-    <h2 style="margin-bottom:4px">${esc(h.label||'Hautanalyse')}</h2>
-    <p style="color:var(--muted);font-size:12px;margin-bottom:16px">${fmtDate(h.date)}${h.filename?' &middot; '+esc(h.filename):''}</p>
-    ${isPdf?'<iframe src="'+h.data+'" style="width:100%;height:500px;border:none;border-radius:10px;background:#fff"></iframe>':'<img src="'+h.data+'" style="width:100%;border-radius:10px;margin-bottom:12px" alt="Hautanalyse">'}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
-      <button class="btn btn-dark btn-sm" onclick="renameHautanalyse(${idx})">Umbenennen</button>
-      <button class="btn btn-red btn-sm" onclick="deleteHautanalyse(${idx})">Löschen</button>
-    </div>
-  `;
+  document.getElementById('addModalContent').innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Lade Hautanalyse...</div>';
   openModal('addModal');
+  loadMediaData(h).then(function(dataUrl){
+    if(!dataUrl){document.getElementById('addModalContent').innerHTML='<button class="modal-close" onclick="closeModal(\'addModal\')">&times;</button><p style="color:var(--red);padding:20px">Hautanalyse konnte nicht geladen werden.</p>';return}
+    document.getElementById('addModalContent').innerHTML=`
+      <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+      <h2 style="margin-bottom:4px">${esc(h.label||'Hautanalyse')}</h2>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:16px">${fmtDate(h.date)}${h.filename?' &middot; '+esc(h.filename):''}</p>
+      ${isPdf?'<iframe src="'+dataUrl+'" style="width:100%;height:500px;border:none;border-radius:10px;background:#fff"></iframe>':'<img src="'+dataUrl+'" style="width:100%;border-radius:10px;margin-bottom:12px" alt="Hautanalyse" onclick="openFullscreen(this.src)">'}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+        <button class="btn btn-dark btn-sm" onclick="renameHautanalyse(${idx})">Umbenennen</button>
+        <button class="btn btn-red btn-sm" onclick="deleteHautanalyse(${idx})">Löschen</button>
+      </div>
+    `;
+  });
 }
 
 function renameHautanalyse(idx){
@@ -3817,7 +4570,7 @@ function deleteHautanalyse(idx){
   saveClientKartei(selectedClient.id,kd);
   closeModal('addModal');
   renderKartei(selectedClient);
-  toast('Bericht geloescht');
+  toast('Bericht gelöscht');
 }
 
 // ── NACHSORGE-INTEGRATION (Firestore client_visits) ──
@@ -4039,7 +4792,7 @@ function shareHautberichtWhatsApp(idx){
       }).then(function(){toast('Bericht geteilt')}).catch(function(){});
     }else{
       downloadHautbericht(idx);
-      var waUrl=c.ph?getWaUrl(c.ph,'Hallo '+(c.fn||'')+', hier ist dein Hautanalysebericht von Skinconcept Hagner. Ich habe dir die Datei gerade auch geschickt. Liebe Gruesse, Tamara'):'';
+      var waUrl=c.ph?getWaUrl(c.ph,'Hallo '+(c.fn||'')+', hier ist dein Hautanalysebericht von Skinconcept Hagner. Ich habe dir die Datei gerade auch geschickt. Liebe Grüße, Tamara'):'';
       if(waUrl){
         setTimeout(function(){window.open(waUrl,'_blank')},500);
         toast('Bericht heruntergeladen — WhatsApp wird geöffnet');
@@ -4101,7 +4854,7 @@ function diagnoseHautbericht(){
     var storedList=kdStored.hautberichte||[];
     lines.push('Berichte im Cache: '+storedList.length);
     var cacheSize=Math.round(JSON.stringify(_karteiCache||{}).length/1024);
-    lines.push('Cache-Groesse: '+cacheSize+' KB (IndexedDB, kein Limit)');
+    lines.push('Cache-Größe: '+cacheSize+' KB (IndexedDB, kein Limit)');
   }catch(e){lines.push('Fehler beim Lesen: '+e.message)}
   lines.push('');
   lines.push('--- CLOUD (Firebase) ---');
@@ -4114,7 +4867,7 @@ function diagnoseHautbericht(){
   ovl.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   ovl.onclick=function(e){if(e.target===ovl)document.body.removeChild(ovl)};
   var btn=document.createElement('button');
-  btn.textContent='Schliessen';
+  btn.textContent='Schließen';
   btn.style.cssText='display:block;margin:12px auto 0;padding:8px 20px;background:var(--gold,#b68);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px';
   btn.onclick=function(){document.body.removeChild(ovl)};
   var box=document.createElement('div');box.appendChild(pre);box.appendChild(btn);
@@ -4191,7 +4944,7 @@ function deleteHautbericht(idx){
   saveClientKartei(selectedClient.id,kd);
   closeModal('addModal');
   renderKartei(selectedClient);
-  toast('Bericht geloescht');
+  toast('Bericht gelöscht');
 }
 
 // ── KONTAKTIERT ──
@@ -4590,9 +5343,9 @@ const CONSENT_TEXTS={
 <li>Kein Make-up für mindestens 12 Stunden</li>
 <li>Kein Sport, keine Sauna, kein Schwimmbad für 48 Stunden</li>
 <li>Konsequenter Sonnenschutz (LSF 50+) für mindestens 2 Wochen</li>
-<li>Kein Retinol, keine Saeuren für 5–7 Tage</li>
+<li>Kein Retinol, keine Säuren für 5–7 Tage</li>
 <li>Nur die empfohlenen Pflegeprodukte verwenden</li>
-<li>Behandelten Bereich nicht beruehren oder kratzen</li>
+<li>Behandelten Bereich nicht berühren oder kratzen</li>
 </ul>
 <h4>5. Einwilligung</h4>
 <p>Ich wurde ausführlich über die Microneedling-Behandlung, deren Ablauf, mögliche Risiken, Nebenwirkungen, Kontraindikationen und das erforderliche Nachsorgeverhalten aufgeklärt. Ich hatte ausreichend Gelegenheit, Fragen zu stellen. Ich willige hiermit freiwillig in die Durchführung der Behandlung ein.</p>`
@@ -4638,7 +5391,7 @@ const CONSENT_TEXTS={
 <ul>
 <li>Bekannte Jod- oder Meeresfruechteallergie</li>
 <li>Akute Hautentzündungen im Behandlungsbereich</li>
-<li>Schilddruesenueberfunktion (bei jodhaltigen Produkten)</li>
+<li>Schilddrüsenüberfunktion (bei jodhaltigen Produkten)</li>
 </ul>
 <h4>4. Verhalten nach der Behandlung</h4>
 <ul>
@@ -4688,7 +5441,7 @@ function renderConsentWarnings(kd){
         <div class="consent-warn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
         <div class="consent-warn-text">
           <div class="consent-warn-title">Erneute Einwilligung erforderlich: ${ct.name}</div>
-          <div class="consent-warn-desc">Seit der letzten Unterschrift wurden ${s.treatsSinceLast} Behandlungen durchgefuehrt (Erneuerung alle ${ct.renewEvery} Behandlungen gesetzlich vorgeschrieben).
+          <div class="consent-warn-desc">Seit der letzten Unterschrift wurden ${s.treatsSinceLast} Behandlungen durchgeführt (Erneuerung alle ${ct.renewEvery} Behandlungen gesetzlich vorgeschrieben).
             <button class="btn btn-red btn-sm" style="margin-left:8px;vertical-align:middle" onclick="openConsentForm('${ct.id}')">Jetzt unterschreiben</button>
           </div>
         </div>
@@ -4706,6 +5459,53 @@ function renderConsentWarnings(kd){
     }
   });
   return html;
+}
+
+// ── PRODUKT-NACHKAUF-ERINNERUNG (nach ~4 Monaten vermutlich leer) ──
+const REFILL_DAYS=120; // ~4 Monate
+function getRefillProducts(kd){
+  const prods=(kd&&kd.products)?kd.products:[];
+  // Nur physisch verkaufte/nachgekaufte Produkte (Empfohlen/Probe zaehlen nicht)
+  const owned=prods.filter(p=>p&&p.date&&(p.type==='Verkauft'||p.type==='Nachkauf'));
+  // Pro Produkt (Name+Marke) nur den juengsten Kauf betrachten
+  const latest={};
+  owned.forEach(p=>{
+    const key=String(p.name||'').trim().toLowerCase()+'|'+String(p.brand||'').trim().toLowerCase();
+    if(!latest[key]||p.date>latest[key].date)latest[key]=p;
+  });
+  const out=[];
+  Object.keys(latest).forEach(k=>{
+    const p=latest[k];
+    const days=diffDays(p.date);
+    if(days>=REFILL_DAYS&&days<9999){
+      out.push({name:p.name||'Produkt',brand:p.brand||'',date:p.date,days:days,type:p.type});
+    }
+  });
+  out.sort((a,b)=>b.days-a.days);
+  return out;
+}
+function getRefillCount(kd){return getRefillProducts(kd).length;}
+function renderProductRefillWarnings(kd){
+  const items=getRefillProducts(kd);
+  if(!items.length)return '';
+  const rows=items.map(it=>`<div class="refill-item">
+      <div class="refill-item-main">
+        <span class="refill-item-name">${esc(it.name)}</span>
+        ${it.brand?'<span class="refill-item-brand">'+esc(it.brand)+'</span>':''}
+      </div>
+      <div class="refill-item-meta">Verkauft am ${fmtDate(it.date)} &middot; vor ${formatDays(it.days)} &middot; vermutlich aufgebraucht</div>
+      <button class="btn btn-gold btn-sm" onclick="openAddProduct({name:'${escJs(it.name)}',brand:'${escJs(it.brand)}',type:'Nachkauf'})">Nachkauf eintragen</button>
+    </div>`).join('');
+  return `<div class="refill-warn">
+    <div class="refill-warn-head">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+      <div>
+        <div class="refill-warn-title">Nachkauf empfohlen &middot; ${items.length} Produkt${items.length>1?'e':''}</div>
+        <div class="refill-warn-sub">Diese Pflegeprodukte wurden vor &uuml;ber 4 Monaten verkauft und sind voraussichtlich leer. Jetzt aktiv einen Nachkauf anbieten &mdash; so bleibt die Pflege l&uuml;ckenlos.</div>
+      </div>
+    </div>
+    <div class="refill-list">${rows}</div>
+  </div>`;
 }
 
 function renderConsentCards(kd){
@@ -4842,7 +5642,7 @@ function openConsentForm(treatId){
 function saveConsent(treatId){
   if(!selectedClient)return;
   const check=document.getElementById('consentCheck');
-  if(!check||!check.checked){toast('Bitte Einverständnis bestaetigen (Checkbox)','warn');return}
+  if(!check||!check.checked){toast('Bitte Einverständnis bestätigen (Checkbox)','warn');return}
   if(isSigEmpty()){toast('Bitte Unterschrift leisten','warn');return}
 
   const sigData=sigCanvas.toDataURL('image/png');
@@ -4875,7 +5675,7 @@ function viewSignature(treatId,date){
       <img src="${c.signature}" style="max-width:100%;border-radius:8px" alt="Unterschrift">
     </div>
     <div style="margin-top:12px;display:flex;gap:8px">
-      <button class="btn btn-dark btn-sm" onclick="closeModal('addModal')">Schliessen</button>
+      <button class="btn btn-dark btn-sm" onclick="closeModal('addModal')">Schließen</button>
       <button class="btn btn-gold btn-sm" onclick="printSignature('${treatId}','${date}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Drucken</button>
     </div>
   `;
@@ -4940,8 +5740,8 @@ const _origSaveTreatment=saveTreatment;
 saveTreatment=function(){
   const _tid=selectedTreatmentId;
   const _cl=selectedClient;
-  _origSaveTreatment();
-  if(!_cl||!_tid)return;
+  const _saved=_origSaveTreatment();
+  if(!_saved||!_cl||!_tid)return false;
   const kd=getClientKartei(_cl.id);
 
   const ct=CONSENT_TREATMENTS.find(c=>c.id===_tid);
@@ -4963,6 +5763,7 @@ saveTreatment=function(){
       }
     },800);
   }
+  return true;
 };
 
 // ── NOTIZEN FUNKTIONEN ──
@@ -4970,7 +5771,7 @@ function openAddNote(){
   if(!selectedClient)return;
   document.getElementById('addModalContent').innerHTML=`
     <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
-    <h2>Notiz hinzufuegen</h2>
+    <h2>Notiz hinzufügen</h2>
     <div class="form-grid" style="margin-bottom:16px">
       <div class="fg"><label>Datum</label><input type="date" id="noteDate" value="${TODAY_STR}"></div>
       <div class="fg"><label>Kategorie (optional)</label>
@@ -4979,7 +5780,7 @@ function openAddNote(){
           <option value="Allgemein">Allgemein</option>
           <option value="Hautpflege">Hautpflege</option>
           <option value="Beratung">Beratung</option>
-          <option value="Wuensche">Wuensche</option>
+          <option value="Wünsche">Wünsche</option>
           <option value="Wichtig">Wichtig</option>
           <option value="Nachsorge">Nachsorge</option>
           <option value="Intern">Intern</option>
@@ -5037,11 +5838,18 @@ function deleteNote(i){
   kd.notesList.splice(i,1);
   saveClientKartei(selectedClient.id,kd);
   renderKartei(selectedClient);
-  toast('Notiz geloescht');
+  toast('Notiz gelöscht');
 }
 
 // ── ASYNC INIT: Kartei aus IndexedDB laden (mit localStorage-Migration) ──
 (async function asyncInit(){
+  if(window.scAuthReady)await window.scAuthReady;
+  var studioAuthenticated=await nsEnsureStudio({required:true});
+  if(!studioAuthenticated)return;
+  await scLoadPrivateCustomerData();
+  var hagnerAuthenticated=await scEnsureHagnerAuth({required:true});
+  if(!hagnerAuthenticated)return;
+  setupDeletedListener();
   try{
     var data=await idbKarteiLoad();
     if(!data){
@@ -5075,6 +5883,7 @@ function deleteNote(i){
   loadAnamnese();
   loadHeimtherapie();
   loadNachsorge();
+  loadCatalog();
   setupFirebaseLiveSync();
 
   openIDB().then(function(){
@@ -5093,47 +5902,139 @@ function deleteNote(i){
 var hautappCache={};
 var haDb=nsDb;
 
+var HA_CYCLE_META={
+  menstrual:{label:'Menstruation',focus:'schonend pflegen',color:'#C0544F'},
+  follicular:{label:'Follikelphase',focus:'Wirkstoff-Sweetspot',color:'#C4A265'},
+  ovulatory:{label:'Eisprung-Phase',focus:'ausgleichen & schützen',color:'#4A7FB5'},
+  luteal:{label:'Lutealphase',focus:'vorbeugen & beruhigen',color:'#6B5344'}
+};
+function haCyclePhase(u){
+  if(!u)return null;
+  var cs=u.cycleStart,cl=parseInt(u.cycleLength);
+  if(!cs||!cl||cl<20||cl>45||u.hormonalContraception)return null;
+  var parts=String(cs).split('-');if(parts.length!==3)return null;
+  var start=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+  if(isNaN(start.getTime()))return null;
+  var n=new Date();n=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  var diff=Math.floor((n-start)/86400000);if(diff<0)return null;
+  var day=((diff%cl)+cl)%cl+1;var ov=Math.max(10,cl-14);
+  var phase=day<=5?'menstrual':day<=ov-2?'follicular':day<=ov+1?'ovulatory':'luteal';
+  return {day:day,len:cl,phase:phase};
+}
+function haPlanPhaseChip(s){
+  if(!s||!s.phase||s.phase==='all')return '';
+  var m=HA_CYCLE_META[s.phase];if(!m)return '';
+  return ' <span style="font-size:10px;padding:1px 6px;border-radius:50px;background:rgba(74,55,40,.08);color:'+m.color+'">'+esc(m.label)+'</span>';
+}
+
+// ── HAUTREISE (spiegelt die Logik der HautApp) ──
+var HR_UNLOCK_DAYS=[0,3,7,14,21,28,42,56];
+var HR_ETAPPEN=[
+  {meta:'Erster Besuch',topic:'Willkommen'},
+  {meta:'Nach wenigen Tagen',topic:'Deine Haut verstehen'},
+  {meta:'Woche 1',topic:'Die häufigsten Pflegefehler'},
+  {meta:'Woche 2',topic:'Deine sanfte Basis-Routine'},
+  {meta:'Woche 3',topic:'Innere Balance'},
+  {meta:'Woche 4',topic:'Dein Ritual'},
+  {meta:'Woche 6',topic:'Was deine Haut jetzt braucht'},
+  {meta:'Woche 8',topic:'Geduld & Selbstliebe'}
+];
+function hrStartDate(appUser){
+  var s=appUser&&appUser.hautreiseStart;
+  if(s){
+    if(typeof s.toDate==='function')return s.toDate();
+    if(s instanceof Date)return s;
+    var d=new Date(s); if(!isNaN(d.getTime()))return d;
+  }
+  var c=appUser&&appUser.createdAt;
+  if(c&&typeof c.toDate==='function')return c.toDate();
+  return null;
+}
+function hrDaysSince(start){
+  var s=new Date(start.getFullYear(),start.getMonth(),start.getDate());
+  var n=new Date(); var t=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  return Math.floor((t-s)/86400000);
+}
+async function setHautreiseStart(uid){
+  var inp=document.getElementById('hr-start-input');
+  if(!inp||!inp.value){toast('Bitte ein Datum wählen','warn');return;}
+  try{
+    var d=new Date(inp.value+'T09:00:00');
+    if(isNaN(d.getTime())){toast('Ungültiges Datum','warn');return;}
+    await haDb.collection('app_users').doc(uid).set({hautreiseStart:firebase.firestore.Timestamp.fromDate(d)},{merge:true});
+    toast('Hautreise-Start gesetzt');
+    if(selectedClient)loadHautAppData(selectedClient);
+  }catch(e){toast('Fehler: '+e.message,'warn');}
+}
+function haToggleDetails(){
+  var d=document.getElementById('ha-details');
+  var b=document.getElementById('ha-details-btn');
+  if(!d)return;
+  var open=d.style.display==='none';
+  d.style.display=open?'block':'none';
+  if(b)b.textContent=open?'Verlauf & Details ausblenden':'Verlauf & Details anzeigen';
+}
+
 async function loadHautAppData(client){
   var box=document.getElementById('hautappContent');
   if(!box)return;
+  var ok=await nsEnsureStudio();
+  if(!ok){box.innerHTML='<div class="scard"><p style="color:var(--muted);padding:16px;font-size:13px;line-height:1.6">Bitte einmalig mit dem Studio-Konto anmelden, um die HautApp-Daten zu sehen.</p><button class="btn btn-gold btn-sm" onclick="loadHautAppData(selectedClient)">Jetzt anmelden</button></div>';return;}
   var uid=findHautAppUid(client);
   if(!uid){
     var inviteLink='https://skinconcept-tool.web.app?ref='+encodeURIComponent(client.id);
     var clientName=(client.fn||client.name||'').split(' ')[0];
     var waMsg='Hallo '+clientName+', hier ist dein persönlicher Zugang zur Skinconcept HautApp — dein Haut-Tagebuch und Pflegeplan zwischen unseren Behandlungen. Registriere dich hier: '+inviteLink;
     var waLink=client.ph?('https://wa.me/'+client.ph.replace(/[^0-9]/g,'').replace(/^0/,'49')+'?text='+encodeURIComponent(waMsg)):'';
-    box.innerHTML='<div class="scard"><h3>HautApp-Einladung</h3><p style="color:var(--muted);padding:8px 0 16px;font-size:13px;line-height:1.6">'+esc(clientName)+' hat noch keinen HautApp-Account. Sende den pers&ouml;nlichen Einladungslink — die Verkn&uuml;pfung zur Kartei passiert automatisch.</p>'+(waLink?'<button class="btn btn-gold btn-sm" onclick="window.open(\''+waLink+'\',\'_blank\')" style="margin-bottom:10px">Per WhatsApp einladen</button><br>':'')+'<button class="btn btn-sm" onclick="navigator.clipboard.writeText(\''+inviteLink+'\').then(function(){toast(\'Link kopiert\')})">Link kopieren</button><div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-family:monospace;word-break:break-all;margin-top:12px;color:var(--muted)">'+esc(inviteLink)+'</div></div>';
+    box.innerHTML='<div class="scard"><h3>HautApp-Einladung</h3><p style="color:var(--muted);padding:8px 0 16px;font-size:13px;line-height:1.6">'+esc(clientName)+' hat noch keinen HautApp-Account. Sende den pers&ouml;nlichen Einladungslink. Nach der Registrierung wird die Verkn&uuml;pfung hier gepr&uuml;ft und freigegeben.</p>'+(waLink?'<button class="btn btn-gold btn-sm" onclick="window.open(\''+waLink+'\',\'_blank\')" style="margin-bottom:10px">Per WhatsApp einladen</button><br>':'')+'<button class="btn btn-sm" onclick="navigator.clipboard.writeText(\''+inviteLink+'\').then(function(){toast(\'Link kopiert\')})">Link kopieren</button><div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-family:monospace;word-break:break-all;margin-top:12px;color:var(--muted)">'+esc(inviteLink)+'</div></div>';
     return;
   }
   box.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Lade HautApp-Daten...</div>';
   try{
     var results=await Promise.all([
       haDb.collection('app_appointments').where('uid','==',uid).get(),
-      haDb.collection('app_diary').where('uid','==',uid).get(),
-      haDb.collection('app_photos').where('uid','==',uid).get(),
+      haDb.collection('app_diary').where('uid','==',uid).where('isPrivate','==',false).get(),
+      haDb.collection('app_photos').where('uid','==',uid).where('isPrivate','==',false).get(),
       haDb.collection('app_products').where('uid','==',uid).get(),
       haDb.collection('app_careplans').doc(uid).get(),
       haDb.collection('app_notifications').where('uid','==',uid).where('direction','==','to_studio').where('status','==','new').get(),
-      haDb.collection('app_users').doc(uid).get()
+      haDb.collection('app_users').doc(uid).get(),
+      haDb.collection('app_routines').doc(uid).get(),
+      haDb.collection('app_studio_messages').where('uid','==',uid).get(),
+      haDb.collection('app_anamneses').doc(uid).get()
     ]);
     var today=localDateStr();
     var appts=results[0].docs.map(function(d){return Object.assign({id:d.id},d.data());}).sort(function(a,b){return a.date<b.date?-1:1;});
     var upcoming=appts.filter(function(a){return a.date>=today;});
     var diary=results[1].docs.map(function(d){return Object.assign({id:d.id},d.data());}).sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
-    var photos=results[2].docs.map(function(d){return Object.assign({id:d.id},d.data());}).filter(function(p){return !p.isPrivate;}).sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
+    var photos=results[2].docs.map(function(d){return Object.assign({id:d.id},d.data());}).sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
     var products=results[3].docs.map(function(d){return Object.assign({id:d.id},d.data());});
     var plan=results[4].exists?results[4].data():null;
     var studioNotifs=results[5].docs.map(function(d){return Object.assign({id:d.id},d.data());});
     var appUser=results[6].exists?results[6].data():{};
+    var routines=results[7].exists?results[7].data():null;
+    var studioMsgs=results[8].docs.map(function(d){return Object.assign({id:d.id},d.data());}).sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
+    var appAnam=results[9].exists?results[9].data():null;
+    if(appAnam){
+      if(!appAnam._uid)appAnam._uid=uid;
+      if(!appAnam._source)appAnam._source='hautapp';
+      processAnamEntry(appAnam);
+    }
+    function prodName(pid){var p=products.find(function(x){return x.id===pid;});return p?(p.brand?p.name+' ('+p.brand+')':p.name):'Produkt';}
 
     var html='';
+
+    // KOPFZEILE: Hauttyp + Behandlerin + Aktualisieren
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><div style="font-size:12px;color:var(--muted)">Hauttyp: <b style="color:var(--text)">'+(appUser.hauttyp||'—')+'</b> · Betreut von <b style="color:var(--text)">'+esc(appUser.behandler||'Tamara')+'</b></div><button class="btn btn-sm" style="font-size:11px" onclick="delete hautappCache[\''+escJs(client.id)+'\'];delete hautappCache[\'_searched_\'+\''+escJs(client.id)+'\'];loadHautAppData(selectedClient)">Aktualisieren</button></div>';
 
     // PENDING APPROVAL
     if(appUser.linkedStatus==='pending'){
       html+='<div class="scard" style="border-left:3px solid var(--gold);background:#fffbf0">';
       html+='<h3 style="color:var(--gold)">Neue Kundin wartet auf Freigabe</h3>';
       html+='<p style="font-size:13px;color:var(--muted);margin-bottom:12px">'+esc(appUser.vorname||'')+' '+esc(appUser.nachname||'')+' hat sich in der HautApp registriert. Best&auml;tige die Verkn&uuml;pfung, damit die Kartei verbunden wird.</p>';
-      html+='<button class="btn btn-gold btn-sm" onclick="approveHautAppLink(\''+uid+'\')">Freigeben &amp; mit Kartei verkn&uuml;pfen</button>';
+      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">Behandlerin:</span>';
+      html+='<select id="ha-approve-behandler" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--card)"><option value="Tamara">Tamara</option><option value="Elena">Elena</option></select></div>';
+      html+='<button class="btn btn-gold btn-sm" onclick="approveHautAppLink(\''+escJs(uid)+'\',(document.getElementById(\'ha-approve-behandler\')||{}).value)">Freigeben &amp; mit Kartei verkn&uuml;pfen</button>';
       html+='</div>';
     }
 
@@ -5147,17 +6048,89 @@ async function loadHautAppData(client){
       html+='</div>';
     }
 
-    // NEXT APPOINTMENT
-    html+='<div class="scard"><h3>Nächster Termin</h3>';
-    if(upcoming.length){
-      var nx=upcoming[0];
-      var nd=new Date(nx.date+'T'+(nx.time||'10:00'));
-      var diff=Math.ceil((nd.getTime()-Date.now())/86400000);
-      html+='<div style="display:flex;align-items:center;gap:16px;padding:12px 0"><div style="text-align:center;min-width:60px"><div style="font-size:28px;font-family:inherit;font-weight:600;color:var(--gold)">'+nd.getDate()+'</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">'+nd.toLocaleDateString('de-DE',{month:'short',year:'numeric'})+'</div></div><div style="flex:1"><div style="font-weight:500">'+nd.toLocaleDateString('de-DE',{weekday:'long'})+', '+nx.time+' Uhr</div>'+(nx.note?'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+esc(nx.note)+'</div>':'')+'<div style="font-size:12px;color:var(--gold);margin-top:4px">'+(diff<=0?'Heute':diff===1?'Morgen':'In '+diff+' Tagen')+'</div></div><button class="btn btn-sm" onclick="editHautAppAppt(\''+nx.id+'\',\''+nx.date+'\',\''+esc(nx.time||'10:00')+'\',\''+esc((nx.note||'').replace(/'/g,''))+'\')">Bearbeiten</button></div>';
-    } else {
-      html+='<p style="color:var(--muted);font-size:13px;padding:8px 0">Kein Termin eingetragen.</p>';
+    // SMART-HINWEIS: ABSETZ-/PAUSE-STATUS vor Termin
+    var CRIT_INGREDIENTS=['retinol','retinoid','aha','bha','glykolsäure','salicylsäure','fruchtsäure','vitamin a','azelainsäure','tretinoin','peeling','säure'];
+    var pauseCfg=appUser.pauseConfig||{};
+    var pauseDays=parseInt(pauseCfg.daysBefore)>0?parseInt(pauseCfg.daysBefore):7;
+    var extraProds=pauseCfg.products||[];
+    var critProducts=products.filter(function(p){
+      var s=((p.name||'')+' '+(p.type||'')+' '+(p.note||'')+' '+(p.brand||'')).toLowerCase();
+      return CRIT_INGREDIENTS.some(function(ing){return s.indexOf(ing)!==-1;})||extraProds.indexOf(p.name)!==-1;
+    });
+    if(upcoming.length&&critProducts.length){
+      var na=upcoming[0];
+      var apptD=new Date(na.date+'T'+(na.time||'10:00'));
+      var pauseStart=new Date(apptD.getTime()-pauseDays*86400000);
+      var daysToPause=Math.ceil((pauseStart.getTime()-Date.now())/86400000);
+      var active=daysToPause<=0;
+      var pn=critProducts.map(function(p){return p.name;}).join(', ');
+      html+='<div class="scard" style="border-left:3px solid '+(active?'#C0544F':'var(--gold)')+';background:'+(active?'#FDF0EF':'#fffbf0')+'">';
+      html+='<h3 style="color:'+(active?'#C0544F':'var(--gold)')+'">Wirkstoff-Pause vor Termin</h3>';
+      html+='<p style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:4px">'+esc(pn)+' '+(critProducts.length===1?'enthält':'enthalten')+' aktive Wirkstoffe. Empfohlene Pause: <b>'+pauseDays+' Tage</b> vor dem Termin am '+apptD.toLocaleDateString('de-DE',{day:'2-digit',month:'long'})+'.</p>';
+      html+='<p style="font-size:13px;color:'+(active?'#C0544F':'var(--muted)')+';font-weight:600">'+(active?'Pause läuft bereits (seit '+pauseStart.toLocaleDateString('de-DE',{day:'2-digit',month:'short'})+'). Die Kundin wurde in der App informiert.':'Pause beginnt am '+pauseStart.toLocaleDateString('de-DE',{day:'2-digit',month:'long'})+' (in '+daysToPause+' Tag'+(daysToPause===1?'':'en')+').')+'</p>';
+      html+='</div>';
     }
-    html+='<div style="margin-top:8px"><button class="btn btn-gold btn-sm" onclick="addHautAppAppt(\''+uid+'\')">+ Termin eintragen</button></div></div>';
+
+    // ═══ STEUERZENTRALE (alle Aktionen gebündelt) ═══
+    haCtx={uid:uid,plan:plan,products:products,pauseCfg:pauseCfg,clientName:(client.fn||client.name||''),behandler:appUser.behandler||'Tamara'};
+    html+='<div class="scard" style="border:1px solid var(--gold)">';
+    html+='<h3 style="color:var(--gold);margin-bottom:2px">Steuerzentrale</h3>';
+    html+='<p style="font-size:11px;color:var(--muted);margin-bottom:12px">Alles zum Steuern an einem Ort — Änderungen erscheinen sofort in der App der Kundin.</p>';
+    html+='<div style="display:flex;align-items:center;gap:14px;padding:10px 12px;background:var(--bg4);border-radius:10px;margin-bottom:12px">';
+    if(upcoming.length){
+      var hz=upcoming[0];
+      var hzd=new Date(hz.date+'T'+(hz.time||'10:00'));
+      var hzdiff=Math.ceil((hzd.getTime()-Date.now())/86400000);
+      html+='<div style="text-align:center;min-width:52px"><div style="font-size:24px;font-weight:600;color:var(--gold);line-height:1">'+hzd.getDate()+'</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">'+hzd.toLocaleDateString('de-DE',{month:'short'})+'</div></div>';
+      html+='<div style="flex:1;min-width:0"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Nächster Termin</div><div style="font-weight:500;font-size:13px">'+hzd.toLocaleDateString('de-DE',{weekday:'long'})+', '+hz.time+' Uhr · <span style="color:var(--gold)">'+(hzdiff<=0?'Heute':hzdiff===1?'Morgen':'in '+hzdiff+' Tagen')+'</span></div>'+(hz.note?'<div style="font-size:12px;color:var(--muted)">'+esc(hz.note)+'</div>':'')+'</div>';
+      html+='<button class="btn btn-sm" onclick="editHautAppAppt(\''+escJs(hz.id)+'\',\''+escJs(hz.date)+'\',\''+escJs(hz.time||'10:00')+'\',\''+escJs(hz.note||'')+'\')">Bearbeiten</button>';
+    } else {
+      html+='<div style="flex:1"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Nächster Termin</div><div style="font-size:13px;color:var(--muted)">Kein Termin eingetragen</div></div><button class="btn btn-gold btn-sm" onclick="addHautAppAppt(\''+uid+'\')">+ Termin</button>';
+    }
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+    html+='<button class="btn btn-gold btn-sm" onclick="openHaPlanEditor()">'+(plan?'Pflegeplan bearbeiten':'Pflegeplan erstellen')+'</button>';
+    html+='<button class="btn btn-sm" onclick="openHaProductsEditor()">Produkte verwalten'+(products.length?' ('+products.length+')':'')+'</button>';
+    html+='<button class="btn btn-sm" onclick="openHaPauseEditor()">Absetz-Regeln anpassen</button>';
+    if(upcoming.length){html+='<button class="btn btn-sm" onclick="addHautAppAppt(\''+uid+'\')">+ Weiterer Termin</button>';}
+    html+='</div>';
+    var curBeh=appUser.behandler||'Tamara';
+    html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px">';
+    html+='<span style="font-size:12px;color:var(--muted)">Betreut von:</span>';
+    html+='<select onchange="setHaBehandler(\''+escJs(uid)+'\',this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--card)">';
+    ['Tamara','Elena'].forEach(function(nm){html+='<option value="'+nm+'"'+(curBeh===nm?' selected':'')+'>'+nm+'</option>';});
+    html+='</select>';
+    html+='<span style="font-size:11px;color:var(--muted)">— erscheint in der App als „'+esc(curBeh)+' fragen"</span>';
+    html+='</div></div>';
+
+    // ═══ HAUTREISE (Etappen-Stand + Startdatum) ═══
+    var hrStart=hrStartDate(appUser);
+    var hrDays=hrStart?hrDaysSince(hrStart):null;
+    var hrRead=Array.isArray(appUser.hautreiseRead)?appUser.hautreiseRead:[];
+    var hrUnlocked=hrStart?HR_UNLOCK_DAYS.filter(function(d){return hrDays>=d;}).length:0;
+    html+='<div class="scard"><h3>Hautreise</h3>';
+    if(!hrStart){
+      html+='<p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:4px">Noch nicht gestartet. Die Reise beginnt automatisch, sobald '+esc((client.fn||client.name||'die Kundin').split(' ')[0])+' die App zum ersten Mal öffnet — oder setze den Start unten auf den Tag des ersten Besuchs.</p>';
+    } else {
+      html+='<p style="font-size:12px;color:var(--muted);margin-bottom:8px">Start <b style="color:var(--text)">'+hrStart.toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'})+'</b> · Tag '+hrDays+' · <b style="color:var(--gold)">'+hrUnlocked+'/8</b> Etappen frei · '+hrRead.length+' gelesen</p>';
+      html+='<div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:'+Math.round(hrUnlocked/8*100)+'%;background:var(--gold)"></div></div>';
+      html+=HR_ETAPPEN.map(function(et,i){
+        var ud=new Date(hrStart.getTime()+HR_UNLOCK_DAYS[i]*86400000);
+        var unlocked=hrDays>=HR_UNLOCK_DAYS[i];
+        var read=hrRead.indexOf(i)!==-1;
+        var col=read?'#4B7B5B':(unlocked?'var(--gold)':'var(--muted)');
+        var status=read?'gelesen':(unlocked?'freigeschaltet':'ab '+ud.toLocaleDateString('de-DE',{day:'2-digit',month:'short'}));
+        var dot=read?'●':(unlocked?'○':'·');
+        return '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;font-size:12px;opacity:'+(unlocked?'1':'.5')+'"><span style="color:'+col+';font-size:14px;min-width:14px;text-align:center">'+dot+'</span><span style="color:var(--muted);min-width:92px;font-size:11px">'+esc(et.meta)+'</span><b style="flex:1;color:var(--text);font-weight:500">'+esc(et.topic)+'</b><span style="color:'+col+';font-size:11px;white-space:nowrap">'+status+'</span></div>';
+      }).join('');
+    }
+    var hrIso=hrStart?(new Date(hrStart.getTime()-hrStart.getTimezoneOffset()*60000)).toISOString().slice(0,10):'';
+    html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--border);padding-top:12px"><span style="font-size:12px;color:var(--muted)">Startdatum:</span><input type="date" id="hr-start-input" value="'+hrIso+'" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--card)"><button class="btn btn-sm" onclick="setHautreiseStart(\''+escJs(uid)+'\')">'+(hrStart?'Ändern':'Starten')+'</button></div>';
+    html+='</div>';
+
+    // ═══ DETAILS (einklappbar) ═══
+    html+='<button id="ha-details-btn" class="btn btn-sm" style="width:100%;margin:4px 0 8px" onclick="haToggleDetails()">Verlauf & Details anzeigen</button>';
+    html+='<div id="ha-details" style="display:none">';
 
     // APP STATUS
     html+='<div class="scard"><h3>HautApp-Profil</h3><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center">';
@@ -5166,14 +6139,22 @@ async function loadHautAppData(client){
     html+='<div style="background:var(--bg4);padding:12px;border-radius:10px"><div style="font-size:22px;font-family:inherit;font-weight:600;color:var(--gold)">'+products.length+'</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Produkte</div></div>';
     html+='<div style="background:var(--bg4);padding:12px;border-radius:10px"><div style="font-size:22px;font-family:inherit;font-weight:600;color:var(--gold)">'+(plan?'Ja':'–')+'</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Pflegeplan</div></div>';
     html+='</div>';
-    html+='<div style="margin-top:12px;font-size:12px;color:var(--muted)">Hauttyp: <b style="color:var(--text)">'+(appUser.hauttyp||'Nicht gesetzt')+'</b> · Registriert: '+fmtDateSafe(appUser.createdAt)+'</div></div>';
+    html+='<div style="margin-top:12px;font-size:12px;color:var(--muted)">Hauttyp: <b style="color:var(--text)">'+(appUser.hauttyp||'Nicht gesetzt')+'</b> · Registriert: '+fmtDateSafe(appUser.createdAt)+(appUser.updatedAt?' · Profil aktualisiert '+fmtDateSafe(appUser.updatedAt):'')+'</div>';
+    var prof=[];
+    if(appUser.allergien)prof.push('<div style="margin-top:6px"><span style="color:var(--muted)">Allergien / Unvertr&auml;glichkeiten:</span> <b>'+esc(appUser.allergien)+'</b></div>');
+    if(appUser.ziele)prof.push('<div style="margin-top:6px"><span style="color:var(--muted)">Hautziele:</span> <b>'+esc(appUser.ziele)+'</b></div>');
+    var haCp=haCyclePhase(appUser);
+    if(haCp){var cm=HA_CYCLE_META[haCp.phase];prof.push('<div style="margin-top:6px"><span style="color:var(--muted)">Aktuelle Hautphase:</span> <b style="color:'+cm.color+'">'+cm.label+'</b> <span style="color:var(--muted)">('+cm.focus+')</span></div>');}
+    else if(appUser.hormonalContraception)prof.push('<div style="margin-top:6px"><span style="color:var(--muted)">Zyklus:</span> <b>hormonelle Verhütung</b> <span style="color:var(--muted)">(Hautphasen-Pflege ausgeblendet)</span></div>');
+    if(prof.length)html+='<div style="font-size:12px;color:var(--text);border-top:1px solid var(--border);margin-top:10px;padding-top:10px">'+prof.join('')+'</div>';
+    html+='</div>';
 
     // RECENT DIARY
     if(diary.length){
       html+='<div class="scard"><h3>Letzte Diary-Einträge</h3>';
       var moods={1:'Bedrückt',2:'Verhalten',3:'Gut',4:'Sehr gut',5:'Strahlend'};
-      html+=diary.filter(function(e){return !e.isPrivate;}).slice(0,5).map(function(e){
-        return '<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">'+(moods[e.mood]?'<div style="flex-shrink:0;min-width:70px;text-align:center"><div style="font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gold)">'+moods[e.mood]+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Stimmung</div></div>':'')+'<div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--muted)">'+fmtDateSafe(e.createdAt)+' · Haut '+e.skinCondition+'/10'+(e.isPrivate?' · <i>Privat</i>':'')+'</div>'+(e.tags&&e.tags.length?'<div style="margin-top:4px">'+e.tags.map(function(t){return '<span style="display:inline-block;padding:2px 8px;background:var(--bg4);border-radius:50px;font-size:11px;color:var(--muted);margin-right:4px">'+esc(t)+'</span>';}).join('')+'</div>':'')+(e.note?'<div style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.5">'+esc(e.note.substring(0,200))+'</div>':'')+'</div></div>';
+      html+=diary.slice(0,5).map(function(e){
+        return '<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">'+(moods[e.mood]?'<div style="flex-shrink:0;min-width:70px;text-align:center"><div style="font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gold)">'+moods[e.mood]+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Stimmung</div></div>':'')+'<div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--muted)">'+fmtDateSafe(e.createdAt)+' · Haut '+e.skinCondition+'/10</div>'+(e.tags&&e.tags.length?'<div style="margin-top:4px">'+e.tags.map(function(t){return '<span style="display:inline-block;padding:2px 8px;background:var(--bg4);border-radius:50px;font-size:11px;color:var(--muted);margin-right:4px">'+esc(t)+'</span>';}).join('')+'</div>':'')+(e.note?'<div style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.5">'+esc(e.note.substring(0,200))+'</div>':'')+'</div></div>';
       }).join('');
       html+='</div>';
     }
@@ -5193,7 +6174,7 @@ async function loadHautAppData(client){
       html+=products.map(function(p){
         var sb=p.addedBy==='studio'?'<span style="background:#FEF3C7;color:#92400E;font-size:10px;padding:1px 6px;border-radius:50px;margin-left:4px">Studio</span>':'';
         var prog=p.progression&&p.progression.length?'<span style="background:#e0f2fe;color:#0369a1;font-size:10px;padding:1px 6px;border-radius:50px;margin-left:4px">Steigerung</span>':'';
-        return '<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:13px">'+esc(p.name)+sb+prog+'</b><div style="font-size:12px;color:var(--muted)">'+esc(p.brand||'')+' · '+esc(p.type||'')+'</div></div><div style="color:var(--gold)">'+[1,2,3,4,5].map(function(i){return '<span style="opacity:'+(i<=p.rating?'1':'.2')+'">★</span>';}).join('')+'</div></div>';
+        return '<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:13px">'+esc(p.name)+sb+prog+'</b><div style="font-size:12px;color:var(--muted)">'+esc(p.brand||'')+' · '+esc(p.type||'')+'</div></div><div style="color:var(--gold)">'+[1,2,3,4,5].map(function(i){return '<span style="opacity:'+(i<=p.rating?'1':'.2')+'">★</span>';}).join('')+'</div></div><div style="margin-top:6px;display:flex;gap:6px"><button class="btn btn-sm" style="font-size:10px;padding:3px 8px" onclick="pushProductToRoutine(\''+escJs(p.id)+'\',\''+escJs(p.name)+'\',\'morning\')">In Routine: Morgens</button><button class="btn btn-sm" style="font-size:10px;padding:3px 8px" onclick="pushProductToRoutine(\''+escJs(p.id)+'\',\''+escJs(p.name)+'\',\'evening\')">Abends</button></div></div>';
       }).join('');
       html+='</div>';
     }
@@ -5204,14 +6185,41 @@ async function loadHautAppData(client){
       html+='<p style="font-size:12px;color:var(--muted);margin-bottom:8px">'+esc(plan.subtitle||'')+' · Aktualisiert '+fmtDateSafe(plan.updatedAt)+'</p>';
       if(plan.morning&&plan.morning.length){
         html+='<div style="font-size:12px;font-weight:600;color:var(--gold);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Morgens</div>';
-        html+=plan.morning.map(function(s,i){return '<div style="font-size:13px;padding:4px 0">'+(i+1)+'. <b>'+esc(s.product)+'</b> — '+esc(s.instruction||'')+'</div>';}).join('');
+        html+=plan.morning.map(function(s,i){return '<div style="font-size:13px;padding:4px 0">'+(i+1)+'. <b>'+esc(s.product)+'</b> — '+esc(s.instruction||'')+haPlanPhaseChip(s)+'</div>';}).join('');
       }
       if(plan.evening&&plan.evening.length){
         html+='<div style="font-size:12px;font-weight:600;color:var(--gold);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Abends</div>';
-        html+=plan.evening.map(function(s,i){return '<div style="font-size:13px;padding:4px 0">'+(i+1)+'. <b>'+esc(s.product)+'</b> — '+esc(s.instruction||'')+'</div>';}).join('');
+        html+=plan.evening.map(function(s,i){return '<div style="font-size:13px;padding:4px 0">'+(i+1)+'. <b>'+esc(s.product)+'</b> — '+esc(s.instruction||'')+haPlanPhaseChip(s)+'</div>';}).join('');
       }
       html+='</div>';
     }
+
+    // AKTUELLE ROUTINE (was die Kundin wirklich anwendet)
+    var rMorning=(routines&&routines.morning)||[];
+    var rEvening=(routines&&routines.evening)||[];
+    if(rMorning.length||rEvening.length){
+      html+='<div class="scard"><h3>Aktuelle Routine der Kundin</h3><p style="font-size:12px;color:var(--muted);margin-bottom:8px">So wendet sie ihre Pflege tats&auml;chlich an. <span style="background:#FEF3C7;color:#92400E;font-size:10px;padding:1px 6px;border-radius:50px">Studio</span> = von dir vorgegeben.</p>';
+      function routeBlock(label,steps){
+        if(!steps.length)return '';
+        var h='<div style="font-size:12px;font-weight:600;color:var(--gold);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">'+label+'</div>';
+        h+=steps.map(function(s,i){var sb=s.addedBy==='studio'?' <span style="background:#FEF3C7;color:#92400E;font-size:10px;padding:1px 6px;border-radius:50px">Studio</span>':'';return '<div style="font-size:13px;padding:4px 0">'+(i+1)+'. <b>'+esc(prodName(s.productId))+'</b>'+sb+(s.instruction?' &mdash; '+esc(s.instruction):'')+'</div>';}).join('');
+        return h;
+      }
+      html+=routeBlock('Morgens',rMorning);
+      html+=routeBlock('Abends',rEvening);
+      html+='</div>';
+    }
+
+    // STUDIO-NACHRICHTEN-VERLAUF (was du der Kundin geschickt hast)
+    if(studioMsgs.length){
+      html+='<div class="scard"><h3>Nachrichten an die Kundin</h3>';
+      html+=studioMsgs.slice(0,8).map(function(m){
+        return '<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">'+fmtDateSafe(m.createdAt)+(m.title?' · '+esc(m.title):'')+'</div><div style="font-size:13px;color:var(--text);margin-top:2px;line-height:1.5">'+esc(m.text||'')+'</div></div>';
+      }).join('');
+      html+='</div>';
+    }
+
+    html+='</div>'; // ende ha-details
 
     html+='<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted)"><a href="https://skinconcept-tool.web.app/studio.html" target="_blank" style="color:var(--gold)">HautApp Studio öffnen →</a></div>';
 
@@ -5226,12 +6234,16 @@ function findHautAppUid(client){
   if(!client)return null;
   var cid=client.id;
   if(hautappCache[cid])return hautappCache[cid];
-  // 1. Check via karteiClientId (ref-link registration)
+  // 1. Bereits freigegebene oder noch wartende Verknüpfung suchen.
   if(!hautappCache['_searched_'+cid]){
     hautappCache['_searched_'+cid]=true;
-    haDb.collection('app_users').where('karteiClientId','==',cid).limit(1).get().then(function(snap){
-      if(snap.docs.length){
-        hautappCache[cid]=snap.docs[0].id;
+    Promise.all([
+      haDb.collection('app_users').where('karteiClientId','==',cid).limit(1).get(),
+      haDb.collection('app_users').where('inviteClientId','==',cid).limit(1).get()
+    ]).then(function(snaps){
+      var doc=snaps[0].docs[0]||snaps[1].docs[0];
+      if(doc){
+        hautappCache[cid]=doc.id;
         if(currentKTab==='hautapp')loadHautAppData(client);
       }
     }).catch(function(){});
@@ -5258,10 +6270,29 @@ async function markHautAppNotifRead(notifId){
   try{await haDb.collection('app_notifications').doc(notifId).update({status:'read'});if(selectedClient)loadHautAppData(selectedClient);}catch(e){toast('Fehler','warn');}
 }
 
-async function approveHautAppLink(uid){
+async function approveHautAppLink(uid,behandler){
   try{
-    await haDb.collection('app_users').doc(uid).update({linkedStatus:'approved',linkedAt:firebase.firestore.FieldValue.serverTimestamp()});
-    toast('Kundin freigeschaltet — Kartei ist verknüpft');
+    var beh=(behandler==='Elena'||behandler==='Tamara')?behandler:'Tamara';
+    var cid=selectedClient&&selectedClient.id;
+    if(!cid)throw new Error('Keine Kundenkartei ausgewählt.');
+    await haDb.collection('app_users').doc(uid).update({
+      linkedStatus:'approved',
+      karteiClientId:cid,
+      inviteClientId:firebase.firestore.FieldValue.delete(),
+      behandler:beh,
+      linkedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    hautappCache[cid]=uid;
+    toast('Kundin freigeschaltet — betreut von '+beh);
+    if(selectedClient)loadHautAppData(selectedClient);
+  }catch(e){toast('Fehler: '+e.message,'warn');}
+}
+
+async function setHaBehandler(uid,behandler){
+  var beh=(behandler==='Elena'||behandler==='Tamara')?behandler:'Tamara';
+  try{
+    await haDb.collection('app_users').doc(uid).update({behandler:beh});
+    toast('Behandlerin gesetzt: '+beh);
     if(selectedClient)loadHautAppData(selectedClient);
   }catch(e){toast('Fehler: '+e.message,'warn');}
 }
@@ -5314,6 +6345,394 @@ async function deleteHaAppt(){
     toast('Termin gelöscht');closeHaApptModal();if(selectedClient)loadHautAppData(selectedClient);
   }catch(e){toast('Fehler','warn');}
 }
+
+// ===== HAUTAPP-STEUERUNG: Kontext + Pflegeplan-Editor + Absetz-Regeln + Routine-Push =====
+var haCtx={};
+
+function haStudioUser(){var u=(window.scCurrentUser?window.scCurrentUser():'')||'tamara';return u.charAt(0).toUpperCase()+u.slice(1);}
+
+function haPlanStepRow(slot,s){
+  s=s||{};
+  var phases=[['all','Alle Phasen'],['menstrual','Menstruation'],['follicular','Follikelphase'],['ovulatory','Eisprung'],['luteal','Lutealphase']];
+  var opts=phases.map(function(p){return '<option value="'+p[0]+'"'+((s.phase||'all')===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('');
+  return '<div class="ha-plan-step" style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">'
+    +'<div style="display:flex;gap:6px;margin-bottom:6px"><input class="hp-product" placeholder="Produkt" value="'+esc(s.product||'')+'" style="flex:2;padding:.5rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px"><input class="hp-brand" placeholder="Marke" value="'+esc(s.brand||'')+'" style="flex:1;padding:.5rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px"></div>'
+    +'<div style="display:flex;gap:6px;margin-bottom:6px"><input class="hp-timing" placeholder="z.B. täglich / 2x Woche" value="'+esc(s.timing||'')+'" style="flex:1;padding:.5rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:13px"><input class="hp-instruction" placeholder="Anwendung (erbsengroß, einklopfen ...)" value="'+esc(s.instruction||'')+'" style="flex:2;padding:.5rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:13px"><button onclick="this.closest(\'.ha-plan-step\').remove()" style="border:0;background:#F3E9E8;color:#C0544F;border-radius:8px;padding:0 10px;cursor:pointer;font-size:16px">&times;</button></div>'
+    +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zyklusphase</span><select class="hp-phase" style="flex:1;padding:.45rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:13px;background:#faf9f7">'+opts+'</select></div>'
+    +'</div>';
+}
+function addHaPlanStep(slot){document.getElementById('hp-'+slot+'-list').insertAdjacentHTML('beforeend',haPlanStepRow(slot));}
+
+function openHaPlanEditor(){
+  if(!haCtx.uid){toast('Keine Kundin gewählt','warn');return;}
+  var p=haCtx.plan||{};
+  document.getElementById('hp-title').value=p.title||'';
+  document.getElementById('hp-subtitle').value=p.subtitle||'';
+  var mEl=document.getElementById('hp-morning-list'),eEl=document.getElementById('hp-evening-list');
+  mEl.innerHTML=(p.morning&&p.morning.length?p.morning:[ {} ]).map(function(s){return haPlanStepRow('morning',s);}).join('');
+  eEl.innerHTML=(p.evening&&p.evening.length?p.evening:[ {} ]).map(function(s){return haPlanStepRow('evening',s);}).join('');
+  document.getElementById('ha-plan-modal').style.display='flex';
+}
+function closeHaPlanModal(){document.getElementById('ha-plan-modal').style.display='none';}
+
+function collectHaSteps(slot){
+  var rows=document.querySelectorAll('#hp-'+slot+'-list .ha-plan-step');
+  var out=[];
+  rows.forEach(function(r){
+    var product=r.querySelector('.hp-product').value.trim();
+    if(!product)return;
+    out.push({product:product,brand:r.querySelector('.hp-brand').value.trim(),timing:r.querySelector('.hp-timing').value.trim(),instruction:r.querySelector('.hp-instruction').value.trim(),phase:r.querySelector('.hp-phase').value||'all'});
+  });
+  return out;
+}
+// Benachrichtigt die Kundin in der App über eine Studio-Änderung (erscheint auf ihrer Startseite).
+function notifyClient(uid,type,message){
+  if(!uid)return;
+  try{haDb.collection('app_notifications').add({uid:uid,direction:'to_client',type:type,message:message,status:'new',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}
+}
+
+async function saveHaPlan(){
+  if(!haCtx.uid)return;
+  var morning=collectHaSteps('morning'),evening=collectHaSteps('evening');
+  if(!morning.length&&!evening.length){toast('Bitte mindestens einen Schritt eintragen','warn');return;}
+  var prev=haCtx.plan||{};
+  var data={
+    title:document.getElementById('hp-title').value.trim()||'Dein Pflegeplan',
+    subtitle:document.getElementById('hp-subtitle').value.trim(),
+    morning:morning,evening:evening,
+    phases:prev.phases||[],adjustments:prev.adjustments||[],
+    createdBy:prev.createdBy||haCtx.behandler||haStudioUser(),
+    updatedLabel:new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'}),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    await haDb.collection('app_careplans').doc(haCtx.uid).set(data,{merge:true});
+    notifyClient(haCtx.uid,'plan_updated','Dein Pflegeplan wurde von '+(haCtx.behandler||'Tamara')+' aktualisiert.');
+    toast('Pflegeplan gespeichert — Kundin sieht ihn in der App');
+    closeHaPlanModal();if(selectedClient)loadHautAppData(selectedClient);
+  }catch(e){toast('Fehler: '+e.message,'warn');}
+}
+
+function openHaPauseEditor(){
+  if(!haCtx.uid){toast('Keine Kundin gewählt','warn');return;}
+  var cfg=haCtx.pauseCfg||{};
+  document.getElementById('hpause-days').value=parseInt(cfg.daysBefore)>0?parseInt(cfg.daysBefore):7;
+  document.getElementById('hpause-note').value=cfg.note||'';
+  var forced=cfg.products||[];
+  var box=document.getElementById('hpause-products');
+  var prods=haCtx.products||[];
+  box.innerHTML=prods.length?prods.map(function(p){
+    var on=forced.indexOf(p.name)!==-1;
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px"><input type="checkbox" class="hpause-prod" value="'+esc(p.name)+'"'+(on?' checked':'')+'> '+esc(p.name)+(p.brand?' <span style="color:var(--muted)">('+esc(p.brand)+')</span>':'')+'</label>';
+  }).join(''):'<p style="font-size:12px;color:var(--muted)">Noch keine Produkte in der App.</p>';
+  document.getElementById('ha-pause-modal').style.display='flex';
+}
+function closeHaPauseModal(){document.getElementById('ha-pause-modal').style.display='none';}
+async function saveHaPause(){
+  if(!haCtx.uid)return;
+  var days=parseInt(document.getElementById('hpause-days').value)||7;
+  var note=document.getElementById('hpause-note').value.trim();
+  var products=[];document.querySelectorAll('.hpause-prod:checked').forEach(function(c){products.push(c.value);});
+  try{
+    await haDb.collection('app_users').doc(haCtx.uid).set({pauseConfig:{daysBefore:days,products:products,note:note,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}},{merge:true});
+    notifyClient(haCtx.uid,'pause_updated',(haCtx.behandler||'Tamara')+' hat deine Wirkstoff-Hinweise vor der Behandlung angepasst.');
+    toast('Absetz-Regeln gespeichert — Kundin wurde informiert');
+    closeHaPauseModal();if(selectedClient)loadHautAppData(selectedClient);
+  }catch(e){toast('Fehler: '+e.message,'warn');}
+}
+
+// ===== HAUTAPP PRODUKT-VERWALTUNG (schreibt app_products) =====
+var HA_PROD_TYPES=['Reiniger','Toner','Serum','Creme','Augenpflege','Sonnenschutz','Maske','Peeling','Sonstiges'];
+var HA_PROD_TIMINGS=[['both','Morgens & Abends'],['morning','Nur morgens'],['evening','Nur abends'],['weekly','Wöchentlich']];
+var HA_EDIT_PROD_ID=null;
+
+function haProdTimingLabel(t){var f=HA_PROD_TIMINGS.filter(function(x){return x[0]===t;});return f.length?f[0][1]:'';}
+
+function openHaProductsEditor(){
+  if(!haCtx.uid){toast('Keine Kundin gewählt','warn');return;}
+  renderHaProductsList();
+  document.getElementById('ha-products-modal').style.display='flex';
+}
+function closeHaProductsModal(){document.getElementById('ha-products-modal').style.display='none';}
+
+function renderHaProductsList(){
+  var box=document.getElementById('ha-products-list');
+  var prods=haCtx.products||[];
+  if(!prods.length){box.innerHTML='<p style="font-size:13px;color:var(--muted);padding:8px 0">Noch keine Produkte in der App. Lege unten das erste an.</p>';return;}
+  box.innerHTML=prods.map(function(p){
+    var sb=p.addedBy==='studio'?'<span style="background:#FEF3C7;color:#92400E;font-size:10px;padding:1px 6px;border-radius:50px;margin-left:6px">Studio</span>':'<span style="background:#eee;color:#777;font-size:10px;padding:1px 6px;border-radius:50px;margin-left:6px">Kundin</span>';
+    var di=p.description&&p.description.trim()?'<span title="Beschreibung hinterlegt" style="color:var(--gold);margin-left:6px;font-size:11px">Beschreibung ✓</span>':'';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+esc(p.name)+sb+di+'</div>'
+      +'<div style="font-size:12px;color:var(--muted)">'+esc(p.brand||'')+(p.brand&&p.type?' · ':'')+esc(p.type||'')+' · '+esc(haProdTimingLabel(p.timing))+'</div></div>'
+      +'<button class="btn btn-sm" style="font-size:11px" onclick="openHaProdEdit(\''+escJs(p.id)+'\')">Bearbeiten</button>'
+      +'<button class="btn btn-sm" style="font-size:11px;color:#C0544F" onclick="deleteHaProduct(\''+escJs(p.id)+'\',\''+escJs(p.name)+'\')">Löschen</button>'
+      +'</div>';
+  }).join('');
+}
+
+function haProdRatingSet(v){
+  HA_EDIT_PROD_RATING=v;
+  document.querySelectorAll('#hprod-rating .hprod-star').forEach(function(s){
+    s.style.opacity=(parseInt(s.dataset.v)<=v)?'1':'.25';
+  });
+}
+var HA_EDIT_PROD_RATING=0;
+
+function openHaProdEdit(id){
+  HA_EDIT_PROD_ID=id||null;
+  var p=null;
+  if(id){var f=(haCtx.products||[]).filter(function(x){return x.id===id;});p=f.length?f[0]:null;}
+  p=p||{};
+  document.getElementById('hprod-edit-title').textContent=id?'Produkt bearbeiten':'Neues Produkt';
+  document.getElementById('hprod-name').value=p.name||'';
+  document.getElementById('hprod-brand').value=p.brand||'';
+  document.getElementById('hprod-type').innerHTML=HA_PROD_TYPES.map(function(t){return '<option'+((p.type||'Serum')===t?' selected':'')+'>'+t+'</option>';}).join('');
+  document.getElementById('hprod-timing').innerHTML=HA_PROD_TIMINGS.map(function(t){return '<option value="'+t[0]+'"'+((p.timing||'both')===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('');
+  document.getElementById('hprod-note').value=p.note||'';
+  document.getElementById('hprod-description').value=p.description||'';
+  haProdRatingSet(parseInt(p.rating)||0);
+  document.getElementById('ha-prodedit-modal').style.display='flex';
+}
+function closeHaProdEdit(){document.getElementById('ha-prodedit-modal').style.display='none';}
+
+async function saveHaProduct(){
+  if(!haCtx.uid){toast('Keine Kundin gewählt','warn');return;}
+  var name=document.getElementById('hprod-name').value.trim();
+  if(!name){toast('Bitte einen Produktnamen eingeben','warn');return;}
+  var data={
+    uid:haCtx.uid,
+    name:name,
+    brand:document.getElementById('hprod-brand').value.trim(),
+    type:document.getElementById('hprod-type').value,
+    timing:document.getElementById('hprod-timing').value,
+    rating:HA_EDIT_PROD_RATING||0,
+    note:document.getElementById('hprod-note').value.trim(),
+    description:document.getElementById('hprod-description').value.trim(),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    if(HA_EDIT_PROD_ID){
+      await haDb.collection('app_products').doc(HA_EDIT_PROD_ID).update(data);
+      notifyClient(haCtx.uid,'product_updated',(haCtx.behandler||'Tamara')+' hat „'+name+'" in deinen Produkten aktualisiert.');
+      toast('Produkt aktualisiert — Kundin informiert');
+    }else{
+      data.addedBy='studio';
+      data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+      await haDb.collection('app_products').add(data);
+      notifyClient(haCtx.uid,'product_added',(haCtx.behandler||'Tamara')+' hat „'+name+'" zu deinen Produkten hinzugefügt.');
+      toast('Produkt hinzugefügt — Kundin informiert');
+    }
+    closeHaProdEdit();
+    if(selectedClient){await loadHautAppData(selectedClient);renderHaProductsList();}
+  }catch(e){toast('Fehler: '+e.message,'warn');}
+}
+
+async function deleteHaProduct(id,name){
+  if(!id)return;
+  if(!confirm('„'+name+'" wirklich aus den Produkten der Kundin entfernen?'))return;
+  try{
+    await haDb.collection('app_products').doc(id).delete();
+    toast('Produkt entfernt');
+    if(selectedClient){await loadHautAppData(selectedClient);renderHaProductsList();}
+  }catch(e){toast('Fehler: '+e.message,'warn');}
+}
+
+async function pushProductToRoutine(pid,name,slot){
+  if(!haCtx.uid){toast('Keine Kundin gewählt','warn');return;}
+  try{
+    var ref=haDb.collection('app_routines').doc(haCtx.uid);
+    var doc=await ref.get();
+    var data=doc.exists?doc.data():{};
+    data.morning=data.morning||[];data.evening=data.evening||[];
+    if((data[slot]||[]).some(function(s){return s.productId===pid;})){toast(name+' ist bereits in dieser Routine');return;}
+    data[slot].push({productId:pid,instruction:'',addedBy:'studio'});
+    await ref.set(data,{merge:true});
+    notifyClient(haCtx.uid,'routine_updated',(haCtx.behandler||'Tamara')+' hat „'+name+'" zu deiner '+(slot==='morning'?'Morgenroutine':'Abendroutine')+' hinzugefügt.');
+    toast(name+' → '+(slot==='morning'?'Morgens':'Abends')+' übernommen — Kundin informiert');
+    if(selectedClient)loadHautAppData(selectedClient);
+  }catch(e){toast('Fehler: '+e.message,'warn');}
+}
+
+// ===== GLOBALE HAUTAPP-BENACHRICHTIGUNGEN (Live-Listener + Popup) =====
+var HA_NOTIF={items:[],started:false,seeded:false,seen:{},queue:[],popupOpen:false,uidToClient:{},clientAlerts:{},userMapStarted:false,anamMapStarted:false};
+
+function haNotifTypeLabel(t){
+  return ({question:'Frage & Foto',diary_shared:'Tagebuch',profile_updated:'Profil',anamnese_updated:'Anamnese',reorder:'Nachbestellung'})[t]||'Meldung';
+}
+
+// uid → Kartei-Kunde: lädt app_users, damit Meldungen der richtigen Kundenkarte zugeordnet werden
+function startHaUserMap(){
+  if(HA_NOTIF.userMapStarted)return;HA_NOTIF.userMapStarted=true;
+  try{
+    haDb.collection('app_users').onSnapshot(function(snap){
+      snap.forEach(function(d){var u=d.data();if(u&&u.karteiClientId)HA_NOTIF.uidToClient[d.id]=String(u.karteiClientId);});
+      recomputeHaClientAlerts();
+    },function(err){console.warn('HautApp-UserMap:',err&&err.message);HA_NOTIF.userMapStarted=false;});
+  }catch(e){HA_NOTIF.userMapStarted=false;}
+}
+
+// Geschützte HautApp-Anamnesen zusätzlich in die bestehende Kartei-Suche einbinden.
+function startHaAnamneseMap(){
+  if(HA_NOTIF.anamMapStarted)return;HA_NOTIF.anamMapStarted=true;
+  try{
+    haDb.collection('app_anamneses').onSnapshot(function(snap){
+      snap.forEach(function(d){
+        var entry=d.data();
+        if(!entry)return;
+        if(!entry._uid)entry._uid=d.id;
+        if(!entry._source)entry._source='hautapp';
+        processAnamEntry(entry);
+      });
+      try{renderSidebar();}catch(e){}
+    },function(err){console.warn('HautApp-AnamneseMap:',err&&err.message);HA_NOTIF.anamMapStarted=false;});
+  }catch(e){HA_NOTIF.anamMapStarted=false;}
+}
+
+// Fasst offene Meldungen pro Kundenkarte zusammen und färbt die Liste neu ein
+function recomputeHaClientAlerts(){
+  var map={};
+  (HA_NOTIF.items||[]).forEach(function(n){
+    if(!n||n.status!=='new')return;
+    var cid=HA_NOTIF.uidToClient[n.uid];
+    if(!cid)return;
+    cid=String(cid);
+    if(!map[cid])map[cid]={count:0,last:n.type};
+    map[cid].count++;
+  });
+  HA_NOTIF.clientAlerts=map;
+  try{if(typeof renderSidebar==='function'&&document.getElementById('sbList'))renderSidebar();}catch(e){}
+}
+
+function startHautAppNotifListener(){
+  if(HA_NOTIF.started)return;HA_NOTIF.started=true;
+  startHaUserMap();
+  startHaAnamneseMap();
+  try{
+    // Nur direction==to_studio (Einzel-Feld-Index, kein Composite nötig) — Status client-seitig filtern.
+    haDb.collection('app_notifications').where('direction','==','to_studio').onSnapshot(function(snap){
+      if(HA_NOTIF.seeded){
+        snap.docChanges().forEach(function(ch){
+          if(ch.type==='added'){var n=ch.doc.data();if(n&&n.status==='new'&&!HA_NOTIF.seen[ch.doc.id]){HA_NOTIF.queue.push(Object.assign({id:ch.doc.id},n));}}
+        });
+      }
+      var items=[];
+      snap.forEach(function(d){var n=d.data();if(n&&n.status==='new')items.push(Object.assign({id:d.id},n));});
+      items.sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
+      items.forEach(function(it){HA_NOTIF.seen[it.id]=true;});
+      HA_NOTIF.items=items;HA_NOTIF.seeded=true;
+      recomputeHaClientAlerts();
+      renderHaNotifBadge();renderHaNotifPanel();
+      if(HA_NOTIF.queue.length)showNextHaPopup();
+    },function(err){console.warn('HautApp-Listener:',err&&err.message);HA_NOTIF.started=false;});
+  }catch(e){HA_NOTIF.started=false;}
+}
+
+function renderHaNotifBadge(){
+  var b=document.getElementById('haNotifBadge');if(!b)return;
+  var c=HA_NOTIF.items.length;
+  if(c>0){b.textContent=c>99?'99+':String(c);b.style.display='';}else{b.style.display='none';}
+}
+
+function ensureHaNotifPanel(){
+  var p=document.getElementById('haNotifPanel');
+  if(p)return p;
+  p=document.createElement('div');
+  p.id='haNotifPanel';
+  p.style.cssText='display:none;position:fixed;top:64px;right:16px;z-index:9000;width:344px;max-width:calc(100vw - 32px);max-height:72vh;overflow-y:auto;background:#fff;border:1px solid #e8e4df;border-radius:14px;box-shadow:0 24px 60px rgba(20,16,12,.22)';
+  document.body.appendChild(p);
+  return p;
+}
+
+function renderHaNotifPanel(){
+  var p=document.getElementById('haNotifPanel');if(!p)return;
+  var items=HA_NOTIF.items;
+  var h='<div style="padding:14px 16px;border-bottom:1px solid #f0ece7;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;border-radius:14px 14px 0 0">'
+    +'<span style="font-weight:600;font-size:14px">Meldungen aus der HautApp</span>'
+    +'<span style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#8a8580">'+items.length+' neu</span>'
+    +'<button onclick="closeHaNotifPanel()" style="border:0;background:none;font-size:20px;line-height:1;color:#a89f95;cursor:pointer;padding:0">&times;</button></span></div>';
+  if(!items.length){
+    h+='<div style="padding:30px 16px;text-align:center;color:#8a8580;font-size:13px">Keine neuen Meldungen.</div>';
+  }else{
+    h+=items.map(function(n){
+      return '<div style="padding:12px 16px;border-bottom:1px solid #f4f1ed">'
+        +'<div style="font-size:13px;line-height:1.5;color:#2a2420">'+esc(n.message||'Neue Meldung')+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px">'
+        +'<span style="font-size:11px;color:#a89f95">'+esc(haNotifTypeLabel(n.type))+' &middot; '+fmtDateSafe(n.createdAt)+'</span>'
+        +'<span style="white-space:nowrap"><button class="btn btn-sm" style="font-size:11px;padding:4px 10px" onclick="openHaNotif(\''+escJs(n.uid)+'\')">&Ouml;ffnen</button> '
+        +'<button class="btn btn-sm" style="font-size:11px;padding:4px 10px" onclick="haNotifMarkRead(\''+escJs(n.id)+'\')">Erledigt</button></span>'
+        +'</div></div>';
+    }).join('');
+    h+='<div style="padding:12px 16px"><button class="btn btn-sm" style="width:100%;font-size:12px" onclick="haNotifMarkAllRead()">Alle als erledigt markieren</button></div>';
+  }
+  p.innerHTML=h;
+}
+
+function toggleHaNotifPanel(){
+  var p=ensureHaNotifPanel();
+  if(p.style.display==='none'||!p.style.display){renderHaNotifPanel();p.style.display='block';}
+  else{p.style.display='none';}
+}
+function closeHaNotifPanel(){var p=document.getElementById('haNotifPanel');if(p)p.style.display='none';}
+
+async function openHaNotif(uid){
+  closeHaNotifPanel();
+  try{
+    var doc=await haDb.collection('app_users').doc(uid).get();
+    var cid=doc.exists?(doc.data().karteiClientId||null):null;
+    if(cid&&typeof selectClient==='function'){selectClient(cid);switchKTab('hautapp');}
+    else{toast('Kundin ist noch nicht mit der Kartei verkn&uuml;pft','warn');}
+  }catch(e){toast('Fehler beim &Ouml;ffnen','warn');}
+}
+
+async function haNotifMarkRead(id){
+  try{await haDb.collection('app_notifications').doc(id).update({status:'read'});}catch(e){toast('Fehler','warn');}
+}
+async function haNotifMarkAllRead(){
+  var ids=HA_NOTIF.items.map(function(n){return n.id;});
+  for(var i=0;i<ids.length;i++){try{await haDb.collection('app_notifications').doc(ids[i]).update({status:'read'});}catch(e){}}
+}
+
+function showNextHaPopup(){
+  if(HA_NOTIF.popupOpen)return;
+  var n=HA_NOTIF.queue.shift();
+  if(!n)return;
+  HA_NOTIF.popupOpen=true;
+  var remaining=HA_NOTIF.queue.length;
+  var ov=document.createElement('div');
+  ov.id='haNotifPopup';
+  ov.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(20,16,12,.5);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;max-width:400px;width:100%;padding:26px 24px;box-shadow:0 24px 70px rgba(0,0,0,.32)">'
+    +'<div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">'
+    +'<span style="width:38px;height:38px;border-radius:50%;background:rgba(192,84,79,.12);display:inline-flex;align-items:center;justify-content:center;color:#C0544F;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></span>'
+    +'<div><div style="font-weight:600;font-size:15px">Neue HautApp-Meldung</div><div style="font-size:11px;color:#a89f95">'+esc(haNotifTypeLabel(n.type))+'</div></div></div>'
+    +'<div style="font-size:14px;line-height:1.55;color:#2a2420;background:#faf8f5;border-radius:10px;padding:14px 16px;margin-bottom:16px">'+esc(n.message||'Neue Meldung')+'</div>'
+    +(remaining>0?'<div style="font-size:12px;color:#a89f95;margin-bottom:12px">+ '+remaining+' weitere neue Meldung'+(remaining>1?'en':'')+'</div>':'')
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn btn-gold btn-sm" style="flex:1" onclick="haPopupOpen(\''+escJs(n.uid)+'\')">Ansehen</button>'
+    +'<button class="btn btn-sm" style="flex:1" onclick="haPopupDone(\''+escJs(n.id)+'\')">Erledigt</button>'
+    +'<button class="btn btn-sm" onclick="haPopupDismiss()">Sp&auml;ter</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+}
+function haPopupClose(){
+  var ov=document.getElementById('haNotifPopup');if(ov)ov.remove();
+  HA_NOTIF.popupOpen=false;
+  if(HA_NOTIF.queue.length)showNextHaPopup();
+}
+function haPopupDismiss(){haPopupClose();}
+function haPopupDone(id){haNotifMarkRead(id);haPopupClose();}
+function haPopupOpen(uid){haPopupClose();openHaNotif(uid);}
+
+// Listener starten, sobald das Studio-Konto angemeldet ist (kein Login-Zwang beim Laden).
+(function(){
+  try{
+    if(typeof nsStudioReady==='function'&&nsStudioReady())startHautAppNotifListener();
+    if(typeof nsAuth!=='undefined'&&nsAuth&&nsAuth.onAuthStateChanged){
+      nsAuth.onAuthStateChanged(function(u){if(u&&u.email===NS_STUDIO_EMAIL)startHautAppNotifListener();});
+    }
+  }catch(e){}
+})();
 </script>
 
 <!-- HAUTAPP TERMIN MODAL -->
@@ -5336,6 +6755,109 @@ async function deleteHaAppt(){
       <button onclick="closeHaApptModal()" style="flex:1;padding:.75rem;border:1px solid #e8e4df;background:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer">Abbrechen</button>
       <button id="ha-appt-delete" onclick="deleteHaAppt()" style="padding:.75rem 1rem;border:0;background:#C0544F;color:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer;display:none">L&ouml;schen</button>
       <button onclick="saveHaAppt()" style="flex:1;padding:.75rem;border:0;background:#2A2520;color:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:500">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- HAUTAPP PFLEGEPLAN-EDITOR -->
+<div id="ha-plan-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <h3 style="font-family:inherit;font-size:1.4rem;font-weight:500;letter-spacing:-0.3px;margin-bottom:1rem">Pflegeplan bearbeiten</h3>
+    <div style="margin-bottom:.9rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Titel</label>
+      <input id="hp-title" placeholder="z. B. Dein individueller Pflegeplan" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:15px;background:#faf9f7">
+    </div>
+    <div style="margin-bottom:1.2rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Untertitel (optional)</label>
+      <input id="hp-subtitle" placeholder="z. B. Aufbauphase · Frühling 2026" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px;background:#faf9f7">
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem"><h4 style="font-family:inherit;font-size:1rem;font-weight:600;color:#b68">Morgens</h4><button onclick="addHaPlanStep('morning')" class="btn btn-sm" style="font-size:11px">+ Schritt</button></div>
+    <div id="hp-morning-list"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:1rem 0 .5rem"><h4 style="font-family:inherit;font-size:1rem;font-weight:600;color:#b68">Abends</h4><button onclick="addHaPlanStep('evening')" class="btn btn-sm" style="font-size:11px">+ Schritt</button></div>
+    <div id="hp-evening-list"></div>
+    <div style="display:flex;gap:.5rem;margin-top:1.2rem">
+      <button onclick="closeHaPlanModal()" style="flex:1;padding:.75rem;border:1px solid #e8e4df;background:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer">Abbrechen</button>
+      <button onclick="saveHaPlan()" style="flex:2;padding:.75rem;border:0;background:#2A2520;color:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:500">Plan speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- HAUTAPP ABSETZ-REGELN -->
+<div id="ha-pause-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <h3 style="font-family:inherit;font-size:1.4rem;font-weight:500;letter-spacing:-0.3px;margin-bottom:.4rem">Absetz-Regeln</h3>
+    <p style="font-size:12px;color:#8a8580;margin-bottom:1rem;line-height:1.5">Wirkstoffe wie Retinol oder Säuren werden automatisch erkannt. Hier legst du fest, wie viele Tage vor dem Termin pausiert wird — und markierst zusätzliche Produkte.</p>
+    <div style="margin-bottom:.9rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Tage vor Termin absetzen</label>
+      <input id="hpause-days" type="number" min="1" max="30" value="7" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:16px;background:#faf9f7">
+    </div>
+    <div style="margin-bottom:.9rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Zusätzlich absetzen (Produkte)</label>
+      <div id="hpause-products" style="border:1px solid #e8e4df;border-radius:8px;padding:.4rem .8rem;background:#faf9f7;max-height:180px;overflow-y:auto"></div>
+    </div>
+    <div style="margin-bottom:1.2rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Eigener Hinweis an die Kundin (optional)</label>
+      <textarea id="hpause-note" rows="2" placeholder="Überschreibt den Standardtext in der App ..." style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px;background:#faf9f7;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button onclick="closeHaPauseModal()" style="flex:1;padding:.75rem;border:1px solid #e8e4df;background:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer">Abbrechen</button>
+      <button onclick="saveHaPause()" style="flex:2;padding:.75rem;border:0;background:#2A2520;color:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:500">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- HAUTAPP PRODUKTE VERWALTEN -->
+<div id="ha-products-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <h3 style="font-family:inherit;font-size:1.4rem;font-weight:500;letter-spacing:-0.3px;margin-bottom:.4rem">Produkte der Kundin</h3>
+    <p style="font-size:12px;color:#8a8580;margin-bottom:1rem;line-height:1.5">Alle Produkte, die in der App der Kundin erscheinen. Änderungen sind sofort in ihrer App sichtbar. Eine optionale Beschreibung sieht die Kundin nur, wenn sie beim Produkt darauf tippt.</p>
+    <div id="ha-products-list"></div>
+    <button onclick="openHaProdEdit(null)" class="btn btn-gold btn-sm" style="width:100%;margin-top:1rem">+ Neues Produkt anlegen</button>
+    <div style="margin-top:1.2rem">
+      <button onclick="closeHaProductsModal()" style="width:100%;padding:.75rem;border:1px solid #e8e4df;background:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- HAUTAPP PRODUKT BEARBEITEN -->
+<div id="ha-prodedit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:210;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <h3 id="hprod-edit-title" style="font-family:inherit;font-size:1.4rem;font-weight:500;letter-spacing:-0.3px;margin-bottom:1rem">Neues Produkt</h3>
+    <div style="margin-bottom:.8rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Produktname</label>
+      <input id="hprod-name" placeholder="z. B. Noon Ultimate A" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:15px;background:#faf9f7">
+    </div>
+    <div style="margin-bottom:.8rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Marke</label>
+      <input id="hprod-brand" placeholder="z. B. Noon Aesthetics" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px;background:#faf9f7">
+    </div>
+    <div style="display:flex;gap:.6rem;margin-bottom:.8rem">
+      <div style="flex:1">
+        <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Typ</label>
+        <select id="hprod-type" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px;background:#faf9f7"></select>
+      </div>
+      <div style="flex:1">
+        <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Wann</label>
+        <select id="hprod-timing" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px;background:#faf9f7"></select>
+      </div>
+    </div>
+    <div style="margin-bottom:.8rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Verträglichkeit</label>
+      <div id="hprod-rating" style="font-size:26px;color:var(--gold);letter-spacing:2px;cursor:pointer">
+        <span class="hprod-star" data-v="1" onclick="haProdRatingSet(1)" style="opacity:.25">&#9733;</span><span class="hprod-star" data-v="2" onclick="haProdRatingSet(2)" style="opacity:.25">&#9733;</span><span class="hprod-star" data-v="3" onclick="haProdRatingSet(3)" style="opacity:.25">&#9733;</span><span class="hprod-star" data-v="4" onclick="haProdRatingSet(4)" style="opacity:.25">&#9733;</span><span class="hprod-star" data-v="5" onclick="haProdRatingSet(5)" style="opacity:.25">&#9733;</span>
+      </div>
+    </div>
+    <div style="margin-bottom:.8rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Interne Notiz (nur Studio &amp; Kurzanzeige)</label>
+      <textarea id="hprod-note" rows="2" placeholder="z. B. Zieht gut ein, 2x pro Woche" style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px;background:#faf9f7;resize:vertical"></textarea>
+    </div>
+    <div style="margin-bottom:1.2rem">
+      <label style="display:block;font-size:.72rem;color:#8a8580;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase">Beschreibung (Kundin tippt zum Aufklappen)</label>
+      <textarea id="hprod-description" rows="3" placeholder="Was bewirkt das Produkt? Wird der Kundin nur gezeigt, wenn sie in der App aktiv darauf tippt." style="width:100%;padding:.7rem .8rem;border:1px solid #e8e4df;border-radius:8px;font-family:inherit;font-size:14px;background:#faf9f7;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button onclick="closeHaProdEdit()" style="flex:1;padding:.75rem;border:1px solid #e8e4df;background:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer">Abbrechen</button>
+      <button onclick="saveHaProduct()" style="flex:2;padding:.75rem;border:0;background:#2A2520;color:#fff;border-radius:8px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:500">Speichern</button>
     </div>
   </div>
 </div>

@@ -274,7 +274,7 @@
             <div class="quick-filters" id="quickFilters"></div>
             <select class="crm-select" id="crmSort">
                 <option value="days-desc">Laengste Abwesenheit zuerst</option>
-                <option value="days-asc">Kuerzeste Abwesenheit zuerst</option>
+                <option value="days-asc">Kürzeste Abwesenheit zuerst</option>
                 <option value="name-asc">Name A–Z</option>
                 <option value="visits-desc">Meiste Besuche zuerst</option>
             </select>
@@ -304,11 +304,11 @@
 
 <!-- Shared Nav -->
 <script src="shared.js"></script>
+<script src="hagner-auth.js"></script>
 
 <!-- Trello + Treatwell Data (shared mit Kartei) -->
 <script>var alleKunden = []; var TW_CONTACTS = [];</script>
-<script src="./trello_all_kunden.js"></script>
-<script src="./tw_contacts.js"></script>
+<script src="./private-customer-data.js"></script>
 
 <script>
 /* ═══════════════════════════════════════════════════════
@@ -329,15 +329,9 @@ const fbApp2=firebase.initializeApp({
 const fbDb=fbApp2.database();
 const FB_VAULT='v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
 
-const nsApp=firebase.initializeApp({
-  apiKey:"AIzaSyAdGdgPnS3Cw3Rpiubx6_s61FyfiTQxfFc",
-  authDomain:"skinconcept-tool.firebaseapp.com",
-  projectId:"skinconcept-tool",
-  storageBucket:"skinconcept-tool.firebasestorage.app",
-  messagingSenderId:"188823880943",
-  appId:"1:188823880943:web:ae87750be002cbe491071a"
-},'nachsorge');
-const nsDb=nsApp.firestore();
+// Firestore immer ueber die von shared.js initialisierte Standard-App nutzen.
+// Nur dort sitzt auch die Studio-Auth-Session fuer gehaertete Rules.
+const nsDb=db;
 
 // ── CONSTANTS ──
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
@@ -356,7 +350,12 @@ const _deletedNames=new Set(JSON.parse(localStorage.getItem(DELETED_NAMES_KEY)||
 function isDeletedName(name){if(!name)return false;return _deletedNames.has(normalize(name))}
 function markDeletedName(name){if(!name)return;_deletedNames.add(normalize(name));try{localStorage.setItem(DELETED_NAMES_KEY,JSON.stringify([..._deletedNames]))}catch(e){}}
 const FB_DELETED_REF=fbDb.ref(FB_VAULT+'/kartei_deleted');
-FB_DELETED_REF.on('child_added',function(snap){const v=snap.val();if(v&&v.name){markDeletedName(v.name)}});
+let _deletedListenerActive=false;
+function setupDeletedListener(){
+  if(_deletedListenerActive)return;
+  _deletedListenerActive=true;
+  FB_DELETED_REF.on('child_added',function(snap){const v=snap.val();if(v&&v.name){markDeletedName(v.name)}});
+}
 function diffDays(dateStr){if(!dateStr)return 9999;return Math.max(0,Math.floor((TODAY-new Date(dateStr+'T00:00:00'))/(864e5)))}
 function fmtDate(d){if(!d)return'–';if(d.includes('-')){const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]}return d}
 function formatDays(d){if(d===0)return'Heute';if(d===1)return'Gestern';if(d<7)return d+' Tage';if(d<30){const w=Math.floor(d/7);return w+' Woche'+(w>1?'n':'');}if(d<365){const m=Math.floor(d/30);return m+' Monat'+(m>1?'e':'');}const y=Math.floor(d/365),m=Math.floor((d%365)/30);return y+' Jahr'+(y>1?'e':'')+(m>0?', '+m+' Mon.':'')}
@@ -395,7 +394,7 @@ function updateCrmClientFields(id,fields){const kd=getClientKartei(id);Object.as
 let crmData={};
 function loadCrmData(){try{crmData=JSON.parse(localStorage.getItem(CRM_KEY)||'{}')}catch{crmData={}}return crmData}
 // Cloud-Schreibzugriff erst freischalten wenn die initiale FB-Synchronisierung abgeschlossen ist
-// — sonst koennte ein Klick auf dem Handy (leerer localStorage) die Cloud-Daten ueberschreiben.
+// — sonst könnte ein Klick auf dem Handy (leerer localStorage) die Cloud-Daten überschreiben.
 let _fbCrmReady=false;
 function saveCrmData(id){localStorage.setItem(CRM_KEY,JSON.stringify(crmData));if(!_fbCrmReady)return;try{if(id){const v=crmData[id];if(v===undefined||v===null)fbDb.ref(FB_VAULT+'/crm_data/'+id).remove();else fbDb.ref(FB_VAULT+'/crm_data/'+id).set(v)}else{Object.keys(crmData).forEach(function(k){fbDb.ref(FB_VAULT+'/crm_data/'+k).set(crmData[k])})}}catch(e){}}
 function getCrmEntry(id){if(!crmData[id])crmData[id]={followUps:[],kontaktiert:null,erinnerung:null,notiz:''};return crmData[id]}
@@ -413,10 +412,10 @@ function getSegment(days){if(days<=30)return SEGMENTS[0];if(days<=90)return SEGM
 function getWaTemplates(c,seg){
   const name=(c.fn||'').split(' ')[0];
   return [
-    {label:'Freundliche Erinnerung',text:'Hallo '+name+'! Hier ist Tamara von Skinconcept Hagner. Ich wollte mich mal melden — wie geht es dir und deiner Haut? Wenn du Lust hast, koennen wir gerne einen Termin fuer deine naechste Behandlung vereinbaren. Liebe Gruesse!'},
-    {label:'Neues Angebot',text:'Hey '+name+'! Ich habe tolle Neuigkeiten: Wir haben neue Behandlungen im Studio, die perfekt fuer dich sein koennten. Soll ich dir mehr dazu erzaehlen? Ich wuerde mich freuen, dich wiederzusehen! Liebe Gruesse, Tamara'},
-    {label:'Geburtstagsglueckwuensche',text:'Liebe '+name+', ich wuensche dir alles Gute zum Geburtstag! Als kleines Geschenk moechte ich dir eine besondere Behandlung anbieten. Meld dich gerne bei mir! Deine Tamara von Skinconcept'},
-    {label:'Rueckgewinnung',text:'Hallo '+name+'! Es ist schon eine Weile her, dass du bei uns warst. Ich wuerde mich sehr freuen, dich wiederzusehen und mich um deine Haut zu kuemmern. Sollen wir einen Termin vereinbaren? Liebe Gruesse, Tamara'}
+    {label:'Freundliche Erinnerung',text:'Hallo '+name+'! Hier ist Tamara von Skinconcept Hagner. Ich wollte mich mal melden — wie geht es dir und deiner Haut? Wenn du Lust hast, können wir gerne einen Termin für deine nächste Behandlung vereinbaren. Liebe Grüße!'},
+    {label:'Neues Angebot',text:'Hey '+name+'! Ich habe tolle Neuigkeiten: Wir haben neue Behandlungen im Studio, die perfekt für dich sein könnten. Soll ich dir mehr dazu erzählen? Ich würde mich freuen, dich wiederzusehen! Liebe Grüße, Tamara'},
+    {label:'Geburtstagsglückwünsche',text:'Liebe '+name+', ich wünsche dir alles Gute zum Geburtstag! Als kleines Geschenk möchte ich dir eine besondere Behandlung anbieten. Meld dich gerne bei mir! Deine Tamara von Skinconcept'},
+    {label:'Rückgewinnung',text:'Hallo '+name+'! Es ist schon eine Weile her, dass du bei uns warst. Ich würde mich sehr freuen, dich wiederzusehen und mich um deine Haut zu kümmern. Sollen wir einen Termin vereinbaren? Liebe Grüße, Tamara'}
   ];
 }
 
@@ -571,6 +570,7 @@ function loadNachsorge(){
       // Office schreibt 'name', altes Format hatte evtl. 'clientName'
       const name=(d.name||d.clientName||'').trim();
       if(!name)return;
+      if(isDeletedName(name))return; // bewusst geloeschte Kunden nicht via Kassenbuch-Sync wiederbeleben
       const c=clients.find(x=>normalize(x.fn+' '+x.ln)===normalize(name)||normalize(x.ln+' '+x.fn)===normalize(name)||normalize(x.name)===normalize(name));
       if(c){
         const vd=d.date||'';
@@ -814,7 +814,7 @@ function renderRow(c,seg){
         <div class="name">
           <div class="crm-avatar" style="background:${avatarColor(c.name)};width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
           <div>
-            <a href="#" onclick="event.preventDefault();openDetail('${c.id}')" title="Kundendetails oeffnen">${esc(c.fn)} ${esc(c.ln)}</a>
+            <a href="#" onclick="event.preventDefault();openDetail('${c.id}')" title="Kundendetails öffnen">${esc(c.fn)} ${esc(c.ln)}</a>
             <div class="badges">${badges}</div>
           </div>
         </div>
@@ -836,7 +836,7 @@ function renderRow(c,seg){
             :'<button class="crm-btn mark" onclick="markKontaktiert(\''+c.id+'\')" title="Als kontaktiert markieren">&#9744;</button>'
           }
           <button class="crm-btn kartei" onclick="openDetail('${c.id}')" title="Kundendetails">&#128203;</button>
-          <button class="crm-btn" onclick="deleteClientCRM('${c.id}')" title="Kunde loeschen" style="color:var(--danger);border-color:rgba(192,84,79,.3)">&#128465;</button>
+          <button class="crm-btn" onclick="deleteClientCRM('${c.id}')" title="Kunde löschen" style="color:var(--danger);border-color:rgba(192,84,79,.3)">&#128465;</button>
         </div>
       </td>
     </tr>`;
@@ -863,15 +863,15 @@ function openWaModal(id){
   document.getElementById('fuModalContent').innerHTML=`
     <button class="crm-modal-close" onclick="closeModal()">&times;</button>
     <h2>&#128172; WhatsApp an ${esc(c.fn)}</h2>
-    <div class="modal-sub">Waehle eine Vorlage oder schreibe eine eigene Nachricht</div>
+    <div class="modal-sub">Wähle eine Vorlage oder schreibe eine eigene Nachricht</div>
     <label>Nachrichtenvorlage</label>
     <div class="wa-templates" id="waTpls">
       ${templates.map((t,i)=>'<div class="wa-tpl" onclick="selectWaTpl('+i+')" data-idx="'+i+'"><strong>'+t.label+'</strong><br>'+esc(t.text).substring(0,100)+'...</div>').join('')}
     </div>
     <label>Nachricht bearbeiten</label>
-    <textarea id="waText" rows="5">${templates[0].text}</textarea>
+    <textarea id="waText" rows="5">${esc(templates[0].text)}</textarea>
     <div class="modal-actions">
-      <button class="modal-btn primary" onclick="sendWa('${id}','${waBase}')">&#128172; WhatsApp oeffnen</button>
+      <button class="modal-btn primary" onclick="sendWa('${id}','${waBase}')">&#128172; WhatsApp öffnen</button>
       <button class="modal-btn secondary" onclick="closeModal()">Abbrechen</button>
     </div>`;
   // Highlight first template
@@ -898,7 +898,7 @@ function sendWa(id,baseUrl){
   updateCrmClientFields(id,{kontaktiert:TODAY_STR,zuletztKontaktiert:TODAY_STR});
   closeModal();
   setTimeout(()=>render(),300);
-  toast('&#128172; WhatsApp geoeffnet & als kontaktiert markiert');
+  toast('&#128172; WhatsApp geöffnet & als kontaktiert markiert');
 }
 
 // ── FOLLOW-UP MODAL ──
@@ -978,7 +978,7 @@ function startBatchFollowUp(){
       }).join('')}
     </div>
     <div class="modal-actions" style="margin-top:16px">
-      <button class="modal-btn secondary" onclick="closeModal()">Schliessen</button>
+      <button class="modal-btn secondary" onclick="closeModal()">Schließen</button>
     </div>`;
   document.getElementById('fuModal').classList.add('open');
 }
@@ -1008,7 +1008,7 @@ function openDetail(id){
 
   document.getElementById('detailPanel').innerHTML=`
     <div class="dp-header">
-      <button class="dp-back" onclick="closeDetail()">&#8592; Zurueck zur CRM-Liste</button>
+      <button class="dp-back" onclick="closeDetail()">&#8592; Zurück zur CRM-Liste</button>
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
         <div class="crm-avatar" style="background:${avatarColor(c.name)};width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
         <div>
@@ -1036,8 +1036,8 @@ function openDetail(id){
       ${(kd.notesList||[]).length?'<div class="dp-section"><div class="dp-section-title">&#128221; Notizen</div>'+kd.notesList.slice(0,3).map(n=>'<div style="padding:8px 12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-secondary);margin-bottom:6px;line-height:1.5">'+esc(n.text||n)+'</div>').join('')+'</div>':''}
 
       <div class="dp-section">
-        <div class="dp-section-title">&#128279; Vollstaendige Kartei</div>
-        <a href="kundenkartei.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);text-decoration:none;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">&#128203; Kundenkartei oeffnen (neuer Tab)</a>
+        <div class="dp-section-title">&#128279; Vollständige Kartei</div>
+        <a href="kundenkartei.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);text-decoration:none;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">&#128203; Kundenkartei öffnen (neuer Tab)</a>
       </div>
     </div>
     <div class="dp-actions">
@@ -1047,7 +1047,7 @@ function openDetail(id){
         ?'<button class="crm-btn done" onclick="undoKontaktiert(\''+c.id+'\');openDetail(\''+c.id+'\')">&#10003; Kontaktiert aufheben</button>'
         :'<button class="crm-btn mark" onclick="markKontaktiert(\''+c.id+'\');openDetail(\''+c.id+'\')">&#9744; Als kontaktiert markieren</button>'
       }
-      <button class="crm-btn" onclick="deleteClientCRM('${c.id}')" style="color:var(--danger);border-color:rgba(192,84,79,.3);margin-left:auto">&#128465; Kunde loeschen</button>
+      <button class="crm-btn" onclick="deleteClientCRM('${c.id}')" style="color:var(--danger);border-color:rgba(192,84,79,.3);margin-left:auto">&#128465; Kunde löschen</button>
     </div>`;
   document.getElementById('detailPanel').classList.add('open');
   document.getElementById('detailOverlay').classList.add('open');
@@ -1067,10 +1067,10 @@ function copyToClipboard(text){
   });
 }
 
-// ── KUNDE LOESCHEN ──
+// ── KUNDE LÖSCHEN ──
 function deleteClientCRM(id){
   const c=clients.find(x=>x.id===id);
-  if(!c||!confirm('Kunde "'+c.fn+' '+c.ln+'" wirklich loeschen?\n\nAlle Karteidaten gehen verloren.'))return;
+  if(!c||!confirm('Kunde "'+c.fn+' '+c.ln+'" wirklich löschen?\n\nAlle Karteidaten gehen verloren.'))return;
   // Schwarze Liste (verhindert Re-Import via Anamnese mit neuer ID)
   const fullName=(c.fn+' '+c.ln).trim();
   markDeletedName(fullName);
@@ -1081,13 +1081,13 @@ function deleteClientCRM(id){
   const k=loadKartei();if(k[id]){delete k[id];_karteiCache=k;idbKarteiSave(k);try{fbDb.ref(FB_VAULT+'/kartei_data/'+id).remove()}catch(e){}}
   // Aus CRM-Daten entfernen
   if(crmData[id]){delete crmData[id];saveCrmData(id)}
-  // Panel schliessen falls offen
+  // Panel schließen falls offen
   closeDetail();
   render();
-  toast('&#128465; Kunde geloescht');
+  toast('&#128465; Kunde gelöscht');
 }
 
-// ESC schliesst Detail-Panel
+// ESC schließt Detail-Panel
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(document.getElementById('fuModal').classList.contains('open'))closeModal();else if(document.getElementById('detailPanel').classList.contains('open'))closeDetail()}})
 
 // ── TOAST ──
@@ -1101,6 +1101,15 @@ document.getElementById('fuModal').addEventListener('click',function(e){if(e.tar
 
 // ── INIT (async: Kartei aus IndexedDB laden, dann rendern) ──
 document.addEventListener('DOMContentLoaded',async function(){
+  if(window.scAuthReady)await window.scAuthReady;
+  if(typeof scEnsureStudioAuth==='function'){
+    var authenticated=await scEnsureStudioAuth({required:true});
+    if(!authenticated)return;
+  }
+  await scLoadPrivateCustomerData();
+  var hagnerAuthenticated=await scEnsureHagnerAuth({required:true});
+  if(!hagnerAuthenticated)return;
+  setupDeletedListener();
   try{
     var idbData=await openKarteiIDB().then(function(db){
       if(!db)return null;
@@ -1116,7 +1125,7 @@ document.addEventListener('DOMContentLoaded',async function(){
   loadCrmData();loadExternalData();initClients();render();loadNachsorge();initFirebaseSync();
   setTimeout(()=>{
     const reminders=clients.filter(c=>{const e=crmData[c.id];return e&&e.erinnerung===TODAY_STR}).length;
-    if(reminders)toast('&#128276; '+reminders+' Erinnerung'+(reminders>1?'en':'')+' fuer heute!');
+    if(reminders)toast('&#128276; '+reminders+' Erinnerung'+(reminders>1?'en':'')+' für heute!');
   },1000);
 });
 </script>

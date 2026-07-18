@@ -464,6 +464,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="shared.js"></script>
+<script src="hagner-auth.js"></script>
 <script>
 function roundCent(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 function fmtEUR(n) { return (n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR'; }
@@ -587,6 +588,13 @@ function addTreatmentItem() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') {
+        const studioAuthenticated = await scEnsureStudioAuth({ required: true });
+        if (!studioAuthenticated) return;
+    }
+    const hagnerAuthenticated = await scEnsureHagnerAuth({ required: true });
+    if (!hagnerAuthenticated) return;
     loadFirestoreProducts();
     loadClientsFromKartei();
 

@@ -208,6 +208,8 @@ function cleanEmailFromInfo(info) {
     return emailMatch ? emailMatch[1].trim() : null;
 }
 
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 function cleanInfoField(info) {
     if (!info) return '';
     // Remove phone/email validation notes
@@ -260,18 +262,16 @@ async function loadAndParseCSV() {
 }
 
 function loadViaFileInput() {
-    return new Promise((resolve) => {
-        const previewDiv = document.getElementById('previewTable');
-        previewDiv.innerHTML = `
-            <div style="text-align:center; padding:30px;">
-                <p style="margin-bottom:16px;">Bitte waehle die Treatwell-Exportdatei aus:</p>
-                <label class="btn btn-primary" style="cursor:pointer;">
-                    CSV-Datei auswaehlen
-                    <input type="file" accept=".csv" style="display:none;" onchange="handleFileSelect(this)">
-                </label>
-            </div>
-        `;
-    });
+    const previewDiv = document.getElementById('previewTable');
+    previewDiv.innerHTML = `
+        <div style="text-align:center; padding:30px;">
+            <p style="margin-bottom:16px;">Bitte waehle die Treatwell-Exportdatei aus:</p>
+            <label class="btn btn-primary" style="cursor:pointer;">
+                CSV-Datei auswaehlen
+                <input type="file" accept=".csv" style="display:none;" onchange="handleFileSelect(this)">
+            </label>
+        </div>
+    `;
 }
 
 function handleFileSelect(input) {
@@ -303,6 +303,12 @@ function processCSVText(text) {
     const birthdayIdx = headers.findIndex(h => h.toLowerCase() === 'geburtsdatum');
     const createdIdx = headers.findIndex(h => h.toLowerCase() === 'erstellt');
     const bookingsIdx = headers.findIndex(h => h.toLowerCase().includes('buchungen'));
+
+    if (nameIdx === -1 && vornameIdx === -1 && nachnameIdx === -1) {
+        document.getElementById('previewTable').innerHTML = '<p style="color:var(--danger);">Keine Namen-Spalte in der CSV gefunden (erwartet wird "Name", "Vorname" oder "Nachname"). Bitte pruefe, ob die richtige Treatwell-Exportdatei ausgewaehlt wurde.</p>';
+        document.getElementById('startBtn').disabled = true;
+        return;
+    }
 
     parsedClients = [];
     const skipNames = ['treatwell support', 'treatwell', 'test'];
@@ -368,7 +374,10 @@ function processCSVText(text) {
             const existing = deduped.get(key);
             // Keep the one with more bookings or more recent
             if (c.bookings > existing.bookings || c.created > existing.created) {
-                deduped.set(key, { ...c, phone: c.phone || existing.phone, email: c.email || existing.email, notes: c.notes || existing.notes });
+                deduped.set(key, { ...c, phone: c.phone || existing.phone, email: c.email || existing.email, notes: c.notes || existing.notes, birthday: c.birthday || existing.birthday, lastVisitEstimate: c.lastVisitEstimate || existing.lastVisitEstimate });
+            } else {
+                // Bestehenden Eintrag behalten, aber fehlende Felder aus c nachfuellen
+                deduped.set(key, { ...existing, phone: existing.phone || c.phone, email: existing.email || c.email, notes: existing.notes || c.notes, birthday: existing.birthday || c.birthday, lastVisitEstimate: existing.lastVisitEstimate || c.lastVisitEstimate });
             }
         } else {
             deduped.set(key, c);
@@ -394,10 +403,10 @@ function processCSVText(text) {
                     ${parsedClients.slice(0, 20).map((c, i) => `
                         <tr>
                             <td>${i + 1}</td>
-                            <td><strong>${c.name}</strong></td>
-                            <td>${c.phone || '-'}</td>
-                            <td>${c.email || '-'}</td>
-                            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.notes || '-'}</td>
+                            <td><strong>${escHtml(c.name)}</strong></td>
+                            <td>${escHtml(c.phone) || '-'}</td>
+                            <td>${escHtml(c.email) || '-'}</td>
+                            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escHtml(c.notes) || '-'}</td>
                             <td>${c.bookings}</td>
                         </tr>
                     `).join('')}
@@ -429,7 +438,13 @@ async function startImport() {
         existingClients = [];
         snap.forEach(doc => existingClients.push({ id: doc.id, ...doc.data() }));
     } catch (err) {
-        existingClients = [];
+        console.error('Fehler beim Laden bestehender Kunden:', err);
+        // Ohne bestehende Kunden wuerden alle Eintraege als neu angelegt → Massen-Duplikate.
+        // Darum hier abbrechen statt stillschweigend doppelt anzulegen.
+        document.getElementById('duringImport').style.display = 'none';
+        document.getElementById('preImport').style.display = 'block';
+        alert('Die bestehenden Kunden konnten nicht geladen werden (Internet/Firebase-Verbindung).\n\nDer Import wurde abgebrochen, damit keine doppelten Kunden angelegt werden. Bitte pruefe die Verbindung und starte den Import erneut.');
+        return;
     }
 
     log.innerHTML += `<div class="log-skip">${existingClients.length} bestehende Kunden gefunden.</div><hr style="border-color:var(--border); margin:8px 0;">`;
@@ -513,11 +528,22 @@ function calcRecallDate(lastVisit, months) {
     if (!lastVisit) return '';
     const d = new Date(lastVisit + 'T00:00:00');
     d.setMonth(d.getMonth() + Number(months));
-    return d.toISOString().slice(0, 10);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
 }
 
 // ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') {
+        const ready = await scEnsureStudioAuth({ required: true });
+        if (!ready) {
+            showToast('Studio-Anmeldung konnte nicht geladen werden. Bitte Seite neu laden.', 'error');
+            return;
+        }
+    }
     loadAndParseCSV();
 });
 </script>

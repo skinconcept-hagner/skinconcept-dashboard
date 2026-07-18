@@ -161,11 +161,11 @@
             </div>
             <div class="task-stat">
                 <div class="task-stat-val" id="stat-today">0</div>
-                <div class="task-stat-label">Heute faellig</div>
+                <div class="task-stat-label">Heute fällig</div>
             </div>
             <div class="task-stat">
                 <div class="task-stat-val" id="stat-overdue">0</div>
-                <div class="task-stat-label">Ueberfaellig</div>
+                <div class="task-stat-label">Überfällig</div>
             </div>
             <div class="task-stat">
                 <div class="task-stat-val" id="stat-done-week">0</div>
@@ -202,7 +202,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Prioritaet</label>
+                        <label>Priorität</label>
                         <select id="t-prio">
                             <option value="normal">Normal</option>
                             <option value="mittel">Mittel</option>
@@ -210,7 +210,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Faellig am</label>
+                        <label>Fällig am</label>
                         <input type="date" id="t-due">
                     </div>
                     <div class="form-group">
@@ -288,7 +288,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Prioritaet</label>
+                <label>Priorität</label>
                 <select id="edit-prio">
                     <option value="normal">Normal</option>
                     <option value="mittel">Mittel</option>
@@ -296,7 +296,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Faellig am</label>
+                <label>Fällig am</label>
                 <input type="date" id="edit-due">
             </div>
             <div class="form-group">
@@ -318,6 +318,86 @@
     </div>
 </div>
 
+<!-- ============ ERINNERUNG (poppt offene Aufgaben immer wieder hoch) ============ -->
+<style>
+    #taskReminder {
+        position: fixed; right: 20px; bottom: 20px; z-index: 300;
+        width: 360px; max-width: calc(100vw - 32px);
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-top: 4px solid var(--accent);
+        border-radius: var(--radius); box-shadow: 0 18px 50px rgba(42,37,32,0.28);
+        overflow: hidden; display: none;
+        animation: reminderIn 0.32s cubic-bezier(0.22,1,0.36,1);
+    }
+    #taskReminder.show { display: block; }
+    @keyframes reminderIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .reminder-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 16px 10px; gap: 12px;
+    }
+    .reminder-title {
+        font-size: 14px; font-weight: 600; color: var(--primary-dark);
+        letter-spacing: 0.2px; display: flex; align-items: center; gap: 8px;
+    }
+    .reminder-title .dot {
+        width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-glow); flex: none;
+    }
+    .reminder-close {
+        width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+        background: var(--bg-card); color: var(--text-light); cursor: pointer;
+        font-size: 15px; line-height: 1; flex: none;
+    }
+    .reminder-close:hover { border-color: var(--accent); color: var(--primary); }
+    .reminder-list { padding: 2px 12px 4px; max-height: 320px; overflow-y: auto; }
+    .reminder-row {
+        display: flex; align-items: center; gap: 10px; padding: 10px 4px;
+        border-bottom: 1px solid var(--border);
+    }
+    .reminder-row:last-child { border-bottom: none; }
+    .reminder-info { flex: 1; min-width: 0; }
+    .reminder-name {
+        font-size: 13px; font-weight: 500; color: var(--primary-dark);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .reminder-sub { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+    .reminder-sub.overdue { color: var(--danger); font-weight: 600; }
+    .reminder-done {
+        flex: none; min-height: 44px; padding: 0 14px; border-radius: 10px;
+        border: 1px solid var(--accent); background: var(--accent); color: #fff;
+        font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .reminder-done:hover { background: var(--primary); border-color: var(--primary); }
+    .reminder-foot {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 16px 14px; gap: 10px;
+    }
+    .reminder-more { font-size: 11px; color: var(--text-light); }
+    .reminder-snooze {
+        min-height: 44px; padding: 0 16px; border-radius: 10px;
+        border: 1px solid var(--border); background: var(--bg-card);
+        color: var(--primary); font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    .reminder-snooze:hover { border-color: var(--accent); }
+    @media (max-width: 560px) {
+        #taskReminder { right: 12px; left: 12px; bottom: 12px; width: auto; max-width: none; }
+    }
+</style>
+<div id="taskReminder" role="dialog" aria-label="Offene Aufgaben">
+    <div class="reminder-head">
+        <div class="reminder-title"><span class="dot"></span><span id="reminderTitleText">Offene Aufgaben</span></div>
+        <button class="reminder-close" onclick="snoozeReminder()" title="Später erinnern">&#10005;</button>
+    </div>
+    <div class="reminder-list" id="reminderList"></div>
+    <div class="reminder-foot">
+        <span class="reminder-more" id="reminderMore"></span>
+        <button class="reminder-snooze" onclick="snoozeReminder()">Später erinnern</button>
+    </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="shared.js"></script>
@@ -329,10 +409,17 @@ let unsubTasks = null;
 // ============ LOAD TASKS (LIVE) ============
 function loadTasks() {
     if (unsubTasks) unsubTasks();
-    unsubTasks = db.collection('studio_tasks').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    // KEIN orderBy('createdAt') in der Query: Aufgaben OHNE createdAt-Feld fielen sonst still raus.
+    // Stattdessen alle laden und client-seitig sortieren (mit Fallback createdAt -> createdAtStr).
+    unsubTasks = db.collection('studio_tasks').onSnapshot(snapshot => {
         allTasks = [];
         snapshot.forEach(doc => {
             allTasks.push({ ...doc.data(), _id: doc.id });
+        });
+        allTasks.sort((a, b) => {
+            const ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : (a.createdAtStr ? Date.parse(a.createdAtStr) : 0);
+            const tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : (b.createdAtStr ? Date.parse(b.createdAtStr) : 0);
+            return tb - ta;
         });
         renderAll();
     }, err => {
@@ -379,7 +466,9 @@ function renderAll() {
         const aOver = a.due && a.due < today ? -1 : 0;
         const bOver = b.due && b.due < today ? -1 : 0;
         if (aOver !== bOver) return aOver - bOver;
-        if (prioOrder[a.priority] !== prioOrder[b.priority]) return prioOrder[a.priority] - prioOrder[b.priority];
+        const aPrio = prioOrder[a.priority] != null ? prioOrder[a.priority] : 2;
+        const bPrio = prioOrder[b.priority] != null ? prioOrder[b.priority] : 2;
+        if (aPrio !== bPrio) return aPrio - bPrio;
         if (a.due && b.due) return a.due.localeCompare(b.due);
         if (a.due) return -1;
         if (b.due) return 1;
@@ -401,6 +490,106 @@ function renderAll() {
 
     // Render activity log
     renderActivityLog(done);
+
+    // Erinnerung aktuell halten: offene Aufgaben merken, Popup ggf. neu aufbauen
+    syncReminder(open);
+}
+
+// ============ ERINNERUNG: offene Aufgaben poppen immer wieder hoch ============
+let reminderSnoozedUntil = 0;      // Zeitstempel, bis zu dem nicht erneut gezeigt wird
+let reminderTimer = null;          // wiederkehrender Intervall-Trigger
+const REMINDER_INTERVAL = 6 * 60 * 1000;   // alle 6 Minuten erneut erinnern
+const REMINDER_SNOOZE   = 6 * 60 * 1000;   // "Später" verschiebt um 6 Minuten
+
+// Welche offenen Aufgaben sind gerade "dran"? Überfällig + heute zuerst, sonst alle offenen.
+function reminderRelevant(open) {
+    const today = todayStr();
+    const prioOrder = { hoch: 0, mittel: 1, normal: 2 };
+    const rank = t => {
+        if (t.due && t.due < today) return 0;   // überfällig
+        if (t.due === today) return 1;           // heute
+        return 2;                                // sonstige offene
+    };
+    return (open || []).slice().sort((a, b) => {
+        const ra = rank(a), rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        const pa = prioOrder[a.priority] != null ? prioOrder[a.priority] : 2;
+        const pb = prioOrder[b.priority] != null ? prioOrder[b.priority] : 2;
+        if (pa !== pb) return pa - pb;
+        if (a.due && b.due) return a.due.localeCompare(b.due);
+        if (a.due) return -1;
+        if (b.due) return 1;
+        return 0;
+    });
+}
+
+// Nach jedem Daten-Update: Popup neu befüllen bzw. ausblenden wenn alles erledigt ist
+function syncReminder(open) {
+    const el = document.getElementById('taskReminder');
+    if (!el) return;
+    const relevant = reminderRelevant(open);
+    if (!relevant.length) {
+        // Nichts mehr offen -> Popup weg, Snooze zurücksetzen
+        el.classList.remove('show');
+        reminderSnoozedUntil = 0;
+        return;
+    }
+    // Wenn das Popup gerade sichtbar ist, Inhalt live aktualisieren
+    if (el.classList.contains('show')) buildReminder(relevant);
+}
+
+function buildReminder(relevant) {
+    const today = todayStr();
+    const overdue = relevant.filter(t => t.due && t.due < today).length;
+    const titleEl = document.getElementById('reminderTitleText');
+    if (overdue > 0) titleEl.textContent = overdue === 1 ? '1 überfällige Aufgabe' : overdue + ' überfällige Aufgaben';
+    else titleEl.textContent = relevant.length === 1 ? '1 offene Aufgabe' : relevant.length + ' offene Aufgaben';
+
+    const shown = relevant.slice(0, 5);
+    document.getElementById('reminderList').innerHTML = shown.map(t => {
+        let sub = '', subCls = '';
+        if (t.due && t.due < today) { sub = 'Überfällig: ' + formatDate(t.due); subCls = ' overdue'; }
+        else if (t.due === today) { sub = 'Heute fällig'; }
+        else if (t.due) { sub = 'Fällig: ' + formatDate(t.due); }
+        else { sub = t.assignee || ''; }
+        if (t.due && t.assignee) sub += ' · ' + t.assignee;
+        return '<div class="reminder-row">'
+            + '<div class="reminder-info">'
+            +   '<div class="reminder-name">' + escHtml(t.title) + '</div>'
+            +   (sub ? '<div class="reminder-sub' + subCls + '">' + escHtml(sub) + '</div>' : '')
+            + '</div>'
+            + '<button class="reminder-done" onclick="reminderComplete(\'' + t._id + '\')">Erledigt</button>'
+            + '</div>';
+    }).join('');
+
+    const more = relevant.length - shown.length;
+    document.getElementById('reminderMore').textContent = more > 0 ? '+ ' + more + ' weitere offen' : '';
+}
+
+// Popup anzeigen (sofern nicht gerade "geschlummert")
+function showReminder() {
+    if (Date.now() < reminderSnoozedUntil) return;
+    const open = allTasks.filter(t => t.status !== 'done');
+    const relevant = reminderRelevant(open);
+    if (!relevant.length) return;
+    buildReminder(relevant);
+    document.getElementById('taskReminder').classList.add('show');
+}
+
+function snoozeReminder() {
+    reminderSnoozedUntil = Date.now() + REMINDER_SNOOZE;
+    document.getElementById('taskReminder').classList.remove('show');
+}
+
+// "Erledigt" direkt aus dem Popup — toggleTask aktualisiert Firestore, onSnapshot baut neu auf
+function reminderComplete(id) {
+    toggleTask(id, false);
+}
+
+// Wiederkehrender Trigger: alle paar Minuten erneut hochpoppen, solange etwas offen ist
+function startReminderLoop() {
+    if (reminderTimer) clearInterval(reminderTimer);
+    reminderTimer = setInterval(showReminder, REMINDER_INTERVAL);
 }
 
 function renderTaskItem(t, isDone) {
@@ -408,9 +597,9 @@ function renderTaskItem(t, isDone) {
     let dueClass = '';
     let dueText = '';
     if (t.due) {
-        if (t.due < today && !isDone) { dueClass = 'overdue'; dueText = 'Ueberfaellig: ' + formatDate(t.due); }
-        else if (t.due === today && !isDone) { dueClass = 'today'; dueText = 'Heute faellig'; }
-        else { dueText = 'Faellig: ' + formatDate(t.due); }
+        if (t.due < today && !isDone) { dueClass = 'overdue'; dueText = 'Überfällig: ' + formatDate(t.due); }
+        else if (t.due === today && !isDone) { dueClass = 'today'; dueText = 'Heute fällig'; }
+        else { dueText = 'Fällig: ' + formatDate(t.due); }
     }
 
     const assigneeClass = t.assignee === 'Tamara' ? 'tag-tamara' : t.assignee === 'Elena' ? 'tag-elena' : 'tag-alle';
@@ -431,7 +620,7 @@ function renderTaskItem(t, isDone) {
             </div>
             <div class="task-actions">
                 ${!isDone ? '<button class="task-btn" onclick="openEditModal(\'' + t._id + '\')" title="Bearbeiten">&#9998;</button>' : ''}
-                <button class="task-btn delete" onclick="deleteTask('${t._id}')" title="Loeschen">&#10005;</button>
+                <button class="task-btn delete" onclick="deleteTask('${t._id}')" title="Löschen">&#10005;</button>
             </div>
         </div>
     `;
@@ -501,7 +690,7 @@ function toggleTask(id, isDone) {
         db.collection('studio_tasks').doc(id).update({
             status: 'done',
             completedAt: todayStr(),
-            completedBy: 'Team'
+            completedBy: (typeof scCurrentUser === 'function' ? (scCurrentUser() === 'elena' ? 'Elena' : 'Tamara') : 'Team')
         }).then(() => {
             showToast('Erledigt!', 'success');
         }).catch(e => {
@@ -512,12 +701,12 @@ function toggleTask(id, isDone) {
 }
 
 function deleteTask(id) {
-    if (!confirm('Aufgabe wirklich loeschen?')) return;
+    if (!confirm('Aufgabe wirklich löschen?')) return;
     db.collection('studio_tasks').doc(id).delete().then(() => {
-        showToast('Geloescht.', '');
+        showToast('Gelöscht.', '');
     }).catch(e => {
         console.error(e);
-        showToast('Fehler beim Loeschen der Aufgabe', 'error');
+        showToast('Fehler beim Löschen der Aufgabe', 'error');
     });
 }
 
@@ -581,9 +770,14 @@ document.getElementById('editModal').addEventListener('click', function(e) {
 });
 
 // ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') await scEnsureStudioAuth();
     document.getElementById('t-due').value = todayStr();
     loadTasks();
+    // Erinnerung: kurz nach dem Laden erstmals hochpoppen, danach wiederkehrend
+    setTimeout(showReminder, 1500);
+    startReminderLoop();
 });
 </script>
 

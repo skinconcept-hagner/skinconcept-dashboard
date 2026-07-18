@@ -140,6 +140,13 @@
         }
         .rg-badge.invoice { background: var(--info-light); color: var(--info); }
         .rg-badge.voucher-source { background: var(--accent-glow); color: var(--accent); }
+        .invoice-payment-select {
+            min-width: 112px; padding: 7px 30px 7px 10px;
+            border: 1px solid var(--border-strong); border-radius: 999px;
+            background-color: #fff; color: var(--text); font-family: inherit;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+        }
+        .invoice-payment-select:disabled { cursor: wait; opacity: 0.65; }
 
         /* OFFICE-MIGRATION HINT */
         .rg-migration {
@@ -163,7 +170,7 @@
     <main class="main">
         <div class="page-header">
             <h2>Rechnungen</h2>
-            <p>Service-Rechnungen ohne Gutschein &mdash; für Behandlungen, Produktverkäufe und Sonstiges</p>
+            <p>Alle Service- und Gutschein-Rechnungen zentral verwalten</p>
         </div>
 
         <div class="rg-migration">
@@ -193,14 +200,14 @@
 
         <!-- TABS -->
         <div class="rg-tabs">
-            <button class="rg-tab active" onclick="switchSection('invoice')">Rechnung erstellen</button>
-            <button class="rg-tab" onclick="switchSection('archive')">Archiv</button>
+            <button class="rg-tab active" data-section="archive" onclick="switchSection('archive')">Alle Rechnungen</button>
+            <button class="rg-tab" data-section="invoice" onclick="switchSection('invoice')">Rechnung erstellen</button>
         </div>
 
         <!-- =========================================================== -->
         <!-- TAB 1: RECHNUNG ERSTELLEN                                   -->
         <!-- =========================================================== -->
-        <section id="section-invoice" class="rg-section active">
+        <section id="section-invoice" class="rg-section">
             <div class="rg-hint">
                 Für klassische Rechnungen (Behandlungen, Produkte etc.). Preise sind <strong>brutto</strong> einzugeben &mdash; die MwSt wird automatisch ausgewiesen.
             </div>
@@ -237,12 +244,28 @@
                         <input type="date" id="r-date">
                     </div>
                     <div class="form-group">
+                        <label>Leistungsdatum <small style="color:var(--text-muted)">&mdash; Tag der Behandlung</small></label>
+                        <input type="date" id="r-service-date">
+                    </div>
+                </div>
+
+                <div class="rg-row">
+                    <div class="form-group">
                         <label>Fälligkeit</label>
                         <select id="r-due">
                             <option value="SOFORT">Sofort fällig</option>
                             <option value="7 Tage">In 7 Tagen</option>
                             <option value="14 Tage">In 14 Tagen</option>
                             <option value="30 Tage">In 30 Tagen</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Zahlung</label>
+                        <select id="r-payment">
+                            <option value="offen">Noch offen / unbezahlt</option>
+                            <option value="bar">Bar bezahlt</option>
+                            <option value="karte">Per Karte gezahlt</option>
+                            <option value="treatwell">Bereits über Treatwell gezahlt</option>
                         </select>
                     </div>
                 </div>
@@ -289,7 +312,10 @@
         <!-- =========================================================== -->
         <!-- TAB 2: ARCHIV                                                -->
         <!-- =========================================================== -->
-        <section id="section-archive" class="rg-section">
+        <section id="section-archive" class="rg-section active">
+            <div class="rg-hint">
+                Gutschein-Rechnungen erscheinen hier automatisch. Den Zahlungsstatus kannst du direkt in der Spalte <strong>Zahlung</strong> ändern.
+            </div>
             <div class="card">
                 <div class="rg-archive-filters">
                     <input type="text" id="arch-search" placeholder="Suchen (Name, Nummer …)" oninput="renderArchive()">
@@ -310,6 +336,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="shared.js"></script>
+<script src="ai-bridge.js"></script>
 <script>
 // ============================================================
 // Skinconcept — Rechnungen
@@ -329,21 +356,17 @@ const STUDIO = {
 };
 
 const today = todayStr();
-const currentUser = (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown';
-
 let allInvoices = [];
 let unsubInvoices = null;
+let invoiceSaveInProgress = false;
 
 // ============ TAB SWITCHING ============
 function switchSection(name) {
     document.querySelectorAll('.rg-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.rg-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('section-' + name).classList.add('active');
-    document.querySelectorAll('.rg-tab').forEach(t => {
-        if (t.textContent.toLowerCase().includes(name === 'invoice' ? 'rechnung erstellen' : 'archiv')) {
-            t.classList.add('active');
-        }
-    });
+    const tab = document.querySelector('.rg-tab[data-section="' + name + '"]');
+    if (tab) tab.classList.add('active');
 }
 
 // ============ FORMAT HELPERS ============
@@ -356,13 +379,19 @@ function formatEURpdf(val) {
 }
 function formatDateDE(dateStr) {
     if (!dateStr) return '';
+    // ISO JJJJ-MM-TT direkt zerlegen (KEIN new Date() -> kein UTC-Tagesversatz)
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
+    if (m) return m[3] + '.' + m[2] + '.' + m[1];
     const d = new Date(dateStr);
+    if (isNaN(d)) return String(dateStr);
     return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
 }
 function escHtml(str) {
     if (str == null) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+// Zahl robust: Komma ODER Punkt, leer/ungueltig -> 0
+function parseNum(v) { const n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isNaN(n) ? 0 : n; }
 
 // ============ AUTO NUMMERIERUNG ============
 async function getNextNumber(type) {
@@ -405,8 +434,8 @@ function addPosition(desc = '', qty = 1, priceBrutto = '') {
 function calcInvoiceTotals() {
     let bruttoTotal = 0;
     document.querySelectorAll('.pos-row').forEach(row => {
-        const qty = parseFloat(row.querySelector('.pos-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.pos-price').value) || 0;
+        const qty = parseNum(row.querySelector('.pos-qty').value);
+        const price = parseNum(row.querySelector('.pos-price').value);
         bruttoTotal += roundCent(qty * price);
     });
     bruttoTotal = roundCent(bruttoTotal);
@@ -418,14 +447,29 @@ function calcInvoiceTotals() {
 }
 
 async function createInvoice(evt) {
+    if (invoiceSaveInProgress) return;
+
+    if (!window.jspdf || typeof window.jspdf.jsPDF !== 'function') {
+        showToast('Das PDF-Modul konnte nicht geladen werden. Bitte die Seite neu laden.', 'error');
+        return;
+    }
+
+    if (typeof scEnsureStudioAuth === 'function') {
+        const authenticated = await scEnsureStudioAuth({ required: true });
+        if (!authenticated) return;
+    }
+
     const name = document.getElementById('r-name').value.trim();
     const email = document.getElementById('r-email').value.trim();
     const street = document.getElementById('r-street').value.trim();
     const zip = document.getElementById('r-zip').value.trim();
     const city = document.getElementById('r-city').value.trim();
     const date = document.getElementById('r-date').value || today;
+    // Leistungsdatum ist Pflichtangabe (§ 14 Abs. 4 Nr. 6 UStG). Wenn nicht gesetzt: = Rechnungsdatum.
+    const serviceDate = document.getElementById('r-service-date').value || date;
     const due = document.getElementById('r-due').value;
     const notes = document.getElementById('r-notes').value.trim();
+    const paymentMethod = document.getElementById('r-payment').value;
 
     if (!name) { showToast('Bitte Kundenname eintragen.', 'error'); return; }
 
@@ -433,8 +477,8 @@ async function createInvoice(evt) {
     let bruttoTotal = 0;
     document.querySelectorAll('.pos-row').forEach(row => {
         const desc = row.querySelector('.pos-desc').value.trim();
-        const qty = parseFloat(row.querySelector('.pos-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.pos-price').value) || 0;
+        const qty = parseNum(row.querySelector('.pos-qty').value);
+        const price = parseNum(row.querySelector('.pos-price').value);
         if (desc && qty > 0 && price > 0) {
             items.push({ description: desc, qty, priceBrutto: roundCent(price) });
             bruttoTotal += roundCent(qty * price);
@@ -444,6 +488,7 @@ async function createInvoice(evt) {
     if (items.length === 0) { showToast('Bitte mindestens eine Position eintragen.', 'error'); return; }
 
     const btn = evt && evt.target && evt.target.closest('button');
+    invoiceSaveInProgress = true;
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
     try {
@@ -456,12 +501,14 @@ async function createInvoice(evt) {
             number: invoiceNumber,
             type: 'service',
             customer: { name, email, street, zip, city },
-            date, due,
+            date, serviceDate, due,
             vatMode: 'standard',
             items, subtotal, vat, total: bruttoTotal,
             notes,
+            paymentMethod,
+            paid: paymentMethod !== 'offen',
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: currentUser
+            createdBy: (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown'
         };
 
         await db.collection('invoices').doc(invoiceNumber).set(invoiceData);
@@ -472,13 +519,38 @@ async function createInvoice(evt) {
         const safeName = name.replace(/[^a-zA-Z0-9äöüÄÖÜß]+/g, '_');
         doc.save('Rechnung_' + safeName + '_' + invoiceNumber + '.pdf');
 
-        showToast('Rechnung ' + invoiceNumber + ' erstellt und gespeichert.', 'success');
+        if (typeof window.scSendAiEvent === 'function') {
+            window.scSendAiEvent({
+                eventId: 'invoice:' + invoiceNumber,
+                eventType: 'invoice.created',
+                occurredAt: new Date().toISOString(),
+                customer: { name, email, street, zip, city },
+                invoice: {
+                    number: invoiceNumber,
+                    date,
+                    serviceDate,
+                    due,
+                    items,
+                    subtotal,
+                    vat,
+                    total: bruttoTotal,
+                    paymentMethod,
+                    paid: paymentMethod !== 'offen'
+                }
+            }).catch(function(err) {
+                console.warn('[AI-Sync] Rechnung wird später synchronisiert:', err && err.message || err);
+            });
+        }
+
+        showToast('Rechnung ' + invoiceNumber + ' erstellt und unter „Alle Rechnungen“ gespeichert.', 'success');
         resetInvoiceForm();
+        switchSection('archive');
         loadStats();
     } catch (err) {
         console.error('Fehler:', err);
         showToast('Fehler beim Erstellen: ' + (err.message || 'unbekannt'), 'error');
     } finally {
+        invoiceSaveInProgress = false;
         if (btn) { btn.disabled = false; btn.style.opacity = ''; }
     }
 }
@@ -486,9 +558,41 @@ async function createInvoice(evt) {
 function resetInvoiceForm() {
     ['r-name','r-email','r-street','r-zip','r-city','r-notes'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('r-date').value = today;
+    document.getElementById('r-service-date').value = today;
     document.getElementById('r-due').value = 'SOFORT';
+    document.getElementById('r-payment').value = 'offen';
     document.getElementById('positions-container').innerHTML = '';
     addPosition();
+}
+
+// ============ ZAHLUNGSART ============
+// Text für die Rechnung (PDF). Bei "offen" leer, dann erscheint keine Zahlbestätigung.
+function paymentLabel(method) {
+    switch (method) {
+        case 'bar':       return 'Betrag dankend in bar erhalten.';
+        case 'karte':     return 'Betrag per Karte erhalten.';
+        case 'treatwell': return 'Bereits über Treatwell bezahlt.';
+        case 'bezahlt':   return 'Betrag dankend erhalten.';
+        default:          return '';
+    }
+}
+function normalizedPaymentMethod(inv) {
+    if (['offen', 'bezahlt', 'bar', 'karte', 'treatwell'].includes(inv.paymentMethod)) return inv.paymentMethod;
+    return inv.paid === true ? 'bezahlt' : 'offen';
+}
+function paymentSelectHtml(inv) {
+    const current = normalizedPaymentMethod(inv);
+    const options = [
+        ['offen', 'Offen'],
+        ['bezahlt', 'Bezahlt'],
+        ['bar', 'Bar'],
+        ['karte', 'Karte'],
+        ['treatwell', 'Treatwell']
+    ];
+    const optionHtml = options.map(([value, label]) =>
+        `<option value="${value}"${current === value ? ' selected' : ''}>${label}</option>`
+    ).join('');
+    return `<select class="invoice-payment-select" data-invoice-id="${escHtml(inv._id || inv.number)}" data-previous="${current}" onchange="updateInvoicePayment(this)">${optionHtml}</select>`;
 }
 
 // ============ PDF: INVOICE (A4 PORTRAIT) ============
@@ -569,6 +673,13 @@ function buildInvoicePDF(doc, inv) {
     doc.setTextColor(...txt);
     doc.text(formatDateDE(inv.date), pageW - mr, rightY, { align: 'right' });
 
+    // Leistungsdatum (Pflichtangabe § 14 Abs. 4 Nr. 6 UStG). Fallback: Rechnungsdatum.
+    rightY += 5;
+    doc.setTextColor(...muted);
+    doc.text('Leistungsdatum', pageW - mr - 35, rightY);
+    doc.setTextColor(...txt);
+    doc.text(formatDateDE(inv.serviceDate || inv.date), pageW - mr, rightY, { align: 'right' });
+
     rightY += 5;
     doc.setTextColor(...muted);
     doc.text('Fälligkeit', pageW - mr - 35, rightY);
@@ -592,11 +703,13 @@ function buildInvoicePDF(doc, inv) {
     doc.setTextColor(...txt);
 
     let posIdx = 0;
+    let netSum = 0;
     inv.items.forEach(item => {
         posIdx++;
         y += 9;
         const netPrice = roundCent(item.priceBrutto / 1.19);
         const netTotal = roundCent(netPrice * item.qty);
+        netSum = roundCent(netSum + netTotal);
         doc.text(String(posIdx), ml + 2, y);
         const descLines = doc.splitTextToSize(item.description, 90);
         doc.text(descLines, ml + 14, y);
@@ -615,15 +728,19 @@ function buildInvoicePDF(doc, inv) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...muted);
+    // Zwischensumme = exakte Summe der oben gedruckten Positions-Nettos (sonst Cent-Differenz zur Spaltensumme),
+    // MwSt = Rest zum Brutto-Gesamt, damit Netto + MwSt = Gesamt exakt aufgeht.
+    const pdfSubtotal = netSum;
+    const pdfVat = roundCent(inv.total - netSum);
     doc.text('Zwischensumme (netto)', ml + 100, y);
     doc.setTextColor(...txt);
-    doc.text(formatEURpdf(inv.subtotal), pageW - mr, y, { align: 'right' });
+    doc.text(formatEURpdf(pdfSubtotal), pageW - mr, y, { align: 'right' });
 
     y += 6;
     doc.setTextColor(...muted);
     doc.text('zzgl. MwSt. 19 %', ml + 100, y);
     doc.setTextColor(...txt);
-    doc.text(formatEURpdf(inv.vat), pageW - mr, y, { align: 'right' });
+    doc.text(formatEURpdf(pdfVat), pageW - mr, y, { align: 'right' });
 
     y += 4;
     doc.setDrawColor(...accent);
@@ -637,6 +754,16 @@ function buildInvoicePDF(doc, inv) {
     doc.text('Gesamt', ml + 100, y);
     doc.setTextColor(...accent);
     doc.text(formatEURpdf(inv.total), pageW - mr, y, { align: 'right' });
+
+    // Zahlbestätigung (nur wenn bereits bezahlt)
+    const payTxt = paymentLabel(inv.paymentMethod);
+    if (payTxt) {
+        y += 8;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(...accent);
+        doc.text(payTxt, pageW - mr, y, { align: 'right' });
+    }
 
     y += 14;
     if (inv.notes) {
@@ -678,8 +805,22 @@ function loadArchive() {
             loadStats();
         }, err => {
             console.error('invoices:', err);
-            document.getElementById('archive-list').innerHTML =
-                '<div class="empty-state" style="padding:40px;text-align:center;color:var(--text-muted);">Fehler beim Laden: ' + escHtml(err.message) + '</div>';
+            // Fallback ohne orderBy (Index-/Feld-Probleme) -> client-seitig sortieren, damit Liste UND Stats trotzdem kommen
+            db.collection('invoices').limit(300).get().then(snap => {
+                allInvoices = [];
+                snap.forEach(d => allInvoices.push({ ...d.data(), _id: d.id }));
+                allInvoices.sort((a, b) => {
+                    const ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : (a.date ? Date.parse(a.date) : 0);
+                    const tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : (b.date ? Date.parse(b.date) : 0);
+                    return tb - ta;
+                });
+                renderArchive();
+                loadStats();
+            }).catch(e2 => {
+                console.error('invoices fallback:', e2);
+                document.getElementById('archive-list').innerHTML =
+                    '<div class="empty-state" style="padding:40px;text-align:center;color:var(--text-muted);">Fehler beim Laden: ' + escHtml(err.message) + '</div>';
+            });
         });
 }
 
@@ -714,6 +855,7 @@ function renderArchive() {
                         <th>Typ</th>
                         <th>Kunde</th>
                         <th style="text-align:right;">Betrag</th>
+                        <th>Zahlung</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -739,9 +881,42 @@ function renderArchiveRow(inv) {
             <td>${typeBadge}</td>
             <td>${escHtml(inv.customer?.name || '—')}</td>
             <td style="text-align:right;font-weight:600;">${formatEUR(inv.total)}</td>
+            <td>${paymentSelectHtml(inv)}</td>
             <td>${action}</td>
         </tr>
     `;
+}
+
+async function updateInvoicePayment(select) {
+    const invoiceId = select && select.dataset.invoiceId;
+    const method = select && select.value;
+    const allowed = ['offen', 'bezahlt', 'bar', 'karte', 'treatwell'];
+    if (!invoiceId || !allowed.includes(method)) return;
+
+    const previous = select.dataset.previous || 'offen';
+    select.disabled = true;
+    try {
+        if (typeof scEnsureStudioAuth === 'function') {
+            const authenticated = await scEnsureStudioAuth({ required: true });
+            if (!authenticated) throw new Error('Studio-Anmeldung erforderlich.');
+        }
+        const isPaid = method !== 'offen';
+        await db.collection('invoices').doc(invoiceId).update({
+            paymentMethod: method,
+            paid: isPaid,
+            paidAt: isPaid ? firebase.firestore.FieldValue.serverTimestamp() : null,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: (typeof window.scCurrentUser === 'function') ? window.scCurrentUser() : 'unknown'
+        });
+        select.dataset.previous = method;
+        showToast(isPaid ? 'Rechnung als bezahlt markiert.' : 'Rechnung wieder als offen markiert.', 'success');
+    } catch (err) {
+        console.error('Zahlungsstatus:', err);
+        select.value = previous;
+        showToast('Zahlungsstatus konnte nicht gespeichert werden: ' + (err.message || 'unbekannt'), 'error');
+    } finally {
+        select.disabled = false;
+    }
 }
 
 async function reprintInvoice(invoiceNumber) {
@@ -785,8 +960,14 @@ function loadStats() {
 }
 
 // ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') {
+        const authenticated = await scEnsureStudioAuth({ required: true });
+        if (!authenticated) return;
+    }
     document.getElementById('r-date').value = today;
+    document.getElementById('r-service-date').value = today;
     addPosition();
     loadArchive();
 });

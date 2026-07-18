@@ -73,7 +73,7 @@
         }
 
         /* Main area */
-        .main { background: var(--bg) !important; }
+        .main { background: var(--bg) !important; min-width: 0; }
 
         /* Page header */
         .page-header {
@@ -836,7 +836,9 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="shared.js"></script>
+<script src="hagner-auth.js"></script>
 <script>
 let allTemplates = [];
 let allClients = [];
@@ -870,12 +872,18 @@ const _rdbDb=_rdbApp.database();
 const FB_VAULT='v_d98f5188d9f9cf761ac092776ad0529ff4240ec8e5818c6e';
 const FB_KARTEI_REF=_rdbDb.ref(FB_VAULT+'/kartei_data');
 const FB_DELETED_REF=_rdbDb.ref(FB_VAULT+'/kartei_deleted');
-FB_DELETED_REF.on('child_added',function(snap){const v=snap.val();if(v&&v.name){markDeletedName(v.name)}});
+let _deletedListenerActive=false;
+function setupDeletedListener(){
+  if(_deletedListenerActive)return;
+  _deletedListenerActive=true;
+  FB_DELETED_REF.on('child_added',function(snap){const v=snap.val();if(v&&v.name){markDeletedName(v.name)}});
+}
 
 // ============ TABS ============
-function switchKTab(tab) {
+function switchKTab(tab, ev) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    const trigger = (ev && ev.target) || (window.event && window.event.target);
+    if (trigger && trigger.classList) trigger.classList.add('active');
     ['overview', 'nachsorge', 'clients', 'import', 'birthdays', 'templates', 'recall'].forEach(t => {
         document.getElementById('ktab-' + t).style.display = t === tab ? 'block' : 'none';
     });
@@ -1226,7 +1234,7 @@ function sendBirthdayMessage(clientId) {
 
     navigator.clipboard.writeText(text).then(() => {
         showToast(`Geburtstagsglueckwuensche fuer ${client.name} kopiert!`, 'success');
-    });
+    }).catch(() => showToast('Kopieren fehlgeschlagen – bitte Text manuell markieren und kopieren.', 'error'));
 }
 
 // ============ FOLLOW-UP / NACHSORGE (5-14 TAGE NACH BESUCH) ============
@@ -1354,7 +1362,7 @@ function sendNachsorge(clientId) {
     const text = getFollowupWAMessage(client);
     navigator.clipboard.writeText(text).then(() => {
         showToast(`Nachsorge-Nachricht fuer ${client.name} kopiert!`, 'success');
-    });
+    }).catch(() => showToast('Kopieren fehlgeschlagen – bitte Text manuell markieren und kopieren.', 'error'));
 }
 
 async function markNachsorgeErledigt(clientId) {
@@ -1691,7 +1699,7 @@ function renderExtractedList() {
         return `
             <div class="extracted-item">
                 <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="extractedNames[${i}].selected = this.checked">
-                <input type="text" value="${item.name}" onchange="extractedNames[${i}].name = this.value">
+                <input type="text" value="${escHtml(item.name)}" onchange="extractedNames[${i}].name = this.value">
                 ${exists ? '<span class="badge badge-geplant" style="white-space:nowrap;">Bereits vorhanden</span>' : '<span class="badge badge-gepostet" style="white-space:nowrap;">Neu</span>'}
                 <button class="remove-btn" onclick="extractedNames.splice(${i},1); renderExtractedList();">&#10005;</button>
             </div>
@@ -1917,19 +1925,27 @@ async function deleteTemplate(id) {
 
 // ============ CLIENTS ============
 async function loadClients() {
+    let snap;
     try {
-        const snap = await db.collection('clients').orderBy('name').get();
-        allClients = [];
-        snap.forEach(doc => allClients.push({ id: doc.id, ...doc.data() }));
-        renderClients();
-        renderRecall();
-        renderNachsorge();
-        renderBirthdays();
-        updateActivityCounts();
-        renderOverview();
+        snap = await db.collection('clients').orderBy('name').get();
     } catch (err) {
-        console.error('Error loading clients:', err);
+        console.error('Error loading clients (orderBy), retrying without sort:', err);
+        try {
+            snap = await db.collection('clients').get();
+        } catch (err2) {
+            console.error('Error loading clients:', err2);
+            return;
+        }
     }
+    allClients = [];
+    snap.forEach(doc => allClients.push({ id: doc.id, ...doc.data() }));
+    allClients.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    renderClients();
+    renderRecall();
+    renderNachsorge();
+    renderBirthdays();
+    updateActivityCounts();
+    renderOverview();
 }
 
 function renderClients(filter = '') {
@@ -1983,7 +1999,10 @@ function calcRecallDate(lastVisit, months) {
     if (!lastVisit) return null;
     const d = new Date(lastVisit + 'T00:00:00');
     d.setMonth(d.getMonth() + Number(months));
-    return d.toISOString().slice(0, 10);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
 }
 
 function openClientModal() {
@@ -2140,7 +2159,7 @@ function sendRecall(clientId) {
 
     navigator.clipboard.writeText(text).then(() => {
         showToast(`Recall-Nachricht fuer ${client.name} kopiert!`, 'success');
-    });
+    }).catch(() => showToast('Kopieren fehlgeschlagen – bitte Text manuell markieren und kopieren.', 'error'));
 }
 
 async function markRecallDone(clientId) {
@@ -2168,7 +2187,18 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 // ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.scAuthReady) await window.scAuthReady;
+    if (typeof scEnsureStudioAuth === 'function') {
+        const ready = await scEnsureStudioAuth({ required: true });
+        if (!ready) {
+            showToast('Studio-Anmeldung konnte nicht geladen werden. Bitte Verbindung prüfen und Seite neu laden.', 'error');
+            return;
+        }
+    }
+    const hagnerAuthenticated = await scEnsureHagnerAuth({ required: true });
+    if (!hagnerAuthenticated) return;
+    setupDeletedListener();
     loadTemplates();
     loadClients();
     initUpload();

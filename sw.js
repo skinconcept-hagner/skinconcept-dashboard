@@ -1,9 +1,9 @@
-const CACHE = 'skinconcept-v65';
+const CACHE = 'skinconcept-v66';
 
 const STATIC_ASSETS = [
   './style.css', './shared.js', './jspdf.min.js',
   './hautanalyse.js', './hautanalyse-pdf.js', './hautanalyse-docx.js',
-  './tw_contacts.js', './auth-gate.js'
+  './private-customer-data.js', './auth-gate.js'
 ];
 
 self.addEventListener('install', e => {
@@ -26,7 +26,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   // Firebase-Hosts nie cachen — sonst zeigt App veraltete Daten
   if (url.hostname.includes('firebaseapp.com') || url.hostname.includes('googleapis.com') || url.hostname.includes('firebaseio.com') || url.hostname.includes('gstatic.com') || url.hostname.includes('cloudfunctions.net')) return;
-  if (url.pathname.endsWith('.html') || url.pathname === '/' || (url.pathname.endsWith('.js') && url.pathname.includes('trello'))) {
+  if (url.pathname.endsWith('.html') || url.pathname === '/') {
     e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
     return;
   }

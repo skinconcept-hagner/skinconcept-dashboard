@@ -7,15 +7,36 @@
 // ============================================
 
 (function () {
+  let authReadyResolved = false;
+  let resolveAuthReady;
+  window.scAuthReady = window.scAuthReady || new Promise(resolve => {
+    resolveAuthReady = resolve;
+  });
+
+  function markAuthReady(detail) {
+    if (authReadyResolved) return;
+    authReadyResolved = true;
+    if (resolveAuthReady) resolveAuthReady(detail);
+  }
+
   const SESSION_KEY = 'skinconcept_session_v1';
   const SESSION_DAYS = 30;
   const INACTIVITY_HOURS = 24;
   const INACTIVITY_MS = INACTIVITY_HOURS * 60 * 60 * 1000;
 
+  // Rollenmodell (Foundation): admin = Inhaberin (Vollzugriff),
+  // staff = Angestellte (studio-relevante Daten, keine Inhaber-Funktionen).
+  // Die Rolle wird hier UI-seitig gesetzt; die scharfe Durchsetzung auf
+  // Firebase-Ebene folgt schrittweise (siehe SECURITY-FOUNDATION.md).
   const USERS = [
-    { id: 'tamara', label: 'Tamara', hash: 'e8026bda3ea2eedc7dc7bce9daa640f8cc0f33e335bd73d986a872b3ba789c71' },
-    { id: 'elena',  label: 'Elena',  hash: '9caa05aeaaaf486bd3f697aaffa2e74e6a1805ff113366526ec0ae038a5aca4b' }
+    { id: 'tamara', label: 'Tamara', role: 'admin', hash: 'e8026bda3ea2eedc7dc7bce9daa640f8cc0f33e335bd73d986a872b3ba789c71' },
+    { id: 'elena',  label: 'Elena',  role: 'staff', hash: '9caa05aeaaaf486bd3f697aaffa2e74e6a1805ff113366526ec0ae038a5aca4b' }
   ];
+
+  function roleFor(userId) {
+    const u = USERS.find(x => x.id === userId);
+    return (u && u.role) ? u.role : 'staff';
+  }
 
   async function sha256(text) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -198,7 +219,10 @@
   function revealPage(userId) {
     removeOverlay();
     document.documentElement.style.visibility = '';
+    const role = roleFor(userId);
     window.scCurrentUser = function () { return userId; };
+    window.scRole = function () { return role; };
+    window.scIsAdmin = function () { return role === 'admin'; };
     window.scLogout = function () {
       clearSession();
       location.reload();
@@ -206,7 +230,8 @@
     setupActivityTracking();
     // Erste Aktivität direkt setzen (Tab-Öffnung zählt als Aktion)
     touchActivity();
-    try { window.dispatchEvent(new CustomEvent('sc:login', { detail: { user: userId } })); } catch (e) {}
+    markAuthReady({ user: userId, role: role });
+    try { window.dispatchEvent(new CustomEvent('sc:login', { detail: { user: userId, role: role } })); } catch (e) {}
   }
 
   function init() {

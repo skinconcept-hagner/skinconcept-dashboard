@@ -205,7 +205,7 @@
         }
         @media (max-width: 600px) {
             .ha-col h3 { font-size: 18px; }
-            .ha-tabs button { padding: 10px 8px; font-size: 12px; min-height: 40px; }
+            .ha-tabs button { padding: 10px 8px; font-size: 12px; min-height: 44px; }
             .msg-card .subj { font-size: 13px; }
             .msg-card .text { font-size: 12.5px; }
             .anam-field .v { font-size: 12.5px; }
@@ -348,21 +348,10 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <!-- shared.js initialisiert Firebase für das Haupt-Projekt (skinconcept-tool) und stellt db bereit -->
 <script src="shared.js"></script>
-
-<script>
-// Zweites Firebase-Projekt für die Anamnese (skinconcept-hagner Realtime DB)
-const karteiApp = firebase.initializeApp({
-    apiKey: "AIzaSyDyxq-F6EcmM9lxMihK_QI3eDxC7zNUnNs",
-    authDomain: "skinconcept-hagner.firebaseapp.com",
-    databaseURL: "https://skinconcept-hagner-default-rtdb.europe-west1.firebasedatabase.app",
-    storageBucket: "skinconcept-hagner.firebasestorage.app"
-}, 'kartei');
-const karteiDb = karteiApp.database();
-</script>
 
 <script>
 // STATE
@@ -494,6 +483,8 @@ function fmtDateTime(ts) {
 }
 function initials(n) { return (n||'?').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// Sicher fuer eine einfach-quotierte JS-Zeichenkette innerhalb eines onclick-Attributs
+function escJs(s) { return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/\r?\n/g,' '); }
 
 // Clients laden + Live-Listener
 async function initApp() {
@@ -547,17 +538,19 @@ async function initApp() {
             if (newC > 0) { badge.style.display=''; badge.textContent = newC; }
             else badge.style.display = 'none';
             renderMessages();
+        }, err => {
+            console.error('app_messages onSnapshot-Fehler:', err);
         });
 
-        // Live: Anamnese-Änderungen aus Realtime DB
-        karteiDb.ref('anamneseboegen').on('child_changed', snap => {
-            const entry = snap.val();
-            if (!entry || entry._source !== 'hautapp') return;
-            if (entry._uid) {
-                UPDATED_UIDS.add(entry._uid);
+        // Live: geschützte Anamnese-Änderungen aus Firestore
+        db.collection('app_anamneses').onSnapshot(snap => {
+            snap.docChanges().forEach(change => {
+              if (change.type === 'modified') {
+                UPDATED_UIDS.add(change.doc.id);
                 renderClients();
-            }
-        });
+              }
+            });
+        }, err => console.error('app_anamneses listen:', err));
     } catch (e) { console.error('init:', e); }
 }
 
@@ -616,29 +609,31 @@ async function selectClient(id) {
     }
 
     // Alle Daten parallel laden
-    const [diarySnap, photoSnap, prodSnap, routDoc, notifSnap] = await Promise.all([
-        db.collection('app_diary').where('uid','==',id).get(),
-        db.collection('app_photos').where('uid','==',id).get(),
-        db.collection('app_products').where('uid','==',id).get(),
-        db.collection('app_routines').doc(id).get(),
-        db.collection('app_notifications').where('uid','==',id).get()
-    ]);
-
-    ALL_DIARY = diarySnap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>!e.isPrivate)
-        .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    ALL_PHOTOS = photoSnap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>!p.isPrivate)
-        .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    ALL_PRODUCTS = prodSnap.docs.map(d=>({id:d.id,...d.data()}))
-        .sort((a,b) => (a.name||'').localeCompare(b.name||''));
-    ALL_ROUTINES = routDoc.exists ? routDoc.data() : { morning:[], evening:[] };
-    ANAM_NOTIFICATIONS = notifSnap.docs.map(d=>({id:d.id,...d.data()}))
-        .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-
-    // Anamnese aus Realtime DB laden
     try {
-        const anamSnap = await karteiDb.ref('anamneseboegen/app_' + id).once('value');
-        ANAM_DATA = anamSnap.val() || {};
-    } catch (e) { ANAM_DATA = {}; }
+        const [diarySnap, photoSnap, prodSnap, routDoc, notifSnap, anamDoc] = await Promise.all([
+            db.collection('app_diary').where('uid','==',id).where('isPrivate','==',false).get(),
+            db.collection('app_photos').where('uid','==',id).where('isPrivate','==',false).get(),
+            db.collection('app_products').where('uid','==',id).get(),
+            db.collection('app_routines').doc(id).get(),
+            db.collection('app_notifications').where('uid','==',id).get(),
+            db.collection('app_anamneses').doc(id).get()
+        ]);
+
+        ALL_DIARY = diarySnap.docs.map(d=>({id:d.id,...d.data()}))
+            .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        ALL_PHOTOS = photoSnap.docs.map(d=>({id:d.id,...d.data()}))
+            .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        ALL_PRODUCTS = prodSnap.docs.map(d=>({id:d.id,...d.data()}))
+            .sort((a,b) => (a.name||'').localeCompare(b.name||''));
+        ALL_ROUTINES = routDoc.exists ? routDoc.data() : { morning:[], evening:[] };
+        ANAM_NOTIFICATIONS = notifSnap.docs.map(d=>({id:d.id,...d.data()}))
+            .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        ANAM_DATA = anamDoc.exists ? anamDoc.data() : {};
+    } catch (e) {
+        console.error('selectClient load:', e);
+        alert('Die Kundendaten konnten nicht geladen werden. Bitte Internetverbindung prüfen und erneut versuchen.');
+        return;
+    }
 
     // Offene Notifications auf "seen" setzen
     const batch = db.batch();
@@ -708,7 +703,7 @@ function renderOverview() {
             <div class="ha-card">
                 <h3>Letztes geteiltes Foto</h3>
                 ${lastPhoto ? `
-                    <img src="${lastPhoto.url}" style="width:100%;border-radius:10px;max-height:280px;object-fit:cover;cursor:pointer" onclick="viewPhoto('${lastPhoto.url}','${esc(lastPhoto.area||'')} &middot; ${fmtDate(lastPhoto.createdAt)}')">
+                    <img src="${esc(lastPhoto.url)}" style="width:100%;border-radius:10px;max-height:280px;object-fit:cover;cursor:pointer" onclick="viewPhoto('${escJs(lastPhoto.url)}','${escJs((lastPhoto.area||'') + ' · ' + fmtDate(lastPhoto.createdAt))}')">
                     <div style="font-size:12px;color:var(--text-muted);margin-top:6px">${esc(lastPhoto.area||'')} &middot; ${fmtDate(lastPhoto.createdAt)}</div>
                 ` : '<div class="ha-empty">Noch keine Fotos geteilt.</div>'}
             </div>
@@ -739,8 +734,8 @@ function renderPhotosPanel() {
     const b = document.getElementById('panel-photos');
     if (!ALL_PHOTOS.length) { b.innerHTML = '<div class="ha-card ha-empty"><div class="big">Keine Fotos</div>Diese Kundin teilt keine Fotos.</div>'; return; }
     b.innerHTML = '<div class="ha-card"><div class="photo-grid">' + ALL_PHOTOS.map(p => `
-        <div class="ph-tile" onclick="viewPhoto('${p.url}','${esc(p.area||'')} &middot; ${fmtDate(p.createdAt)}${p.tags?.length?(' &middot; '+p.tags.map(esc).join(', ')):''}')">
-            <img src="${p.url}" loading="lazy">
+        <div class="ph-tile" onclick="viewPhoto('${escJs(p.url)}','${escJs((p.area||'') + ' · ' + fmtDate(p.createdAt) + (p.tags?.length?(' · '+p.tags.join(', ')):''))}')">
+            <img src="${esc(p.url)}" loading="lazy">
             ${p.area ? '<div class="a">'+esc(p.area)+'</div>' : ''}
             <div class="d">${fmtDate(p.createdAt)}</div>
         </div>
@@ -1059,7 +1054,7 @@ document.getElementById('pm-delete').addEventListener('click', async () => {
 window.openRoutineStepModal = function(slot) {
     if (!SELECTED) return;
     ROUTINE_SLOT = slot;
-    document.getElementById('rs-modal-title').textContent = 'Schritt — ' + (slot === 'morning' ? '☀ Morgen' : '☾ Abend');
+    document.getElementById('rs-modal-title').textContent = 'Schritt — ' + (slot === 'morning' ? 'Morgen' : 'Abend');
     const sel = document.getElementById('rs-product');
     if (!ALL_PRODUCTS.length) {
         alert('Lege zuerst ein Produkt für die Kundin an.');
@@ -1124,8 +1119,29 @@ function showNotification(n) {
     }
 }
 
-// START
-initApp();
+// START — die App-Collections sind bereits durch Firebase-Rules geschuetzt.
+// Deshalb erst Listener starten, wenn die Studio-Anmeldung wirklich steht.
+let hautAppStarted = false;
+window.startHautApp = async function() {
+    if (hautAppStarted) return;
+    if (window.scAuthReady) await window.scAuthReady;
+    if (!IS_PREVIEW && typeof scEnsureStudioAuth === 'function') {
+        const ready = await scEnsureStudioAuth({ required: true });
+        if (!ready) {
+            const list = document.getElementById('client-list');
+            if (list) list.innerHTML = `
+                <div style="padding:28px 18px;text-align:center;color:var(--text-muted)">
+                    <div style="font-weight:600;color:var(--primary-dark);margin-bottom:8px">Studio-Anmeldung erforderlich</div>
+                    <div style="font-size:12px;line-height:1.5;margin-bottom:14px">Die HautApp-Daten sind geschützt und werden erst nach der Anmeldung geladen.</div>
+                    <button type="button" onclick="startHautApp()" style="min-height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--primary-dark);color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer">Jetzt anmelden</button>
+                </div>`;
+            return;
+        }
+    }
+    hautAppStarted = true;
+    await initApp();
+};
+startHautApp();
 </script>
 
 </body>
