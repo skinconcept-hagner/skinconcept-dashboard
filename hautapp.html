@@ -352,6 +352,7 @@
 
 <!-- shared.js initialisiert Firebase für das Haupt-Projekt (skinconcept-tool) und stellt db bereit -->
 <script src="shared.js"></script>
+<script src="ai-bridge.js"></script>
 
 <script>
 // STATE
@@ -485,6 +486,32 @@ function initials(n) { return (n||'?').split(/\s+/).map(w=>w[0]).slice(0,2).join
 function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 // Sicher fuer eine einfach-quotierte JS-Zeichenkette innerhalb eines onclick-Attributs
 function escJs(s) { return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/\r?\n/g,' '); }
+
+async function sendClientNotification(uid,type,message) {
+    const ref = await db.collection('app_notifications').add({
+        uid,
+        direction: 'to_client',
+        type,
+        message,
+        status: 'new',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    if (typeof window.scSendHautAppPush === 'function') {
+        try {
+            await window.scSendHautAppPush({
+                uid,
+                title: 'Skinconcept',
+                body: message,
+                tag: 'skinconcept-' + String(type || 'update').replace(/[^a-z0-9_-]/gi, '-'),
+                url: '/app.html',
+                notificationId: ref.id
+            });
+        } catch (error) {
+            console.warn('HautApp-Push:', error && error.message || error);
+        }
+    }
+    return ref;
+}
 
 // Clients laden + Live-Listener
 async function initApp() {
@@ -1016,16 +1043,13 @@ document.getElementById('pm-save').addEventListener('click', async () => {
                 await db.collection('app_products').add(data);
             }
             // Benachrichtigung an Kundin
-            await db.collection('app_notifications').add({
-                uid: SELECTED.id,
-                direction: 'to_client',
-                type: EDITING_PRODUCT_ID ? 'product_updated' : 'product_added',
-                message: EDITING_PRODUCT_ID
+            await sendClientNotification(
+                SELECTED.id,
+                EDITING_PRODUCT_ID ? 'product_updated' : 'product_added',
+                EDITING_PRODUCT_ID
                     ? 'Dein Studio hat "' + name + '" aktualisiert'
-                    : 'Dein Studio hat "' + name + '" für dich eingetragen',
-                status: 'new',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+                    : 'Dein Studio hat "' + name + '" für dich eingetragen'
+            );
             if (typeof showToast === 'function') showToast('Gespeichert — Kundin wird informiert');
             await selectClient(SELECTED.id);
             document.getElementById('prod-modal').style.display = 'none';
@@ -1081,14 +1105,11 @@ document.getElementById('rs-save').addEventListener('click', async () => {
     }
     try {
         await db.collection('app_routines').doc(SELECTED.id).set(ALL_ROUTINES, { merge: true });
-        await db.collection('app_notifications').add({
-            uid: SELECTED.id,
-            direction: 'to_client',
-            type: 'routine_updated',
-            message: 'Dein Studio hat deine ' + (ROUTINE_SLOT === 'morning' ? 'Morgen-' : 'Abend-') + 'Routine angepasst',
-            status: 'new',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        await sendClientNotification(
+            SELECTED.id,
+            'routine_updated',
+            'Dein Studio hat deine ' + (ROUTINE_SLOT === 'morning' ? 'Morgen-' : 'Abend-') + 'Routine angepasst'
+        );
         if (typeof showToast === 'function') showToast('Routine aktualisiert — Kundin wird informiert');
         await selectClient(SELECTED.id);
         document.getElementById('rs-modal').style.display = 'none';

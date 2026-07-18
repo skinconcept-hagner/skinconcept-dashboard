@@ -64,7 +64,7 @@
     return null;
   }
 
-  async function postEvent(event) {
+  async function postAuthenticated(path, payload) {
     const baseUrl = getBaseUrl();
     if (!baseUrl) throw new Error('AI Command Center URL ist noch nicht konfiguriert.');
 
@@ -75,13 +75,13 @@
     }
 
     const token = await user.getIdToken();
-    const response = await fetch(baseUrl + '/api/integrations/studio/events', {
+    const response = await fetch(baseUrl + path, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(event)
+      body: JSON.stringify(payload)
     });
 
     let body = null;
@@ -90,6 +90,10 @@
       throw new Error(body && body.error ? body.error : 'AI-Synchronisierung fehlgeschlagen (' + response.status + ').');
     }
     return body || { ok: true };
+  }
+
+  async function postEvent(event) {
+    return postAuthenticated('/api/integrations/studio/events', event);
   }
 
   window.scSetAiCommandCenterUrl = function (url) {
@@ -114,6 +118,13 @@
       queueEvent(event);
       throw error;
     }
+  };
+
+  window.scSendHautAppPush = async function (payload) {
+    if (!payload || !payload.uid || !payload.body) {
+      throw new Error('HautApp-Push benoetigt Kundinnen-ID und Nachricht.');
+    }
+    return postAuthenticated('/api/integrations/hautapp/push', payload);
   };
 
   window.scFlushAiEvents = async function () {

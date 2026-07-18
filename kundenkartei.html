@@ -6325,6 +6325,7 @@ async function saveHaAppt(){
   var date=document.getElementById('ha-appt-date').value;
   var time=document.getElementById('ha-appt-time').value||'10:00';
   var note=document.getElementById('ha-appt-note').value.trim();
+  var targetUid=haApptUid||(haCtx&&haCtx.uid);
   if(!date){toast('Bitte Datum eingeben','warn');return;}
   try{
     if(haApptEditId){
@@ -6334,6 +6335,10 @@ async function saveHaAppt(){
       await haDb.collection('app_appointments').add({uid:haApptUid,date:date,time:time,note:note,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
       toast('Termin gespeichert — Kundin sieht ihn in der App');
     }
+    if(targetUid){
+      var appointmentDate=new Date(date+'T'+time).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
+      await notifyClient(targetUid,'appointment_updated','Dein Termin bei Skinconcept ist am '+appointmentDate+' um '+time+' Uhr.');
+    }
     closeHaApptModal();if(selectedClient)loadHautAppData(selectedClient);
   }catch(e){toast('Fehler: '+e.message,'warn');}
 }
@@ -6342,6 +6347,7 @@ async function deleteHaAppt(){
   if(!haApptEditId||!confirm('Termin wirklich löschen?'))return;
   try{
     await haDb.collection('app_appointments').doc(haApptEditId).delete();
+    if(haCtx&&haCtx.uid)await notifyClient(haCtx.uid,'appointment_cancelled','Ein Termin in deiner HautApp wurde vom Studio entfernt.');
     toast('Termin gelöscht');closeHaApptModal();if(selectedClient)loadHautAppData(selectedClient);
   }catch(e){toast('Fehler','warn');}
 }
@@ -6386,9 +6392,22 @@ function collectHaSteps(slot){
   return out;
 }
 // Benachrichtigt die Kundin in der App über eine Studio-Änderung (erscheint auf ihrer Startseite).
-function notifyClient(uid,type,message){
-  if(!uid)return;
-  try{haDb.collection('app_notifications').add({uid:uid,direction:'to_client',type:type,message:message,status:'new',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}
+async function notifyClient(uid,type,message){
+  if(!uid)return null;
+  var ref=await haDb.collection('app_notifications').add({uid:uid,direction:'to_client',type:type,message:message,status:'new',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  if(typeof window.scSendHautAppPush==='function'){
+    try{
+      await window.scSendHautAppPush({
+        uid:uid,
+        title:'Skinconcept',
+        body:message,
+        tag:'skinconcept-'+String(type||'update').replace(/[^a-z0-9_-]/gi,'-'),
+        url:'/app.html',
+        notificationId:ref.id
+      });
+    }catch(e){console.warn('HautApp-Push:',e&&e.message||e);}
+  }
+  return ref;
 }
 
 async function saveHaPlan(){
@@ -6407,7 +6426,7 @@ async function saveHaPlan(){
   };
   try{
     await haDb.collection('app_careplans').doc(haCtx.uid).set(data,{merge:true});
-    notifyClient(haCtx.uid,'plan_updated','Dein Pflegeplan wurde von '+(haCtx.behandler||'Tamara')+' aktualisiert.');
+    await notifyClient(haCtx.uid,'plan_updated','Dein Pflegeplan wurde von '+(haCtx.behandler||'Tamara')+' aktualisiert.');
     toast('Pflegeplan gespeichert — Kundin sieht ihn in der App');
     closeHaPlanModal();if(selectedClient)loadHautAppData(selectedClient);
   }catch(e){toast('Fehler: '+e.message,'warn');}
@@ -6435,7 +6454,7 @@ async function saveHaPause(){
   var products=[];document.querySelectorAll('.hpause-prod:checked').forEach(function(c){products.push(c.value);});
   try{
     await haDb.collection('app_users').doc(haCtx.uid).set({pauseConfig:{daysBefore:days,products:products,note:note,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}},{merge:true});
-    notifyClient(haCtx.uid,'pause_updated',(haCtx.behandler||'Tamara')+' hat deine Wirkstoff-Hinweise vor der Behandlung angepasst.');
+    await notifyClient(haCtx.uid,'pause_updated',(haCtx.behandler||'Tamara')+' hat deine Wirkstoff-Hinweise vor der Behandlung angepasst.');
     toast('Absetz-Regeln gespeichert — Kundin wurde informiert');
     closeHaPauseModal();if(selectedClient)loadHautAppData(selectedClient);
   }catch(e){toast('Fehler: '+e.message,'warn');}
@@ -6514,13 +6533,13 @@ async function saveHaProduct(){
   try{
     if(HA_EDIT_PROD_ID){
       await haDb.collection('app_products').doc(HA_EDIT_PROD_ID).update(data);
-      notifyClient(haCtx.uid,'product_updated',(haCtx.behandler||'Tamara')+' hat „'+name+'" in deinen Produkten aktualisiert.');
+      await notifyClient(haCtx.uid,'product_updated',(haCtx.behandler||'Tamara')+' hat „'+name+'“ in deinen Produkten aktualisiert.');
       toast('Produkt aktualisiert — Kundin informiert');
     }else{
       data.addedBy='studio';
       data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
       await haDb.collection('app_products').add(data);
-      notifyClient(haCtx.uid,'product_added',(haCtx.behandler||'Tamara')+' hat „'+name+'" zu deinen Produkten hinzugefügt.');
+      await notifyClient(haCtx.uid,'product_added',(haCtx.behandler||'Tamara')+' hat „'+name+'“ zu deinen Produkten hinzugefügt.');
       toast('Produkt hinzugefügt — Kundin informiert');
     }
     closeHaProdEdit();
@@ -6548,7 +6567,7 @@ async function pushProductToRoutine(pid,name,slot){
     if((data[slot]||[]).some(function(s){return s.productId===pid;})){toast(name+' ist bereits in dieser Routine');return;}
     data[slot].push({productId:pid,instruction:'',addedBy:'studio'});
     await ref.set(data,{merge:true});
-    notifyClient(haCtx.uid,'routine_updated',(haCtx.behandler||'Tamara')+' hat „'+name+'" zu deiner '+(slot==='morning'?'Morgenroutine':'Abendroutine')+' hinzugefügt.');
+    await notifyClient(haCtx.uid,'routine_updated',(haCtx.behandler||'Tamara')+' hat „'+name+'“ zu deiner '+(slot==='morning'?'Morgenroutine':'Abendroutine')+' hinzugefügt.');
     toast(name+' → '+(slot==='morning'?'Morgens':'Abends')+' übernommen — Kundin informiert');
     if(selectedClient)loadHautAppData(selectedClient);
   }catch(e){toast('Fehler: '+e.message,'warn');}
