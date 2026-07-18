@@ -6,7 +6,7 @@
     <title>Mein Termin — Skinconcept Hagner</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --ink: #2A2520; --gold: #B89763; --cream: #FCFAF6; --muted: #8C857A; --border: rgba(42,37,32,0.08); --success: #3D8B5F; --danger: #C0544F; }
+        :root { --ink: #2A2520; --gold: #80612E; --cream: #FCFAF6; --muted: #6F6860; --border: rgba(42,37,32,0.14); --success: #33754F; --danger: #A13F3A; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .card { max-width: 440px; width: 100%; background: #fff; border-radius: 20px; padding: 40px 32px; box-shadow: 0 8px 32px rgba(74,55,40,0.08); border: 1px solid var(--border); }
@@ -57,12 +57,16 @@ var apptData = null;
 
 async function init() {
     var token = new URLSearchParams(window.location.search).get('token');
-    if (!token) { showError('Kein gueltiger Termin-Link'); return; }
+    if (!token) { showError('Kein gültiger Termin-Link'); return; }
 
     try {
-        var snap = await db.collection('appointments').where('manageToken', '==', token).get();
-        if (snap.empty) { showError('Termin nicht gefunden oder abgelaufen'); return; }
-        snap.forEach(function(doc) { apptId = doc.id; apptData = doc.data(); });
+        var doc = await db.collection('appointments').doc(token).get();
+        if (!doc.exists || doc.data().manageToken !== token || doc.data().source !== 'online') {
+            showError('Termin nicht gefunden oder abgelaufen');
+            return;
+        }
+        apptId = doc.id;
+        apptData = doc.data();
         renderAppointment();
     } catch(e) {
         console.error(e);
@@ -88,7 +92,7 @@ function renderAppointment() {
 
     document.getElementById('content').innerHTML =
         '<div class="title">Ihr Termin</div>' +
-        '<div class="status"><span class="status-badge ' + (isCancelled ? 'cancelled' : 'confirmed') + '">' + (isCancelled ? 'Abgesagt' : 'Bestaetigt') + '</span></div>' +
+        '<div class="status"><span class="status-badge ' + (isCancelled ? 'cancelled' : 'confirmed') + '">' + (isCancelled ? 'Abgesagt' : 'Bestätigt') + '</span></div>' +
         '<div class="detail">' +
             '<div class="detail-row"><span class="label">Behandlung</span><span class="value">' + esc(a.treatment) + '</span></div>' +
             '<div class="detail-row"><span class="label">Datum</span><span class="value">' + dateStr + '</span></div>' +

@@ -7,7 +7,7 @@
     <title>Termin buchen — Skinconcept Hagner</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --ink: #2A2520; --gold: #B89763; --cream: #FCFAF6; --muted: #8C857A; --border: rgba(42,37,32,0.08); --success: #3D8B5F; }
+        :root { --ink: #2A2520; --gold: #80612E; --cream: #FCFAF6; --muted: #6F6860; --border: rgba(42,37,32,0.14); --success: #33754F; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
 
@@ -33,6 +33,7 @@
             padding: 16px 18px; border: 2px solid var(--border); border-radius: 12px;
             cursor: pointer; transition: all 0.2s; background: #fff;
             display: flex; justify-content: space-between; align-items: center;
+            width: 100%; color: var(--ink); text-align: left; font-family: inherit;
         }
         .treatment-card:hover { border-color: var(--gold); }
         .treatment-card.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); }
@@ -44,6 +45,7 @@
         .staff-btn {
             padding: 20px 16px; border: 2px solid var(--border); border-radius: 12px;
             cursor: pointer; text-align: center; background: #fff; transition: all 0.2s;
+            color: var(--ink); font-family: inherit;
         }
         .staff-btn:hover { border-color: var(--gold); }
         .staff-btn.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); }
@@ -54,7 +56,7 @@
             background: rgba(184,151,99,0.12); display: flex; align-items: center;
             justify-content: center; font-size: 18px; font-weight: 600; color: var(--gold);
         }
-        .no-pref { padding: 12px; text-align: center; font-size: 13px; color: var(--muted); cursor: pointer; border: 1px solid var(--border); border-radius: 10px; margin-top: 8px; }
+        .no-pref { width: 100%; padding: 12px; text-align: center; font-size: 13px; color: var(--muted); cursor: pointer; border: 1px solid var(--border); border-radius: 10px; margin-top: 8px; background:#fff; font-family:inherit; }
         .no-pref:hover { background: rgba(42,37,32,0.02); }
         .no-pref.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); }
 
@@ -65,7 +67,7 @@
         .time-slot {
             padding: 12px 8px; border: 2px solid var(--border); border-radius: 10px;
             text-align: center; cursor: pointer; font-size: 14px; font-weight: 500;
-            background: #fff; transition: all 0.2s;
+            background: #fff; transition: all 0.2s; color:var(--ink); font-family:inherit;
         }
         .time-slot:hover { border-color: var(--gold); }
         .time-slot.selected { border-color: var(--ink); background: rgba(42,37,32,0.03); font-weight: 600; }
@@ -116,11 +118,11 @@
     <div class="brand">Skinconcept</div>
     <div class="sub">Hagner · Morbach</div>
     <h1>Termin buchen</h1>
-    <p>Waehlen Sie Ihre Wunschbehandlung und einen freien Termin — wir freuen uns auf Sie.</p>
+    <p>Wählen Sie Ihre Wunschbehandlung und einen freien Termin — wir freuen uns auf Sie.</p>
 </div>
 
 <div class="container">
-    <div class="step-indicator">
+    <div class="step-indicator" aria-hidden="true">
         <div class="step-dot active" id="dot0"></div>
         <div class="step-dot" id="dot1"></div>
         <div class="step-dot" id="dot2"></div>
@@ -130,7 +132,7 @@
 
     <!-- STEP 0: Behandlung -->
     <div class="step active" id="step0">
-        <div class="step-title">Behandlung waehlen</div>
+        <div class="step-title">Behandlung wählen</div>
         <div class="treatment-list" id="treatmentList"></div>
         <div class="nav-btns"><button class="btn-next" id="btnNext0" disabled onclick="nextStep()">Weiter</button></div>
     </div>
@@ -139,25 +141,25 @@
     <div class="step" id="step1">
         <div class="step-title">Mitarbeiterin</div>
         <div class="staff-btns">
-            <div class="staff-btn" onclick="selectStaff('tamara', this)">
+            <button type="button" class="staff-btn" aria-pressed="false" onclick="selectStaff('tamara', this)">
                 <div class="sb-avatar">TH</div>
                 <div class="sb-name">Tamara</div>
                 <div class="sb-sub">Inhaberin</div>
-            </div>
-            <div class="staff-btn" onclick="selectStaff('elena', this)">
+            </button>
+            <button type="button" class="staff-btn" aria-pressed="false" onclick="selectStaff('elena', this)">
                 <div class="sb-avatar">E</div>
                 <div class="sb-name">Elena</div>
                 <div class="sb-sub">Kosmetikerin</div>
-            </div>
+            </button>
         </div>
-        <div class="no-pref" onclick="selectStaff('egal', this)">Keine Praeferenz</div>
+        <button type="button" class="no-pref" aria-pressed="false" onclick="selectStaff('egal', this)">Keine Präferenz</button>
         <div class="nav-btns"><button class="btn-back" onclick="prevStep()">Zurueck</button><button class="btn-next" id="btnNext1" disabled onclick="nextStep()">Weiter</button></div>
     </div>
 
     <!-- STEP 2: Datum + Uhrzeit -->
     <div class="step" id="step2">
         <div class="step-title">Datum und Uhrzeit</div>
-        <div class="date-input"><input type="date" id="bookDate" onchange="loadSlots()"></div>
+        <div class="date-input"><label for="bookDate" class="step-title" style="display:block;margin-bottom:8px;">Wunschdatum</label><input type="date" id="bookDate" onchange="loadSlots()"></div>
         <div id="slotsContainer"></div>
         <div class="nav-btns"><button class="btn-back" onclick="prevStep()">Zurueck</button><button class="btn-next" id="btnNext2" disabled onclick="nextStep()">Weiter</button></div>
     </div>
@@ -165,11 +167,11 @@
     <!-- STEP 3: Kontaktdaten -->
     <div class="step" id="step3">
         <div class="step-title">Ihre Kontaktdaten</div>
-        <div class="form-field"><label>Vorname *</label><input type="text" id="bookFirstName" placeholder="Ihr Vorname"></div>
-        <div class="form-field"><label>Nachname *</label><input type="text" id="bookLastName" placeholder="Ihr Nachname"></div>
-        <div class="form-field"><label>E-Mail *</label><input type="email" id="bookEmail" placeholder="ihre@email.de"></div>
-        <div class="form-field"><label>Telefon</label><input type="tel" id="bookPhone" placeholder="+49 ..."></div>
-        <div class="form-field"><label>Anmerkungen (optional)</label><textarea id="bookNotes" rows="2" placeholder="Allergien, Wuensche..."></textarea></div>
+        <div class="form-field"><label for="bookFirstName">Vorname *</label><input type="text" id="bookFirstName" autocomplete="given-name" placeholder="Ihr Vorname"></div>
+        <div class="form-field"><label for="bookLastName">Nachname *</label><input type="text" id="bookLastName" autocomplete="family-name" placeholder="Ihr Nachname"></div>
+        <div class="form-field"><label for="bookEmail">E-Mail *</label><input type="email" id="bookEmail" autocomplete="email" placeholder="ihre@email.de"></div>
+        <div class="form-field"><label for="bookPhone">Telefon</label><input type="tel" id="bookPhone" autocomplete="tel" placeholder="+49 ..."></div>
+        <div class="form-field"><label for="bookNotes">Anmerkungen (optional)</label><textarea id="bookNotes" rows="2" placeholder="Allergien, Wünsche..."></textarea></div>
         <div class="nav-btns"><button class="btn-back" onclick="prevStep()">Zurueck</button><button class="btn-next" onclick="nextStep()">Zur Uebersicht</button></div>
     </div>
 
@@ -187,9 +189,9 @@
     <!-- STEP 5: Erfolg -->
     <div class="step" id="step5">
         <div class="success-card">
-            <div class="success-icon">&#10003;</div>
+            <div class="success-icon" aria-hidden="true">&#10003;</div>
             <div class="success-title">Termin gebucht!</div>
-            <div class="success-text" id="successMsg">Sie erhalten in Kuerze eine Bestaetigungsmail. Wir freuen uns auf Ihren Besuch!</div>
+            <div class="success-text" id="successMsg">Ihr Termin wurde im System gespeichert. Wir freuen uns auf Ihren Besuch!</div>
         </div>
     </div>
 </div>
@@ -271,9 +273,9 @@ async function init() {
     Object.keys(categories).forEach(function(cat) {
         html += '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:600;margin:16px 0 8px;padding-left:2px;">' + esc(cat) + '</div>';
         categories[cat].forEach(function(t) {
-            html += '<div class="treatment-card" onclick="selectTreatment(\'' + t.id + '\', this)">' +
+            html += '<button type="button" class="treatment-card" aria-pressed="false" onclick="selectTreatment(\'' + t.id + '\', this)">' +
                 '<div><div class="tc-name">' + esc(t.name) + '</div><div class="tc-info">' + (t.duration || '?') + ' Min.</div></div>' +
-                '<div class="tc-price">' + (t.price ? t.price.toLocaleString('de-DE', {minimumFractionDigits:2}) + ' EUR' : 'Auf Anfrage') + '</div></div>';
+                '<div class="tc-price">' + (t.price ? t.price.toLocaleString('de-DE', {minimumFractionDigits:2}) + ' EUR' : 'Auf Anfrage') + '</div></button>';
         });
     });
     list.innerHTML = html;
@@ -283,15 +285,17 @@ function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.te
 
 function selectTreatment(id, el) {
     booking.treatment = treatments.find(function(t) { return t.id === id; });
-    document.querySelectorAll('.treatment-card').forEach(function(c) { c.classList.remove('selected'); });
+    document.querySelectorAll('.treatment-card').forEach(function(c) { c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
     el.classList.add('selected');
+    el.setAttribute('aria-pressed', 'true');
     document.getElementById('btnNext0').disabled = false;
 }
 
 function selectStaff(staff, el) {
     booking.staff = staff;
-    document.querySelectorAll('.staff-btn, .no-pref').forEach(function(c) { c.classList.remove('selected'); });
+    document.querySelectorAll('.staff-btn, .no-pref').forEach(function(c) { c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
     el.classList.add('selected');
+    el.setAttribute('aria-pressed', 'true');
     document.getElementById('btnNext1').disabled = false;
 }
 
@@ -365,14 +369,15 @@ async function loadSlots() {
 
     document.getElementById('slotsContainer').innerHTML = '<div class="step-title" style="margin-top:16px;">Verfuegbare Zeiten</div>' +
         '<div class="time-grid">' + slots.map(function(s) {
-            return '<div class="time-slot' + (!s.available ? ' disabled' : '') + '" onclick="' + (s.available ? "selectTime('" + s.time + "', this)" : '') + '">' + s.time + '</div>';
+            return '<button type="button" class="time-slot' + (!s.available ? ' disabled' : '') + '" aria-pressed="false"' + (s.available ? ' onclick="selectTime(\'' + s.time + '\', this)"' : ' disabled aria-disabled="true"') + '>' + s.time + '</button>';
         }).join('') + '</div>';
 }
 
 function selectTime(time, el) {
     booking.time = time;
-    document.querySelectorAll('.time-slot').forEach(function(s) { s.classList.remove('selected'); });
+    document.querySelectorAll('.time-slot').forEach(function(s) { s.classList.remove('selected'); s.setAttribute('aria-pressed', 'false'); });
     el.classList.add('selected');
+    el.setAttribute('aria-pressed', 'true');
     document.getElementById('btnNext2').disabled = false;
 }
 
@@ -403,8 +408,10 @@ async function submitBooking() {
     var ln = document.getElementById('bookLastName').value.trim();
 
     try {
-        var manageToken = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
-        await db.collection('appointments').add({
+        var tokenBytes = new Uint8Array(24);
+        crypto.getRandomValues(tokenBytes);
+        var manageToken = Array.from(tokenBytes).map(function(byte) { return byte.toString(16).padStart(2, '0'); }).join('');
+        await db.collection('appointments').doc(manageToken).set({
             manageToken: manageToken,
             client: fn + ' ' + ln,
             treatment: t.name || '',
@@ -420,8 +427,8 @@ async function submitBooking() {
             status: 'bestaetigt',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        document.getElementById('successMsg').innerHTML = 'Sie erhalten in Kuerze eine Bestaetigungsmail.<br><br>' +
-            '<a href="termin.html?token=' + manageToken + '" style="color:var(--gold);font-weight:600;text-decoration:none;">Termin verwalten (umbuchen / absagen)</a><br><br>' +
+        document.getElementById('successMsg').innerHTML = 'Ihr Termin wurde im System gespeichert.<br><br>' +
+            '<a href="termin.html?token=' + manageToken + '" style="color:var(--gold);font-weight:600;text-decoration:underline;">Termin anzeigen oder absagen</a><br><br>' +
             'Wir freuen uns auf Ihren Besuch!';
         showStep(5);
     } catch(e) {

@@ -795,25 +795,37 @@ function buildInvoicePDF(doc, inv) {
 }
 
 // ============ ARCHIV ============
+function invoiceSortMillis(inv) {
+    if (inv && inv.createdAt && typeof inv.createdAt.toMillis === 'function') return inv.createdAt.toMillis();
+    if (inv && typeof inv.createdAt === 'number') return inv.createdAt;
+    if (inv && typeof inv.createdAt === 'string') {
+        const t = Date.parse(inv.createdAt);
+        if (!isNaN(t)) return t;
+    }
+    if (inv && inv.date) {
+        const t = Date.parse(inv.date + 'T00:00:00');
+        if (!isNaN(t)) return t;
+    }
+    return 0;
+}
+
 function loadArchive() {
     if (unsubInvoices) unsubInvoices();
-    unsubInvoices = db.collection('invoices').orderBy('createdAt', 'desc').limit(300)
+    // Ohne orderBy laden: Firestore wuerde Dokumente ohne createdAt sonst komplett ausblenden.
+    unsubInvoices = db.collection('invoices').limit(500)
         .onSnapshot(snap => {
             allInvoices = [];
             snap.forEach(d => allInvoices.push({ ...d.data(), _id: d.id }));
+            allInvoices.sort((a, b) => invoiceSortMillis(b) - invoiceSortMillis(a));
             renderArchive();
             loadStats();
         }, err => {
             console.error('invoices:', err);
-            // Fallback ohne orderBy (Index-/Feld-Probleme) -> client-seitig sortieren, damit Liste UND Stats trotzdem kommen
-            db.collection('invoices').limit(300).get().then(snap => {
+            // Fallback: Liste UND Stats sollen trotzdem kommen.
+            db.collection('invoices').limit(500).get().then(snap => {
                 allInvoices = [];
                 snap.forEach(d => allInvoices.push({ ...d.data(), _id: d.id }));
-                allInvoices.sort((a, b) => {
-                    const ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : (a.date ? Date.parse(a.date) : 0);
-                    const tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : (b.date ? Date.parse(b.date) : 0);
-                    return tb - ta;
-                });
+                allInvoices.sort((a, b) => invoiceSortMillis(b) - invoiceSortMillis(a));
                 renderArchive();
                 loadStats();
             }).catch(e2 => {

@@ -106,7 +106,7 @@
       #sc-auth-overlay *{box-sizing:border-box}
       .sc-auth-card{max-width:400px;width:100%;background:#fff;border-radius:22px;box-shadow:0 20px 60px rgba(74,55,40,.15),0 4px 16px rgba(74,55,40,.08);padding:44px 32px;text-align:center}
       .sc-auth-brand{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:30px;color:#4A3728;letter-spacing:1.5px;margin-bottom:6px;font-weight:600}
-      .sc-auth-sub{color:#9E9894;font-size:11px;margin-bottom:32px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+      .sc-auth-sub{color:#6F6862;font-size:11px;margin-bottom:32px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
       .sc-auth-userrow{display:flex;gap:10px;margin-bottom:22px}
       .sc-auth-userbtn{flex:1;padding:16px 8px;border:2px solid rgba(107,83,68,.14);background:#FDFCFB;border-radius:14px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#2C2420;transition:all .2s;min-height:60px;-webkit-tap-highlight-color:transparent}
       .sc-auth-userbtn:hover{border-color:#C4A265;background:rgba(196,162,101,.08)}
@@ -121,7 +121,7 @@
       .sc-auth-submit{width:100%;background:#4A3728;color:#fff;border:none;padding:15px;border-radius:14px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;min-height:54px;transition:all .2s;letter-spacing:.3px}
       .sc-auth-submit:hover{background:#6B5344}
       .sc-auth-submit:disabled{opacity:.5;cursor:not-allowed}
-      .sc-auth-hint{margin-top:18px;font-size:11px;color:#9E9894;letter-spacing:.3px}
+      .sc-auth-hint{margin-top:18px;font-size:11px;color:#6F6862;letter-spacing:.3px}
       .sc-auth-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:scSpin .7s linear infinite;vertical-align:middle;margin-right:8px}
       @keyframes scSpin{to{transform:rotate(360deg)}}
     `;
@@ -142,10 +142,10 @@
           USERS.map(u => '<button type="button" class="sc-auth-userbtn" data-user="' + u.id + '">' + u.label + '</button>').join('') +
         '</div>' +
         '<div class="sc-auth-pinrow">' +
-          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" data-i="0">' +
-          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" data-i="1">' +
-          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" data-i="2">' +
-          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" data-i="3">' +
+          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" aria-label="PIN-Ziffer 1" data-i="0">' +
+          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" aria-label="PIN-Ziffer 2" data-i="1">' +
+          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" aria-label="PIN-Ziffer 3" data-i="2">' +
+          '<input type="tel" maxlength="1" class="sc-auth-pin" inputmode="numeric" autocomplete="off" aria-label="PIN-Ziffer 4" data-i="3">' +
         '</div>' +
         '<div class="sc-auth-msg" id="sc-auth-msg"></div>' +
         '<button type="button" class="sc-auth-submit" id="sc-auth-submit">Anmelden</button>' +
