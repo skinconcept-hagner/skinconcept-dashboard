@@ -699,8 +699,13 @@ function showStudioLoginModal(resolve,required){
   pw.focus();
   resetBtn.addEventListener('click',function(){
     err.style.display='none';msg.style.display='none';resetBtn.disabled=true;resetBtn.textContent='Sende Link…';
-    nsAuth.sendPasswordResetEmail(NS_STUDIO_EMAIL)
-      .then(function(){msg.innerHTML='Reset-Link an <b>'+NS_STUDIO_EMAIL+'</b> gesendet. Bitte E-Mail (auch Spam) pr&uuml;fen, neues Passwort setzen und hier anmelden.';msg.style.display='block';resetBtn.style.display='none';})
+    window.scRequestStudioPasswordReset('office')
+      .then(function(result){
+        msg.innerHTML=result.sent===false
+          ?'Eine Reset-Mail wurde bereits vor Kurzem gesendet. Bitte den <b>Posteingang</b> pr&uuml;fen.'
+          :'Neue Reset-Mail von <b>Skinconcept Hagner</b> gesendet. Bitte den <b>Posteingang</b> pr&uuml;fen, neues Passwort setzen und hier anmelden.';
+        msg.style.display='block';resetBtn.style.display='none';
+      })
       .catch(function(e){err.textContent='Konnte Reset-Mail nicht senden: '+(e&&e.message||'');err.style.display='block';resetBtn.disabled=false;resetBtn.textContent='Passwort vergessen?';});
   });
   function close(val){ov.remove();resolve(val);}

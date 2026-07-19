@@ -28,6 +28,21 @@
   var hagnerAuthPromise = null;
   var verifiedStudioUid = null;
 
+  if (!global.scRequestStudioPasswordReset) {
+    global.scRequestStudioPasswordReset = function (system) {
+      return fetch('https://skinconcept-office.vercel.app/api/auth/studio-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: system })
+      }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+          if (!response.ok) throw new Error(data.error || 'Passwort-Mail konnte nicht versendet werden');
+          return data;
+        });
+      });
+    };
+  }
+
   // Findet die bereits initialisierte -hagner-App (egal wie sie heisst),
   // sonst legt sie eine an. Jede Dashboard-Seite initialisiert -hagner selbst;
   // wir greifen nur darauf zu.
@@ -177,8 +192,13 @@
     pw.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
     resetBtn.addEventListener('click', function () {
       err.style.display = 'none'; msg.style.display = 'none'; resetBtn.disabled = true; resetBtn.textContent = 'Sende Link…';
-      app.auth().sendPasswordResetEmail(STUDIO_EMAIL)
-        .then(function () { msg.innerHTML = 'Reset-Link an <b>' + STUDIO_EMAIL + '</b> gesendet. Bitte E-Mail (auch Spam) pr&uuml;fen.'; msg.style.display = 'block'; resetBtn.style.display = 'none'; })
+      global.scRequestStudioPasswordReset('kartei')
+        .then(function (result) {
+          msg.innerHTML = result.sent === false
+            ? 'Eine Reset-Mail wurde bereits vor Kurzem gesendet. Bitte den <b>Posteingang</b> pr&uuml;fen.'
+            : 'Neue Reset-Mail von <b>Skinconcept Hagner</b> gesendet. Bitte den <b>Posteingang</b> pr&uuml;fen.';
+          msg.style.display = 'block'; resetBtn.style.display = 'none';
+        })
         .catch(function (e) { err.textContent = 'Konnte Reset-Mail nicht senden: ' + ((e && e.message) || ''); err.style.display = 'block'; resetBtn.disabled = false; resetBtn.textContent = 'Passwort vergessen?'; });
     });
     var laterBtn = ov.querySelector('#scHagnerLater');

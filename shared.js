@@ -20,8 +20,27 @@ const db = firebase.firestore();
 // klickt man "Spaeter", funktioniert alles weiter (nichts wird blockiert).
 // Einmal pro Geraet — Firebase merkt sich die Anmeldung (LOCAL-Persistenz).
 const STUDIO_EMAIL = 'skinconcept.hagner@gmail.com';
+const STUDIO_RESET_API = 'https://skinconcept-office.vercel.app/api/auth/studio-password-reset';
 let scAuthSdkPromise = null;
 let scStudioAuthPromise = null;
+
+// Passwort-Mails laufen ueber den verifizierten Skinconcept-SMTP-Versand.
+// Der Server akzeptiert nur die feste Studio-Adresse und die beiden bekannten
+// Systeme; eine frei eingebbare Empfaenger-Adresse gibt es bewusst nicht.
+if (!window.scRequestStudioPasswordReset) {
+  window.scRequestStudioPasswordReset = function (system) {
+    return fetch(STUDIO_RESET_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: system })
+    }).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        if (!response.ok) throw new Error(data.error || 'Passwort-Mail konnte nicht versendet werden');
+        return data;
+      });
+    });
+  };
+}
 
 // Das Auth-SDK ist auf den Seiten (noch) nicht eingebunden — dynamisch laden.
 function scLoadAuthSdk() {
@@ -117,8 +136,13 @@ function scShowStudioLogin(resolve, required) {
   pw.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
   resetBtn.addEventListener('click', () => {
     err.style.display = 'none'; msg.style.display = 'none'; resetBtn.disabled = true; resetBtn.textContent = 'Sende Link…';
-    firebase.auth().sendPasswordResetEmail(STUDIO_EMAIL)
-      .then(() => { msg.innerHTML = 'Reset-Link an <b>' + STUDIO_EMAIL + '</b> gesendet. Bitte E-Mail (auch Spam) pr&uuml;fen, neues Passwort setzen und hier anmelden.'; msg.style.display = 'block'; resetBtn.style.display = 'none'; })
+    window.scRequestStudioPasswordReset('office')
+      .then((result) => {
+        msg.innerHTML = result.sent === false
+          ? 'Eine Reset-Mail wurde bereits vor Kurzem gesendet. Bitte den <b>Posteingang</b> pr&uuml;fen.'
+          : 'Neue Reset-Mail von <b>Skinconcept Hagner</b> gesendet. Bitte den <b>Posteingang</b> pr&uuml;fen und danach hier anmelden.';
+        msg.style.display = 'block'; resetBtn.style.display = 'none';
+      })
       .catch((e) => { err.textContent = 'Konnte Reset-Mail nicht senden: ' + ((e && e.message) || ''); err.style.display = 'block'; resetBtn.disabled = false; resetBtn.textContent = 'Passwort vergessen?'; });
   });
   const laterBtn = ov.querySelector('#scStudioLater');
